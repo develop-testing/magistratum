@@ -6,7 +6,7 @@ metadata = sa.MetaData()
 
 engine = sa.create_engine(DATABASE_URL)
 
-users_table = sa.Table(
+sa.Table(
     "users",
     metadata,
     sa.Column("id", sa.Integer, primary_key=True),
@@ -14,6 +14,33 @@ users_table = sa.Table(
     sa.Column("password", sa.String(255), nullable=False, unique=False),
     sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
     sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
+
+sa.Table(
+    "files",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("name", sa.String(255), nullable=False, unique=True),
+    sa.Column("content", sa.Text, nullable=False, unique=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
+
+sa.Table(
+    "directories",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("name", sa.String(255), nullable=False, unique=True),
+    sa.Column("parent_name", sa.Text, nullable=False, unique=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
+sa.Table(
+    "files_to_dirs",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("file_id", sa.String(255), nullable=False, unique=True),
+    sa.Column("dir_id", sa.Text, nullable=False, unique=False),
 )
 
 if __name__ == "__main__":
