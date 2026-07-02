@@ -1,0 +1,33 @@
+run:
+	docker compose up --build
+
+stop:
+	docker compose down
+
+logs:
+	docker compose logs -f
+
+lint:
+	docker compose run --rm web mypy .
+
+format:
+	docker compose run --rm web black .
+
+install:
+	docker compose exec web pip install $(pkgs)
+	docker compose exec web pip freeze > requirements.txt
+
+install-req:
+	docker compose exec web pip install -r requirements.txt
+
+create-database:
+	docker compose exec web python database/database.py
+
+init-alembic:
+	docker compose exec web alembic init database/alembic
+
+create-migrations:
+	docker compose exec web alembic revision --autogenerate -m "init"
+
+apply-migrations:
+	docker compose exec web alembic upgrade head

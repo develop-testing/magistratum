@@ -1,0 +1,51 @@
+services:
+  db:
+    image: mariadb:12.3.2
+    ports:
+      - "8810:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: lorica_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: 'hdjywee2'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-ppassword" ]
+      timeout: 10s
+      interval: 5s
+      retries: 5
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8820:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=db
+    depends_on:
+      db:
+        condition: service_healthy
+      fast-store:
+        condition: service_started
+
+  fast-store:
+    image: redis:8.8.0
+    ports:
+      - "8830:6379"
+    command: redis-server --requirepass fhy6asd
+
+  web:
+    build: .
+    ports:
+      - "8800:8000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPYCACHEPREFIX=/app/.cache/pycache
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
