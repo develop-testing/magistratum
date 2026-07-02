@@ -30,7 +30,7 @@ async def custom_swagger_ui_html() -> HTMLResponse:
         swagger_js_url="/public/swagger-ui-bundle.js",
         swagger_css_url="/public/swagger-ui.css",
         swagger_favicon_url="/public/favicon.png",
-    )  # type: ignore[no-any-return]
+    )
 
 app.add_middleware(
     CORSMiddleware,

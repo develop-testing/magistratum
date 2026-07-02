@@ -14,7 +14,13 @@ class FetchDirectoryError:
 class SaveFileError:
     value: str
 
-def fetch_dir_by_name(dirname: str) -> Result[Directory, str]:
+@dataclass(frozen=True, slots=True)
+class FetchFileError:
+    value: str
+
+FetchFileErrs = FetchDirectoryError | str
+
+def fetch_dir_by_name(dirname: str) -> Result[Directory, FetchFileErrs]:
     query = sa.text(
         "SELECT name, parent_name FROM directories WHERE name = :dirname"
     )
@@ -34,7 +40,32 @@ def is_dir_exists(dirname: str) -> bool:
     )
 
     with engine.connect() as conn:
-        return conn.execute(query, {"dirname": dirname}).scalar()
+        return bool(conn.execute(query, {"dirname": dirname}).scalar())
+
+def fetch_file_by_name(name: str) -> Result[File, FetchFileError]:
+    query = sa.text("SELECT name, content FROM files WHERE name = :name")
+
+    with engine.connect() as conn:
+        row = conn.execute(query, {"name": name}).mappings().first()
+
+        if row is None:
+            return Err(FetchFileError("file not found"))
+
+        return Ok(File(row["name"], row["content"]))
+
+
+def update_file(old_name: str, file: File) -> Result[File, SaveFileError]:
+    try:
+        query = sa.text("UPDATE files SET content = :content, name = :new_name WHERE name = :old_name")
+        with engine.connect() as conn:
+            conn.execute(query, {"content": file.content, "new_name": file.name, "old_name": old_name})
+            conn.commit()
+            return Ok(file)
+    except sa.exc.IntegrityError as e:
+        if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
+            return Err(SaveFileError("file with this name already exists"))
+        raise
+
 
 def save_file(file: File) -> Result[File, SaveFileError]:
     try:
