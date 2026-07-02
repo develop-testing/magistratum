@@ -11,9 +11,9 @@ class UnauthorizedException(HTTPException):
         super().__init__(status_code=401, detail=message)
 
 
-async def auth_middleware(request: Request):
+async def auth_middleware(request: Request) -> bool:
     token = request.cookies.get("access_token", "")
-    
+
     print(token, fetch_session_by_id(token))
 
     match fetch_session_by_id(token):

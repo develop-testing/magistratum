@@ -10,7 +10,6 @@ from auth.member import *
 from auth.sqlalchemy_member import *
 from auth.redis_sessions import *
 
-
 auth_router = APIRouter()
 
 
