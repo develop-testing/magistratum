@@ -30,17 +30,11 @@ def fetch_dir_by_name(dirname: str) -> Result[Directory, str]:
 
 def is_dir_exists(dirname: str) -> bool:
     query = sa.text(
-        "SELECT name, parent_name FROM directories WHERE name = :dirname"
+        "SELECT EXISTS(SELECT 1 FROM directories WHERE name = :dirname)"
     )
 
     with engine.connect() as conn:
-        result = conn.execute(query, {"dirname": dirname})
-        row = result.mappings().first()
-
-        if row is None:
-            return False
-        
-        return True
+        return conn.execute(query, {"dirname": dirname}).scalar()
 
 def save_file(file: File) -> Result[File, SaveFileError]:
     try:
