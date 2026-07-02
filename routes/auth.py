@@ -17,7 +17,7 @@ class LoginRequest:
     password: str
 
 
-@auth_router.post("/auth/login", tags=["auth"])
+@auth_router.post("/auth/login", tags=["Auth"])
 async def login(body: LoginRequest) -> Response:
     try:
         user_session = (
@@ -54,7 +54,7 @@ async def login(body: LoginRequest) -> Response:
         return InternalServerError()
 
 
-@auth_router.post("/auth/logout", tags=["auth"])
+@auth_router.post("/auth/logout", tags=["Auth"])
 def logout(request: Request) -> Response:
     try:
         result = fetch_session_by_id(request.cookies.get("access_token", "")).map(
@@ -81,7 +81,7 @@ class RegisterRequest:
     password: str
 
 
-@auth_router.post("/auth/register", tags=["auth"])
+@auth_router.post("/auth/register", tags=["Auth"])
 def register(body: RegisterRequest) -> Response:
     try:
         candidate = make_candidate(body.username, body.password).and_then(
