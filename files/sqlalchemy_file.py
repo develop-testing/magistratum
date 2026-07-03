@@ -4,7 +4,8 @@ from result import Ok, Err, Result
 
 from database.database import engine
 
-from .file import *
+from .file import File, FileFilter
+from .directory import Directory, new_directory
 
 
 @dataclass(frozen=True, slots=True)

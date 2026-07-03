@@ -4,7 +4,7 @@ from result import Ok, Err, Result, is_err
 from fastapi import APIRouter, Request, Response
 
 from .response import *
-from files.file import change_file_content, rename_file, FileFilter
+from files.file import change_file_content, rename_file, new_file, FileFilter
 from files.sqlalchemy_file import *
 
 files_router = APIRouter()

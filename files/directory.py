@@ -1,0 +1,27 @@
+from __future__ import annotations
+from dataclasses import dataclass
+from result import Ok, Result
+
+
+@dataclass(slots=True)
+class Directory:
+    name: str
+    parent_name: str
+    files: list[str]
+
+
+def new_directory(dir_name: str, parent_name: str) -> Result[Directory, str]:
+    return Ok(Directory(dir_name, parent_name, []))
+
+
+def add_to_directory(d: Directory, file_name: str) -> Result[Directory, str]:
+    return Ok(Directory(d.name, d.parent_name, d.files + [file_name]))
+
+
+def remove_from_directory(d: Directory, file_name: str) -> Result[Directory, str]:
+    if file_name not in d.files:
+        return Ok(d)
+
+    new_files = [f for f in d.files if f != file_name]
+
+    return Ok(Directory(d.name, d.parent_name, new_files))
