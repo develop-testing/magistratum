@@ -6,24 +6,27 @@ from database.database import engine
 
 from .file import *
 
+
 @dataclass(frozen=True, slots=True)
 class FetchDirectoryError:
     value: str
+
 
 @dataclass(frozen=True, slots=True)
 class SaveFileError:
     value: str
 
+
 @dataclass(frozen=True, slots=True)
 class FetchFileError:
     value: str
 
+
 FetchFileErrs = FetchDirectoryError | str
 
+
 def fetch_dir_by_name(dirname: str) -> Result[Directory, FetchFileErrs]:
-    query = sa.text(
-        "SELECT name, parent_name FROM directories WHERE name = :dirname"
-    )
+    query = sa.text("SELECT name, parent_name FROM directories WHERE name = :dirname")
 
     with engine.connect() as conn:
         result = conn.execute(query, {"dirname": dirname})
@@ -34,13 +37,13 @@ def fetch_dir_by_name(dirname: str) -> Result[Directory, FetchFileErrs]:
 
         return new_directory(row["name"], row["parent_name"])
 
+
 def is_dir_exists(dirname: str) -> bool:
-    query = sa.text(
-        "SELECT EXISTS(SELECT 1 FROM directories WHERE name = :dirname)"
-    )
+    query = sa.text("SELECT EXISTS(SELECT 1 FROM directories WHERE name = :dirname)")
 
     with engine.connect() as conn:
         return bool(conn.execute(query, {"dirname": dirname}).scalar())
+
 
 def fetch_file_by_name(name: str) -> Result[File, FetchFileError]:
     query = sa.text("SELECT name, content FROM files WHERE name = :name")
@@ -54,11 +57,75 @@ def fetch_file_by_name(name: str) -> Result[File, FetchFileError]:
         return Ok(File(row["name"], row["content"]))
 
 
+def fetch_file_by_filter(filter: FileFilter) -> list[File]:
+    limit = filter.limit if filter.limit > 0 else 18446744073709551615
+    offset = max(filter.offset, 0)
+    pagination = " LIMIT :limit OFFSET :offset"
+
+    with engine.connect() as conn:
+        if filter.by_name and filter.by_directory:
+            query = sa.text(
+                "SELECT f.name, f.content FROM files f"
+                " JOIN files_to_dirs ftd ON f.name = ftd.file_id"
+                " WHERE f.name = :name AND ftd.dir_id = :dir" + pagination
+            )
+            rows = (
+                conn.execute(
+                    query,
+                    {
+                        "name": filter.by_name,
+                        "dir": filter.by_directory,
+                        "limit": limit,
+                        "offset": offset,
+                    },
+                )
+                .mappings()
+                .all()
+            )
+
+        elif filter.by_name:
+            query = sa.text(
+                "SELECT name, content FROM files WHERE name = :name" + pagination
+            )
+            rows = (
+                conn.execute(
+                    query, {"name": filter.by_name, "limit": limit, "offset": offset}
+                )
+                .mappings()
+                .all()
+            )
+
+        elif filter.by_directory:
+            query = sa.text(
+                "SELECT f.name, f.content FROM files f"
+                " JOIN files_to_dirs ftd ON f.name = ftd.file_id"
+                " WHERE ftd.dir_id = :dir" + pagination
+            )
+            rows = (
+                conn.execute(
+                    query,
+                    {"dir": filter.by_directory, "limit": limit, "offset": offset},
+                )
+                .mappings()
+                .all()
+            )
+
+        else:
+            rows = []
+
+        return [File(row["name"], row["content"]) for row in rows]
+
+
 def update_file(old_name: str, file: File) -> Result[File, SaveFileError]:
     try:
-        query = sa.text("UPDATE files SET content = :content, name = :new_name WHERE name = :old_name")
+        query = sa.text(
+            "UPDATE files SET content = :content, name = :new_name WHERE name = :old_name"
+        )
         with engine.connect() as conn:
-            conn.execute(query, {"content": file.content, "new_name": file.name, "old_name": old_name})
+            conn.execute(
+                query,
+                {"content": file.content, "new_name": file.name, "old_name": old_name},
+            )
             conn.commit()
             return Ok(file)
     except sa.exc.IntegrityError as e:
@@ -77,7 +144,7 @@ def save_file(file: File) -> Result[File, SaveFileError]:
                 {
                     "name": file.name,
                     "content": file.content,
-                }
+                },
             )
 
             conn.commit()

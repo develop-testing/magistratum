@@ -16,11 +16,13 @@ app = FastAPI(docs_url=None, redoc_url=None)
 
 app.mount("/public", StaticFiles(directory="public/admin"), name="static")
 
+
 @app.exception_handler(UnauthorizedException)
 async def unauthorized_plain_handler(
     request: Response, exc: UnauthorizedException
 ) -> PlainTextResponse:
     return PlainTextResponse(content=str(exc.detail), status_code=exc.status_code)
+
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html() -> HTMLResponse:
@@ -31,6 +33,7 @@ async def custom_swagger_ui_html() -> HTMLResponse:
         swagger_css_url="/public/swagger-ui.css",
         swagger_favicon_url="/public/favicon.png",
     )
+
 
 app.add_middleware(
     CORSMiddleware,

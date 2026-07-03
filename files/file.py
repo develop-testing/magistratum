@@ -14,6 +14,9 @@ def new_file(name: str, content: str) -> Result[File, str]:
 
 
 def rename_file(f: File, new_name: str) -> Result[File, str]:
+    if new_name == "":
+        return Ok(f)
+
     return Ok(File(new_name, f.content))
 
 
@@ -26,7 +29,18 @@ def add_to_start_file(f: File, new_content: str) -> Result[File, str]:
 
 
 def change_file_content(f: File, new_content: str) -> Result[File, str]:
+    if new_content == "":
+        return Ok(f)
+
     return Ok(File(f.name, new_content))
+
+
+@dataclass(frozen=True, slots=True)
+class FileFilter:
+    by_name: str
+    by_directory: str
+    limit: int
+    offset: int
 
 
 @dataclass(slots=True)
@@ -35,8 +49,10 @@ class Directory:
     parent_name: str
     files: list[str]
 
+
 def new_directory(dir_name: str, parent_name: str) -> Result[Directory, str]:
     return Ok(Directory(dir_name, parent_name, []))
+
 
 def add_to_directory(d: Directory, file_name: str) -> Result[Directory, str]:
     return Ok(Directory(d.name, d.parent_name, d.files + [file_name]))
