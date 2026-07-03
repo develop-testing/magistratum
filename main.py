@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+# import traceback
 
 from fastapi import Response, FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,7 +16,13 @@ app = FastAPI(docs_url=None, redoc_url=None)
 
 app.mount("/public", StaticFiles(directory="public/admin"), name="static")
 
-
+"""
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, err: Exception) -> PlainTextResponse:
+    stack_trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
+    return PlainTextResponse("application error")
+"""
+    
 @app.exception_handler(UnauthorizedException)
 async def unauthorized_plain_handler(
     request: Response, exc: UnauthorizedException
