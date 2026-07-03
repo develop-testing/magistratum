@@ -156,6 +156,7 @@ def save_file(file: TextFile) -> Result[TextFile, SaveFileError]:
             return Err(SaveFileError("file with this name is exists"))
         raise
 
+
 def delete_file_by_name(file_name: str) -> bool:
     query = sa.text("DELETE FROM files WHERE name = :name")
 

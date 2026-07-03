@@ -4,7 +4,13 @@ from result import Ok, Err
 from fastapi import APIRouter, Depends, Response
 
 from .response import *
-from files.text_file import TextFileFilter, change_file_content, rename_file, new_file, destroy_file
+from files.text_file import (
+    TextFileFilter,
+    change_file_content,
+    rename_file,
+    new_file,
+    destroy_file,
+)
 from files.sqlalchemy_file import (
     FetchFileError,
     SaveFileError,
@@ -13,7 +19,7 @@ from files.sqlalchemy_file import (
     fetch_file_by_filter,
     fetch_file_by_name,
     delete_file_by_name,
-    update_file
+    update_file,
 )
 
 files_router = APIRouter()

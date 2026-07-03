@@ -16,6 +16,7 @@ class TextFile:
     name: str
     content: str
 
+
 @dataclass(frozen=True, slots=True)
 class RemovedFile:
     name: str
@@ -45,6 +46,7 @@ def change_file_content(f: TextFile, new_content: str) -> Result[TextFile, str]:
         return Ok(f)
 
     return Ok(TextFile(f.name, new_content))
+
 
 def destroy_file(f: TextFile) -> RemovedFile:
     return RemovedFile(f.name)

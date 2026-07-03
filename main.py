@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 # import traceback
 
 from fastapi import Response, FastAPI, Depends
@@ -22,7 +23,8 @@ async def global_exception_handler(request: Request, err: Exception) -> PlainTex
     stack_trace = "".join(traceback.format_exception(type(err), err, err.__traceback__))
     return PlainTextResponse("application error")
 """
-    
+
+
 @app.exception_handler(UnauthorizedException)
 async def unauthorized_plain_handler(
     request: Response, exc: UnauthorizedException
