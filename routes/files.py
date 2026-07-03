@@ -26,7 +26,6 @@ async def create_file(body: CreateFileRequest) -> Response:
 
     match result:
         case Ok(file):
-            print(file)
             return Success(file)
         case Err(SaveFileError() as err):
             return BadRequest(err.value)
