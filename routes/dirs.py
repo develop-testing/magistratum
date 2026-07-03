@@ -17,7 +17,7 @@ class CreateDirectoryRequest:
     parent_id: str
 
 
-@dirs_router.post("/files", tags=["Directories"])
+@dirs_router.post("/directory", tags=["Directories"])
 async def create_directory(body: CreateDirectoryRequest) -> Response:
 
     dir = mk_directory(body.name, body.parent_id).map(lambda dir: save_directory(dir))
