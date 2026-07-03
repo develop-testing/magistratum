@@ -4,7 +4,7 @@ from result import Ok, Err, Result, is_err
 from fastapi import APIRouter, Request, Response
 
 from .response import *
-from files.file import change_file_content, rename_file, new_file, FileFilter
+from files.text_file import change_file_content, rename_file, new_file, TextFileFilter
 from files.sqlalchemy_file import *
 
 files_router = APIRouter()
@@ -71,6 +71,6 @@ class FetchFileRequest:
 @files_router.post("/files/read", tags=["Files"])
 async def read_files(body: FetchFileRequest) -> Response:
     files = fetch_file_by_filter(
-        FileFilter(body.by_name, body.by_directory, body.limit, body.offset)
+        TextFileFilter(body.by_name, body.by_directory, body.limit, body.offset)
     )
     return Success(files)

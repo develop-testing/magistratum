@@ -4,7 +4,7 @@ from result import Ok, Err, Result
 
 from database.database import engine
 
-from .file import File, FileFilter
+from .text_file import TextFile, TextFileFilter
 from .directory import Directory, new_directory
 
 
@@ -46,7 +46,7 @@ def is_dir_exists(dirname: str) -> bool:
         return bool(conn.execute(query, {"dirname": dirname}).scalar())
 
 
-def fetch_file_by_name(name: str) -> Result[File, FetchFileError]:
+def fetch_file_by_name(name: str) -> Result[TextFile, FetchFileError]:
     query = sa.text("SELECT name, content FROM files WHERE name = :name")
 
     with engine.connect() as conn:
@@ -55,10 +55,10 @@ def fetch_file_by_name(name: str) -> Result[File, FetchFileError]:
         if row is None:
             return Err(FetchFileError("file not found"))
 
-        return Ok(File(row["name"], row["content"]))
+        return Ok(TextFile(row["name"], row["content"]))
 
 
-def fetch_file_by_filter(filter: FileFilter) -> list[File]:
+def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
     limit = filter.limit if filter.limit > 0 else 18446744073709551615
     offset = max(filter.offset, 0)
     pagination = " LIMIT :limit OFFSET :offset"
@@ -114,10 +114,10 @@ def fetch_file_by_filter(filter: FileFilter) -> list[File]:
         else:
             rows = []
 
-        return [File(row["name"], row["content"]) for row in rows]
+        return [TextFile(row["name"], row["content"]) for row in rows]
 
 
-def update_file(old_name: str, file: File) -> Result[File, SaveFileError]:
+def update_file(old_name: str, file: TextFile) -> Result[TextFile, SaveFileError]:
     try:
         query = sa.text(
             "UPDATE files SET content = :content, name = :new_name WHERE name = :old_name"
@@ -135,7 +135,7 @@ def update_file(old_name: str, file: File) -> Result[File, SaveFileError]:
         raise
 
 
-def save_file(file: File) -> Result[File, SaveFileError]:
+def save_file(file: TextFile) -> Result[TextFile, SaveFileError]:
     try:
         query = sa.text("INSERT INTO files (name, content) VALUES (:name, :content)")
 
