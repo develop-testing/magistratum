@@ -34,6 +34,22 @@ async def create_file(body: CreateFileRequest) -> Response:
 
 
 @dataclass(frozen=True, slots=True)
+class FetchFileRequest:
+    by_name: str
+    by_directory: str
+    limit: int = 10
+    offset: int = 0
+
+
+@files_router.post("/files/read", tags=["Files"])
+async def read_files(body: FetchFileRequest) -> Response:
+    files = fetch_file_by_filter(
+        TextFileFilter(body.by_name, body.by_directory, body.limit, body.offset)
+    )
+    return Success(files)
+
+
+@dataclass(frozen=True, slots=True)
 class EditFileRequest:
     filename: str
     new_filename: str
@@ -58,19 +74,3 @@ async def edit_file(body: EditFileRequest) -> Response:
             return BadRequest(err.value)
         case _:
             return InternalServerError()
-
-
-@dataclass(frozen=True, slots=True)
-class FetchFileRequest:
-    by_name: str
-    by_directory: str
-    limit: int = 10
-    offset: int = 0
-
-
-@files_router.post("/files/read", tags=["Files"])
-async def read_files(body: FetchFileRequest) -> Response:
-    files = fetch_file_by_filter(
-        TextFileFilter(body.by_name, body.by_directory, body.limit, body.offset)
-    )
-    return Success(files)
