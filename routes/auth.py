@@ -21,60 +21,49 @@ class LoginRequest:
 
 @auth_router.post("/auth/login", tags=["Auth"])
 async def login(body: LoginRequest) -> Response:
-    try:
-        user_session = (
-            fetch_member_by_username(body.username, body.password)
-            .and_then(lambda m: generate_session_for(m.user_id))
-            .map(lambda ssn: save_session(ssn))
-        )
+    user_session = (
+        fetch_member_by_username(body.username, body.password)
+        .and_then(lambda m: generate_session_for(m.user_id))
+        .map(lambda ssn: save_session(ssn))
+    )
 
-        match user_session:
-            case Ok(s):
-                response = Success(True)
-                response.set_cookie(
-                    key="access_token",
-                    value=s.id,
-                    httponly=True,
-                    secure=True,
-                    samesite="strict",
-                    expires=s.expires,
-                )
+    match user_session:
+        case Ok(s):
+            response = Success(True)
+            response.set_cookie(
+                key="access_token",
+                value=s.id,
+                httponly=True,
+                secure=True,
+                samesite="strict",
+                expires=s.expires,
+            )
 
-                return response
-            case Err(ErrorOfIncorrectCreds() as err):
-                return BadRequest(err.value)
-            case Err(ErrorOfMemberValidate() as err):
-                return BadRequest(err.value)
-            case Err(SessionValidateErr() as err):
-                return BadRequest(err.value)
-            case Err(NotFoundMemberError() as err):
-                return BadRequest("incorrect username or password")
-            case _:
-                return InternalServerError()
-
-    except:
-        return InternalServerError()
+            return response
+        case Err(ErrorOfIncorrectCreds() as err):
+            return BadRequest(err.value)
+        case Err(ErrorOfMemberValidate() as err):
+            return BadRequest(err.value)
+        case Err(SessionValidateErr() as err):
+            return BadRequest(err.value)
+        case Err(NotFoundMemberError() as err):
+            return BadRequest("incorrect username or password")
+        case _:
+            return InternalServerError()
 
 
 @auth_router.post("/auth/logout", tags=["Auth"])
 def logout(request: Request) -> Response:
-    try:
-        result = fetch_session_by_id(request.cookies.get("access_token", "")).map(
-            lambda ssn: close_session(ssn)
-        )
+    access_token = request.cookies.get("access_token", "")
+    result = fetch_session_by_id(access_token).map(lambda ssn: close_session(ssn))
 
-        match result:
-            case Ok():
-                response = Success(True)
-                response.delete_cookie(
-                    key="access_token", secure=True, samesite="strict"
-                )
-            case Err(err):
-                return BadRequest(err.value)
-
-        return response
-    except:
-        return InternalServerError()
+    match result:
+        case Ok():
+            response = Success(True)
+            response.delete_cookie(key="access_token", secure=True, samesite="strict")
+            return response
+        case Err(err):
+            return BadRequest(err.value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,17 +74,14 @@ class RegisterRequest:
 
 @auth_router.post("/auth/register", tags=["Auth"])
 def register(body: RegisterRequest) -> Response:
-    try:
-        candidate = make_candidate(body.username, body.password).and_then(
-            lambda cnd: save_candidate(cnd)
-        )
+    candidate = make_candidate(body.username, body.password).and_then(
+        lambda cnd: save_candidate(cnd)
+    )
 
-        match candidate:
-            case Ok():
-                return Success(True)
-            case Err(SaveDuplicateError() as err):
-                return BadRequest(err.value)
-            case _:
-                return InternalServerError()
-    except Exception as e:
-        return InternalServerError()
+    match candidate:
+        case Ok():
+            return Success(True)
+        case Err(SaveDuplicateError() as err):
+            return BadRequest(err.value)
+        case _:
+            return InternalServerError()
