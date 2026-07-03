@@ -18,9 +18,11 @@ from files.sqlalchemy_file import (
     save_file,
     fetch_file_by_filter,
     fetch_file_by_name,
-    delete_file_by_name,
+    delete_file_by_id,
     update_file,
 )
+from files.permissions.permissions import new_permissions
+
 
 files_router = APIRouter()
 
@@ -50,10 +52,21 @@ class CreateFileRequest:
 
 @files_router.post("/file", tags=["Files"])
 async def create_file(body: CreateFileRequest) -> Response:
+    """
+    Проверка прав, добавление директории
+    """
+
     if body.dirname != "" and not is_dir_exists(body.dirname):
         return BadRequest("directory " + body.dirname + " not exists")
 
-    result = new_file(body.filename, body.content).and_then(lambda fl: save_file(fl))
+    result = (
+        new_file(body.filename, body.content)
+        .and_then(lambda fl:
+            new_permissions(fl.file_id, "test", "test", "r-r-")
+            .map(lambda perm: (fl, perm))
+        )
+        .and_then(lambda rs: save_file(rs[0], rs[1]))
+    )
 
     match result:
         case Ok(file):
@@ -96,7 +109,7 @@ async def delete_file(file_name: str) -> Response:
     result = (
         fetch_file_by_name(file_name)
         .map(lambda fl: destroy_file(fl))
-        .map(lambda fl: delete_file_by_name(fl.name))
+        .map(lambda fl: delete_file_by_id(fl.file_id))
     )
 
     match result:
