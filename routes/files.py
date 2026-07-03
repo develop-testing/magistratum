@@ -18,7 +18,7 @@ class FetchFileRequest:
     offset: int = 0
 
 
-@files_router.get("/files/read", tags=["Files"])
+@files_router.get("/files", tags=["Files"])
 async def read_files(query: FetchFileRequest = Depends()) -> Response:
     files = fetch_file_by_filter(
         TextFileFilter(query.by_name, query.by_directory, query.limit, query.offset)
@@ -33,7 +33,7 @@ class CreateFileRequest:
     content: str
 
 
-@files_router.post("/files/create", tags=["Files"])
+@files_router.post("/file", tags=["Files"])
 async def create_file(body: CreateFileRequest) -> Response:
     if body.dirname != "" and not is_dir_exists(body.dirname):
         return BadRequest("directory " + body.dirname + " not exists")
@@ -56,7 +56,7 @@ class EditFileRequest:
     new_content: str
 
 
-@files_router.put("/files/edit", tags=["Files"])
+@files_router.patch("/file", tags=["Files"])
 async def edit_file(body: EditFileRequest) -> Response:
     result = (
         fetch_file_by_name(body.filename)
