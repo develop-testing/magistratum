@@ -58,7 +58,8 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
 
         elif filter.by_name:
             query = sa.text(
-                "SELECT file_id, name, content FROM files WHERE name = :name" + pagination
+                "SELECT file_id, name, content FROM files WHERE name = :name"
+                + pagination
             )
             rows = (
                 conn.execute(
@@ -86,7 +87,9 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
         else:
             rows = []
 
-        return [TextFile(str(row["file_id"]), row["name"], row["content"]) for row in rows]
+        return [
+            TextFile(str(row["file_id"]), row["name"], row["content"]) for row in rows
+        ]
 
 
 def update_file(old_name: str, file: TextFile) -> Result[TextFile, SaveFileError]:
@@ -99,7 +102,7 @@ def update_file(old_name: str, file: TextFile) -> Result[TextFile, SaveFileError
             {"content": file.content, "new_name": file.name, "old_name": old_name},
         )
         conn.commit()
-        
+
         return Ok(file)
 
 
@@ -116,7 +119,7 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, SaveFileEr
         with engine.connect() as conn:
             conn.execute(
                 insert_file_query,
-                {   
+                {
                     "file_id": file.file_id,
                     "name": file.name,
                     "content": file.content,
@@ -125,7 +128,7 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, SaveFileEr
 
             conn.execute(
                 insert_perms_query,
-                {   
+                {
                     "item_id": perms.item_id,
                     "owner_id": perms.owner_id,
                     "group_name": perms.group_name,

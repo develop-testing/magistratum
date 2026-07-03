@@ -18,7 +18,7 @@ def mk_directory(dir_name: str, parent_id: str) -> Result[Directory, str]:
 
 
 def add_to_directory(d: Directory, file_name: str) -> Result[Directory, str]:
-    return Ok(Directory(d.name, d.parent_id, d.files + [file_name]))
+    return Ok(Directory(d.dir_id, d.name, d.parent_id, d.files + [file_name]))
 
 
 def remove_from_directory(d: Directory, file_name: str) -> Result[Directory, str]:
@@ -27,4 +27,4 @@ def remove_from_directory(d: Directory, file_name: str) -> Result[Directory, str
 
     new_files = [f for f in d.files if f != file_name]
 
-    return Ok(Directory(d.name, d.parent_id, new_files))
+    return Ok(Directory(d.dir_id, d.name, d.parent_id, new_files))

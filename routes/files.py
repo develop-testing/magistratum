@@ -23,7 +23,6 @@ from files.sqlalchemy_file import (
 )
 from files.permissions.permissions import new_permissions
 
-
 files_router = APIRouter()
 
 
@@ -61,9 +60,10 @@ async def create_file(body: CreateFileRequest) -> Response:
 
     result = (
         new_file(body.filename, body.content)
-        .and_then(lambda fl:
-            new_permissions(fl.file_id, "test", "test", "r-r-")
-            .map(lambda perm: (fl, perm))
+        .and_then(
+            lambda fl: new_permissions(fl.file_id, "test", "test", "r-r-").map(
+                lambda perm: (fl, perm)
+            )
         )
         .and_then(lambda rs: save_file(rs[0], rs[1]))
     )

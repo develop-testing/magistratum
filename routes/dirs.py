@@ -8,7 +8,6 @@ from .response import *
 from files.sqlalchemy_dir import is_dir_exists, save_directory
 from files.directory import mk_directory
 
-
 dirs_router = APIRouter()
 
 
@@ -20,15 +19,11 @@ class CreateDirectoryRequest:
 
 @dirs_router.post("/files", tags=["Directories"])
 async def create_directory(body: CreateDirectoryRequest) -> Response:
-    
-    dir = (
-        mk_directory(body.name, body.parent_id)
-        .map(lambda dir: save_directory(dir))
-    )
+
+    dir = mk_directory(body.name, body.parent_id).map(lambda dir: save_directory(dir))
 
     match dir:
-        case Ok(dir):
-            return Success(dir)
+        case Ok(d):
+            return Success(d)
         case _:
             return InternalServerError()
-

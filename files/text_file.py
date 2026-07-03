@@ -4,6 +4,7 @@ from result import Ok, Result
 
 import uuid
 
+
 @dataclass(frozen=True, slots=True)
 class TextFileFilter:
     by_name: str

@@ -26,10 +26,7 @@ PermErrs = PermissionDenied | PermissionValidationError
 
 
 def new_permissions(
-    item_id: str,
-    owner_id: str,
-    group_name: str,
-    content: str
+    item_id: str, owner_id: str, group_name: str, content: str
 ) -> Result[Permissions, PermErrs]:
     if len(item_id) > 255:
         return Err(PermissionValidationError("wrong item id length"))
@@ -46,8 +43,10 @@ def new_permissions(
     return Ok(Permissions(item_id, owner_id, group_name, content))
 
 
-def grant_for_group(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
-    if p.owner != who:
+def grant_for_group(
+    p: Permissions, who: str, what: str
+) -> Result[Permissions, PermErrs]:
+    if p.owner_id != who:
         return Err(PermissionDenied("only owner can change permissions"))
 
     if what == "read":
@@ -62,14 +61,16 @@ def grant_for_group(p: Permissions, who: str, what: str) -> Result[Permissions, 
     return new_permissions(p.item_id, p.owner_id, p.group_name, new_value)
 
 
-def grant_for_other(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
-    if p.owner != who:
+def grant_for_other(
+    p: Permissions, who: str, what: str
+) -> Result[Permissions, PermErrs]:
+    if p.owner_id != who:
         return Err(PermissionDenied("only owner can change permissions"))
 
     if what == "read":
-        new_value = p.values[:2] + "r" + p.values[3:]
+        new_value = p.content[:2] + "r" + p.content[3:]
     elif what == "write":
-        new_value = p.values[:3] + "w" + p.values[4:]
+        new_value = p.content[:3] + "w" + p.content[4:]
     else:
         return Err(
             PermissionValidationError(f"unknown action: {what}, expected read/write")
@@ -78,14 +79,16 @@ def grant_for_other(p: Permissions, who: str, what: str) -> Result[Permissions, 
     return new_permissions(p.item_id, p.owner_id, p.group_name, new_value)
 
 
-def revoke_for_group(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
-    if p.owner != who:
+def revoke_for_group(
+    p: Permissions, who: str, what: str
+) -> Result[Permissions, PermErrs]:
+    if p.owner_id != who:
         return Err(PermissionDenied("only owner can change permissions"))
 
     if what == "read":
-        new_value = p.values[:0] + "-" + p.values[1:]
+        new_value = p.content[:0] + "-" + p.content[1:]
     elif what == "write":
-        new_value = p.values[:1] + "-" + p.values[2:]
+        new_value = p.content[:1] + "-" + p.content[2:]
     else:
         return Err(
             PermissionValidationError(f"unknown action: {what}, expected read/write")
@@ -94,14 +97,16 @@ def revoke_for_group(p: Permissions, who: str, what: str) -> Result[Permissions,
     return new_permissions(p.item_id, p.owner_id, p.group_name, new_value)
 
 
-def revoke_for_other(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
-    if p.owner != who:
+def revoke_for_other(
+    p: Permissions, who: str, what: str
+) -> Result[Permissions, PermErrs]:
+    if p.owner_id != who:
         return Err(PermissionDenied("only owner can change permissions"))
 
     if what == "read":
-        new_value = p.values[:2] + "-" + p.values[3:]
+        new_value = p.content[:2] + "-" + p.content[3:]
     elif what == "write":
-        new_value = p.values[:3] + "-" + p.values[4:]
+        new_value = p.content[:3] + "-" + p.content[4:]
     else:
         return Err(
             PermissionValidationError(f"unknown action: {what}, expected read/write")
@@ -111,7 +116,7 @@ def revoke_for_other(p: Permissions, who: str, what: str) -> Result[Permissions,
 
 
 def has_permissions(p: Permissions, action: str, user_id: str, group_name: str) -> bool:
-    if user_id != "" and p.owner == user_id:
+    if user_id != "" and p.owner_id == user_id:
         return True
 
     if group_name != "" and p.group_name == group_name:

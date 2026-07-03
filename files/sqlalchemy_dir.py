@@ -12,6 +12,10 @@ from .directory import Directory, mk_directory
 class FetchDirectoryError:
     value: str
 
+
+DirErrs = FetchDirectoryError | str
+
+
 def save_directory(dir: Directory) -> Directory:
     query = sa.text(
         "INSERT INTO directories (dir_id, name, parent_id) VALUES (:dir_id, :name, :parent_id)"
@@ -24,12 +28,14 @@ def save_directory(dir: Directory) -> Directory:
                 "dir_id": dir.dir_id,
                 "name": dir.name,
                 "parent_id": dir.parent_id,
-            }
+            },
         )
+        conn.commit()
 
         return dir
 
-def fetch_dir_by_name(dirname: str) -> Result[Directory, FetchDirectoryError]:
+
+def fetch_dir_by_name(dirname: str) -> Result[Directory, DirErrs]:
     query = sa.text("SELECT name, parent_name FROM directories WHERE name = :dirname")
 
     with engine.connect() as conn:
