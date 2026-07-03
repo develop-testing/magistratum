@@ -4,7 +4,7 @@ from result import Ok, Err, Result
 
 from database.database import engine
 
-from .text_file import TextFile, TextFileFilter
+from .text_file import TextFile, RemovedFile, TextFileFilter
 from .directory import Directory, new_directory
 
 
@@ -155,3 +155,12 @@ def save_file(file: TextFile) -> Result[TextFile, SaveFileError]:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
             return Err(SaveFileError("file with this name is exists"))
         raise
+
+def delete_file_by_name(file_name: str) -> bool:
+    query = sa.text("DELETE FROM files WHERE name = :name")
+
+    with engine.connect() as conn:
+        conn.execute(query, {"name": file_name})
+        conn.commit()
+
+        return True

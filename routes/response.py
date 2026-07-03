@@ -11,7 +11,7 @@ class Success(JSONResponse):
 
 class InternalServerError(Response):
     def __init__(self) -> None:
-        super().__init__(status_code=500, content="Internal Server Error")
+        super().__init__(status_code=500, content="application error")
 
 
 class Forbidden(Response):

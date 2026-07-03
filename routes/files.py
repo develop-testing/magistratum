@@ -1,11 +1,20 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from result import Ok, Err, Result, is_err
-from fastapi import APIRouter, Depends, Request, Response
+from result import Ok, Err
+from fastapi import APIRouter, Depends, Response
 
 from .response import *
-from files.text_file import change_file_content, rename_file, new_file, TextFileFilter
-from files.sqlalchemy_file import *
+from files.text_file import TextFileFilter, change_file_content, rename_file, new_file, destroy_file
+from files.sqlalchemy_file import (
+    FetchFileError,
+    SaveFileError,
+    is_dir_exists,
+    save_file,
+    fetch_file_by_filter,
+    fetch_file_by_name,
+    delete_file_by_name,
+    update_file
+)
 
 files_router = APIRouter()
 
@@ -70,6 +79,23 @@ async def edit_file(body: EditFileRequest) -> Response:
             return Success(file)
         case Err(SaveFileError() as err):
             return BadRequest(err.value)
+        case Err(FetchFileError() as err):
+            return BadRequest(err.value)
+        case _:
+            return InternalServerError()
+
+
+@files_router.delete("/file", tags=["Files"])
+async def delete_file(file_name: str) -> Response:
+    result = (
+        fetch_file_by_name(file_name)
+        .map(lambda fl: destroy_file(fl))
+        .map(lambda fl: delete_file_by_name(fl.name))
+    )
+
+    match result:
+        case Ok():
+            return Success(True)
         case Err(FetchFileError() as err):
             return BadRequest(err.value)
         case _:
