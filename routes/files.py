@@ -11,10 +11,10 @@ from files.text_file import (
     new_file,
     destroy_file,
 )
+from files.sqlalchemy_dir import is_dir_exists
 from files.sqlalchemy_file import (
     FetchFileError,
     SaveFileError,
-    is_dir_exists,
     save_file,
     fetch_file_by_filter,
     fetch_file_by_name,
@@ -53,7 +53,7 @@ class CreateFileRequest:
 @files_router.post("/file", tags=["Files"])
 async def create_file(body: CreateFileRequest) -> Response:
     """
-    Проверка прав, добавление директории
+    Проверка прав, добавление директории, перемещение файлов
     """
 
     if body.dirname != "" and not is_dir_exists(body.dirname):

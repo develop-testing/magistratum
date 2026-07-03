@@ -1,0 +1,49 @@
+from dataclasses import dataclass
+import sqlalchemy as sa
+from result import Ok, Err, Result
+
+from database.database import engine
+
+
+from .directory import Directory, mk_directory
+
+
+@dataclass(frozen=True, slots=True)
+class FetchDirectoryError:
+    value: str
+
+def save_directory(dir: Directory) -> Directory:
+    query = sa.text(
+        "INSERT INTO directories (dir_id, name, parent_id) VALUES (:dir_id, :name, :parent_id)"
+    )
+
+    with engine.connect() as conn:
+        result = conn.execute(
+            query,
+            {
+                "dir_id": dir.dir_id,
+                "name": dir.name,
+                "parent_id": dir.parent_id,
+            }
+        )
+
+        return dir
+
+def fetch_dir_by_name(dirname: str) -> Result[Directory, FetchDirectoryError]:
+    query = sa.text("SELECT name, parent_name FROM directories WHERE name = :dirname")
+
+    with engine.connect() as conn:
+        result = conn.execute(query, {"dirname": dirname})
+        row = result.mappings().first()
+
+        if row is None:
+            return Err(FetchDirectoryError("directory not found"))
+
+        return mk_directory(row["name"], row["parent_name"])
+
+
+def is_dir_exists(dirname: str) -> bool:
+    query = sa.text("SELECT EXISTS(SELECT 1 FROM directories WHERE name = :dirname)")
+
+    with engine.connect() as conn:
+        return bool(conn.execute(query, {"dirname": dirname}).scalar())

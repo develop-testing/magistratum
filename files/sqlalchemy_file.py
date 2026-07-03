@@ -4,14 +4,8 @@ from result import Ok, Err, Result
 
 from database.database import engine
 
-from .text_file import TextFile, RemovedFile, TextFileFilter
-from .directory import Directory, new_directory
+from .text_file import TextFile, TextFileFilter
 from .permissions.permissions import Permissions
-
-
-@dataclass(frozen=True, slots=True)
-class FetchDirectoryError:
-    value: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,29 +16,6 @@ class SaveFileError:
 @dataclass(frozen=True, slots=True)
 class FetchFileError:
     value: str
-
-
-FetchFileErrs = FetchDirectoryError | str
-
-
-def fetch_dir_by_name(dirname: str) -> Result[Directory, FetchFileErrs]:
-    query = sa.text("SELECT name, parent_name FROM directories WHERE name = :dirname")
-
-    with engine.connect() as conn:
-        result = conn.execute(query, {"dirname": dirname})
-        row = result.mappings().first()
-
-        if row is None:
-            return Err(FetchDirectoryError("directory not found"))
-
-        return new_directory(row["name"], row["parent_name"])
-
-
-def is_dir_exists(dirname: str) -> bool:
-    query = sa.text("SELECT EXISTS(SELECT 1 FROM directories WHERE name = :dirname)")
-
-    with engine.connect() as conn:
-        return bool(conn.execute(query, {"dirname": dirname}).scalar())
 
 
 def fetch_file_by_name(name: str) -> Result[TextFile, FetchFileError]:
