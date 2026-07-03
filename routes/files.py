@@ -1,13 +1,29 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from result import Ok, Err, Result, is_err
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 
 from .response import *
 from files.text_file import change_file_content, rename_file, new_file, TextFileFilter
 from files.sqlalchemy_file import *
 
 files_router = APIRouter()
+
+
+@dataclass(frozen=True, slots=True)
+class FetchFileRequest:
+    by_name: str = ""
+    by_directory: str = ""
+    limit: int = 10
+    offset: int = 0
+
+
+@files_router.get("/files/read", tags=["Files"])
+async def read_files(query: FetchFileRequest = Depends()) -> Response:
+    files = fetch_file_by_filter(
+        TextFileFilter(query.by_name, query.by_directory, query.limit, query.offset)
+    )
+    return Success(files)
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,22 +47,6 @@ async def create_file(body: CreateFileRequest) -> Response:
             return BadRequest(err.value)
         case _:
             return InternalServerError()
-
-
-@dataclass(frozen=True, slots=True)
-class FetchFileRequest:
-    by_name: str
-    by_directory: str
-    limit: int = 10
-    offset: int = 0
-
-
-@files_router.post("/files/read", tags=["Files"])
-async def read_files(body: FetchFileRequest) -> Response:
-    files = fetch_file_by_filter(
-        TextFileFilter(body.by_name, body.by_directory, body.limit, body.offset)
-    )
-    return Success(files)
 
 
 @dataclass(frozen=True, slots=True)
