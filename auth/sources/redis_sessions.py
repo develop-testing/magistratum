@@ -4,7 +4,7 @@ from result import Err, Ok, Result
 
 
 from database.redis import client
-from .session import *
+from ..session import *
 
 
 @dataclass(frozen=True, slots=True)

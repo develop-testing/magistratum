@@ -3,16 +3,16 @@ from dataclasses import dataclass
 from result import Ok, Err
 from fastapi import APIRouter, Depends, Response
 
-from .response import *
-from files.text_file import (
+from router.response import *
+from ..text_file import (
     TextFileFilter,
     change_file_content,
     rename_file,
     new_file,
     destroy_file,
 )
-from files.sqlalchemy_dir import is_dir_exists
-from files.sqlalchemy_file import (
+from ..sources.sqlalchemy_dir import is_dir_exists
+from ..sources.sqlalchemy_file import (
     FetchFileError,
     SaveFileError,
     save_file,
@@ -21,7 +21,7 @@ from files.sqlalchemy_file import (
     delete_file_by_id,
     update_file,
 )
-from files.permissions.permissions import new_permissions
+from ..permissions import new_permissions
 
 files_router = APIRouter()
 
@@ -51,9 +51,6 @@ class CreateFileRequest:
 
 @files_router.post("/file", tags=["Files"])
 async def create_file(body: CreateFileRequest) -> Response:
-    """
-    Проверка прав, добавление директории, перемещение файлов
-    """
 
     if body.dirname != "" and not is_dir_exists(body.dirname):
         return BadRequest("directory " + body.dirname + " not exists")

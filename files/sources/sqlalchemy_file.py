@@ -4,8 +4,8 @@ from result import Ok, Err, Result
 
 from database.database import engine
 
-from .text_file import TextFile, TextFileFilter
-from .permissions.permissions import Permissions
+from ..text_file import TextFile, TextFileFilter
+from ..permissions import Permissions
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,7 +113,7 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, SaveFileEr
         )
 
         insert_perms_query = sa.text(
-            "INSERT INTO permissions (item_id, owner_id, group_name, content) VALUES (:item_id, :owner_id, :group_name, :content)"
+            "INSERT INTO permissions (item_id, owner_name, group_name, content) VALUES (:item_id, :owner_name, :group_name, :content)"
         )
 
         with engine.connect() as conn:
@@ -130,7 +130,7 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, SaveFileEr
                 insert_perms_query,
                 {
                     "item_id": perms.item_id,
-                    "owner_id": perms.owner_id,
+                    "owner_name": perms.owner_name,
                     "group_name": perms.group_name,
                     "content": perms.content,
                 },

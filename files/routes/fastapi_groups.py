@@ -3,10 +3,9 @@ from dataclasses import dataclass
 from result import Ok, Err
 from fastapi import APIRouter, Depends, Response
 
-from .response import *
-
-from files.groups.groups import mk_group
-from files.groups.sqlalchemy_group import save_group
+from router.response import *
+from ..groups import mk_group
+from ..sources.sqlalchemy_group import save_group
 
 groups_router = APIRouter()
 

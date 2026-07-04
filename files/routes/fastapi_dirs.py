@@ -3,10 +3,9 @@ from dataclasses import dataclass
 from result import Ok
 from fastapi import APIRouter, Depends, Response
 
-from .response import *
-
-from files.sqlalchemy_dir import is_dir_exists, save_directory
-from files.directory import mk_directory
+from router.response import *
+from ..sources.sqlalchemy_dir import is_dir_exists, save_directory
+from ..directory import mk_directory
 
 dirs_router = APIRouter()
 
@@ -19,7 +18,6 @@ class CreateDirectoryRequest:
 
 @dirs_router.post("/directory", tags=["Directories"])
 async def create_directory(body: CreateDirectoryRequest) -> Response:
-
     dir = mk_directory(body.name, body.parent_id).map(lambda dir: save_directory(dir))
 
     match dir:

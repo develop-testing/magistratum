@@ -3,12 +3,11 @@ from dataclasses import dataclass
 from result import Ok, Err, Result
 from fastapi import APIRouter, Request, Response
 
-
-from .response import *
-from auth.session import *
-from auth.member import *
-from auth.sqlalchemy_member import *
-from auth.redis_sessions import *
+from router.response import *
+from ..session import *
+from ..member import *
+from ..sources.sqlalchemy_member import *
+from ..sources.redis_sessions import *
 
 auth_router = APIRouter()
 

@@ -5,7 +5,7 @@ from result import Ok, Err, Result
 from database.database import engine
 
 
-from .directory import Directory, mk_directory
+from ..directory import Directory, mk_directory
 
 
 @dataclass(frozen=True, slots=True)

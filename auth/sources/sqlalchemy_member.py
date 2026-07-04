@@ -4,7 +4,7 @@ from result import Ok, Err, Result
 
 
 from database.database import engine
-from .member import *
+from ..member import *
 
 
 @dataclass(frozen=True, slots=True)

@@ -8,12 +8,12 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import PlainTextResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from routes.auth_middleware import *
+from auth.routes.auth_middleware import *
 
-from routes.auth import auth_router
-from routes.files import files_router
-from routes.dirs import dirs_router
-from routes.groups import groups_router
+from auth.routes.fastapi_auth import auth_router
+from files.routes.fastapi_file import files_router
+from files.routes.fastapi_dirs import dirs_router
+from files.routes.fastapi_groups import groups_router
 
 app = FastAPI(docs_url=None, redoc_url=None)
 

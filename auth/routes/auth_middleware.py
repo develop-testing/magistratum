@@ -2,8 +2,8 @@ from __future__ import annotations
 from fastapi import Request, HTTPException
 from result import Ok
 
-from auth.redis_sessions import *
-from .response import *
+from auth.sources.redis_sessions import *
+from router.response import *
 
 
 class UnauthorizedException(HTTPException):

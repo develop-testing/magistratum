@@ -9,6 +9,7 @@ class Group:
     owner: str
     members: list[str]
 
+
 def mk_group(name: str, owner: str, members: list[str]) -> Result[Group, str]:
-    members = [name] + members if name not in members else members 
-    return Group(name, owner, members)
+    members = [name] + members if name not in members else members
+    return Ok(Group(name, owner, members))
