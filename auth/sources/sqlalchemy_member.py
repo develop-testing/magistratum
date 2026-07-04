@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import sqlalchemy as sa
-from result import Ok, Err, Result
+from result import Err, Result
 
 
 from database.database import engine, metadata

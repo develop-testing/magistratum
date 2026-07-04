@@ -1,11 +1,8 @@
-from dataclasses import dataclass
 import sqlalchemy as sa
-from result import Ok, Err, Result
 
 from database.database import engine, metadata
 
-from ..groups import Group, mk_group
-
+from ..groups import Group
 
 sa.Table(
     "groups",
@@ -43,7 +40,9 @@ def save_group(grp: Group) -> Group:
 
         id = result.scalar()
 
-        members_data = [{"username": username, "group_id": id} for username in grp.members]
+        members_data = [
+            {"username": username, "group_id": id} for username in grp.members
+        ]
 
         if members_data:
             conn.execute(members_query, members_data)

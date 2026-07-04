@@ -6,6 +6,7 @@ from database.database import engine, metadata
 
 from ..text_file import TextFile, TextFileFilter
 
+from ..permissions import Permissions
 
 sa.Table(
     "files",
@@ -24,7 +25,6 @@ sa.Table(
     sa.Column("file_id", sa.String(255), nullable=False),
     sa.Column("dir_id", sa.Text, nullable=False, unique=False),
 )
-from ..permissions import Permissions
 
 
 @dataclass(frozen=True, slots=True)

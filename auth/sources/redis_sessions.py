@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from result import Err, Ok, Result
+from result import Err, Result
 
 
 from database.redis import client

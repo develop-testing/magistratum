@@ -1,11 +1,9 @@
-from dataclasses import dataclass
 import sqlalchemy as sa
-from result import Ok, Err, Result, is_err
+from result import is_err
 
 from database.database import engine, metadata
 
-from ..permissions import PermErrs, Permissions, new_permissions
-
+from ..permissions import Permissions, new_permissions
 
 sa.Table(
     "permissions",
@@ -18,7 +16,6 @@ sa.Table(
     sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
     sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
 )
-from ..text_file import TextFileFilter
 
 
 def save_permissions(prms: Permissions) -> Permissions:
@@ -42,6 +39,7 @@ def save_permissions(prms: Permissions) -> Permissions:
 
     return prms
 
+
 def fetch_permissions_for(item_ids: list[str]) -> list[Permissions]:
     query = sa.text("""
         SELECT item_id, owner_name, group_name, content
@@ -60,11 +58,10 @@ def fetch_permissions_for(item_ids: list[str]) -> list[Permissions]:
                     str(item["item_id"]),
                     str(item["owner_name"]),
                     str(item["group_name"]),
-                    str(item["content"])
+                    str(item["content"]),
                 )
 
                 if not is_err(prms):
                     out.append(prms.unwrap())
-
 
     return out
