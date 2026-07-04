@@ -13,6 +13,7 @@ from routes.auth_middleware import *
 from routes.auth import auth_router
 from routes.files import files_router
 from routes.dirs import dirs_router
+from routes.groups import groups_router
 
 app = FastAPI(docs_url=None, redoc_url=None)
 
@@ -54,4 +55,5 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(dirs_router)
+app.include_router(groups_router)
 app.include_router(files_router, dependencies=[Depends(auth_middleware)])

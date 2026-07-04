@@ -10,6 +10,10 @@ from files.sqlalchemy_dir import save_directory
 from files.permissions.permissions import new_permissions
 from files.permissions.sqlalchemy_permissions import save_permissions
 
+from files.groups.groups import mk_group
+from files.groups.sqlalchemy_group import save_group
+
+
 sa.Table(
     "users",
     metadata,
@@ -53,9 +57,29 @@ sa.Table(
     metadata,
     sa.Column("id", sa.Integer, primary_key=True),
     sa.Column("item_id", sa.String(255), nullable=False),
-    sa.Column("owner_id", sa.String(255), nullable=False),
+    sa.Column("owner_name", sa.String(255), nullable=False),
     sa.Column("group_name", sa.String(255), nullable=False),
     sa.Column("content", sa.String(4), nullable=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
+
+sa.Table(
+    "groups",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("name", sa.String(255), nullable=False, unique=True),
+    sa.Column("owner_name", sa.String(255), nullable=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
+
+sa.Table(
+    "users_to_groups",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("user_id", sa.String(255), nullable=False),
+    sa.Column("group_id", sa.String(255), nullable=False),
 )
 
 if __name__ == "__main__":
@@ -64,6 +88,9 @@ if __name__ == "__main__":
 
     root = make_candidate("root", "root").unwrap()
     root = save_candidate(root).unwrap()
+
+    rgroup = mk_group("root", root.username, [])
+    rgroup = save_group(rgroup)
 
     rhome = mk_directory("root", root.username).unwrap()
     prmns = new_permissions(rhome.dir_id, root.username, "root", "r-r-").unwrap()
