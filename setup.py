@@ -77,7 +77,7 @@ sa.Table(
     "users_to_groups",
     metadata,
     sa.Column("id", sa.Integer, primary_key=True),
-    sa.Column("user_id", sa.String(255), nullable=False),
+    sa.Column("username", sa.String(255), nullable=False),
     sa.Column("group_id", sa.String(255), nullable=False),
 )
 

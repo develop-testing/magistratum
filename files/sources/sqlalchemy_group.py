@@ -17,8 +17,8 @@ def save_group(grp: Group) -> Group:
     """)
 
     members_query = sa.text("""
-        INSERT INTO users_to_groups (user_id, group_id) 
-        VALUES (:user_id, :group_id)
+        INSERT INTO users_to_groups (username, group_id) 
+        VALUES (:username, :group_id)
     """)
 
     with engine.connect() as conn:
@@ -26,7 +26,7 @@ def save_group(grp: Group) -> Group:
 
         id = result.scalar()
 
-        members_data = [{"user_id": user_id, "group_id": id} for user_id in grp.members]
+        members_data = [{"username": username, "group_id": id} for username in grp.members]
 
         if members_data:
             conn.execute(members_query, members_data)

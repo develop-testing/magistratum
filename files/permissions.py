@@ -115,8 +115,8 @@ def revoke_for_other(
     return new_permissions(p.item_id, p.owner_name, p.group_name, new_value)
 
 
-def has_permissions(p: Permissions, action: str, user_id: str, group_name: str) -> bool:
-    if user_id != "" and p.owner_name == user_id:
+def has_permissions(p: Permissions, action: str, user_name: str, group_name: str) -> bool:
+    if user_name != "" and p.owner_name == user_name:
         return True
 
     if group_name != "" and p.group_name == group_name:
