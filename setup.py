@@ -8,6 +8,7 @@ from files.directory import mk_directory
 from files.sqlalchemy_dir import save_directory
 
 from files.permissions.permissions import new_permissions
+from files.permissions.sqlalchemy_permissions import save_permissions
 
 sa.Table(
     "users",
@@ -61,11 +62,11 @@ if __name__ == "__main__":
     metadata.drop_all(engine)
     metadata.create_all(engine)
 
-    super_admin = make_candidate("root", "root").unwrap()
-    member = save_candidate(super_admin).unwrap()
+    root = make_candidate("root", "root").unwrap()
+    root = save_candidate(root).unwrap()
 
-    root_dir = mk_directory("root", member.username).unwrap()
-    # permissions = new_permissions(root_dir.dir_id, member.username).unwrap()
+    rhome = mk_directory("root", root.username).unwrap()
+    prmns = new_permissions(rhome.dir_id, root.username, "root", "r-r-").unwrap()
 
-    save_directory(root_dir)
-    # save_permitions(root_dir)
+    save_directory(rhome)
+    save_permissions(prmns)
