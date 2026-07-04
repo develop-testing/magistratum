@@ -3,8 +3,18 @@ import sqlalchemy as sa
 from result import Ok, Err, Result
 
 
-from database.database import engine
+from database.database import engine, metadata
 from ..member import *
+
+sa.Table(
+    "users",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("username", sa.String(255), nullable=False, unique=True),
+    sa.Column("password", sa.String(255), nullable=False, unique=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
 
 
 @dataclass(frozen=True, slots=True)

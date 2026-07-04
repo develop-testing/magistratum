@@ -2,9 +2,22 @@ from dataclasses import dataclass
 import sqlalchemy as sa
 from result import Ok, Err, Result, is_err
 
-from database.database import engine
+from database.database import engine, metadata
 
 from ..permissions import PermErrs, Permissions, new_permissions
+
+
+sa.Table(
+    "permissions",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("item_id", sa.String(255), nullable=False),
+    sa.Column("owner_name", sa.String(255), nullable=False),
+    sa.Column("group_name", sa.String(255), nullable=False),
+    sa.Column("content", sa.String(4), nullable=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
 from ..text_file import TextFileFilter
 
 

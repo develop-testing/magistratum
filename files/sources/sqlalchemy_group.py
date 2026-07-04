@@ -2,11 +2,28 @@ from dataclasses import dataclass
 import sqlalchemy as sa
 from result import Ok, Err, Result
 
-from database.database import engine
+from database.database import engine, metadata
 
 from ..groups import Group, mk_group
 
-import sqlalchemy as sa
+
+sa.Table(
+    "groups",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("name", sa.String(255), nullable=False, unique=True),
+    sa.Column("owner_name", sa.String(255), nullable=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
+
+sa.Table(
+    "users_to_groups",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("username", sa.String(255), nullable=False),
+    sa.Column("group_id", sa.String(255), nullable=False),
+)
 
 
 def save_group(grp: Group) -> Group:

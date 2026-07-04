@@ -2,9 +2,28 @@ from dataclasses import dataclass
 import sqlalchemy as sa
 from result import Ok, Err, Result
 
-from database.database import engine
+from database.database import engine, metadata
 
 from ..text_file import TextFile, TextFileFilter
+
+
+sa.Table(
+    "files",
+    metadata,
+    sa.Column("file_id", sa.String(255), nullable=False, unique=True, primary_key=True),
+    sa.Column("name", sa.String(255), nullable=False),
+    sa.Column("content", sa.Text, nullable=False, unique=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
+
+sa.Table(
+    "files_to_dirs",
+    metadata,
+    sa.Column("id", sa.Integer, primary_key=True),
+    sa.Column("file_id", sa.String(255), nullable=False),
+    sa.Column("dir_id", sa.Text, nullable=False, unique=False),
+)
 from ..permissions import Permissions
 
 
