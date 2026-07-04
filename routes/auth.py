@@ -22,21 +22,22 @@ class LoginRequest:
 @auth_router.post("/auth/login", tags=["Auth"])
 async def login(body: LoginRequest) -> Response:
     user_session = (
-        fetch_member_by_username(body.username, body.password)
-        .and_then(lambda m: generate_session_for(m.user_id))
+        fetch_member_by_username(body.username)
+        .and_then(lambda member: is_password_incorect(member, body.password))
+        .and_then(lambda member: generate_session_for(member.username))
         .map(lambda ssn: save_session(ssn))
     )
 
     match user_session:
-        case Ok(s):
+        case Ok(us):
             response = Success(True)
             response.set_cookie(
                 key="access_token",
-                value=s.id,
+                value=us.id,
                 httponly=True,
                 secure=True,
                 samesite="strict",
-                expires=s.expires,
+                expires=us.expires,
             )
 
             return response
@@ -74,11 +75,11 @@ class RegisterRequest:
 
 @auth_router.post("/auth/register", tags=["Auth"])
 def register(body: RegisterRequest) -> Response:
-    candidate = make_candidate(body.username, body.password).and_then(
+    member = make_candidate(body.username, body.password).and_then(
         lambda cnd: save_candidate(cnd)
     )
 
-    match candidate:
+    match member:
         case Ok():
             return Success(True)
         case Err(SaveDuplicateError() as err):

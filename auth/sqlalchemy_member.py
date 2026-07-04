@@ -20,9 +20,7 @@ class NotFoundMemberError:
 MemberErrors = SaveDuplicateError | NotFoundMemberError | MemberErr
 
 
-def fetch_member_by_username(
-    username: str, password: str
-) -> Result[Member, MemberErrors]:
+def fetch_member_by_username(username: str) -> Result[Member, MemberErrors]:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )
@@ -34,10 +32,10 @@ def fetch_member_by_username(
         if row is None:
             return Err(NotFoundMemberError("user not found"))
 
-        return new_member(str(row["id"]), row["username"], password, row["password"])
+        return new_member(row["username"], row["password"])
 
 
-def save_candidate(candidate: Candidate) -> Result[Candidate, MemberErrors]:
+def save_candidate(cnd: Candidate) -> Result[Member, MemberErrors]:
     try:
         with engine.connect() as conn:
             query = sa.text(
@@ -46,13 +44,13 @@ def save_candidate(candidate: Candidate) -> Result[Candidate, MemberErrors]:
             conn.execute(
                 query,
                 {
-                    "username": candidate.username,
-                    "password": candidate.password_hash,
+                    "username": cnd.username,
+                    "password": cnd.password_hash,
                 },
             )
             conn.commit()
 
-            return Ok(candidate)
+            return new_member(cnd.username, cnd.password_hash)
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
             return Err(SaveDuplicateError("user is exists"))

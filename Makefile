@@ -20,8 +20,8 @@ install:
 install-req:
 	docker compose exec web pip install -r requirements.txt
 
-create-database:
-	docker compose exec web python database/database.py
+setup:
+	docker compose exec web python setup.py
 
 init-alembic:
 	docker compose exec web alembic init database/alembic

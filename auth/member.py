@@ -20,25 +20,25 @@ MemberErr = ErrorOfIncorrectCreds | ErrorOfMemberValidate
 
 @dataclass(frozen=True, slots=True)
 class Member:
-    user_id: str
     username: str
     password_hash: str
 
 
-def new_member(uid: str, uname: str, pswd: str, hash: str) -> Result[Member, MemberErr]:
-    if len(uid) > 255:
-        return Err(ErrorOfMemberValidate("incorrect user id"))
-
+def new_member(uname: str, hash: str) -> Result[Member, MemberErr]:
     if len(uname) > 255:
         return Err(ErrorOfMemberValidate("incorrect username length"))
 
-    if len(pswd) > 255:
-        return Err(ErrorOfMemberValidate("incorrect password length"))
+    if len(hash) > 255:
+        return Err(ErrorOfMemberValidate("incorrect password hash"))
 
-    if not bcrypt.checkpw(pswd.encode(), hash.encode()):
-        return Err(ErrorOfIncorrectCreds("incorrect username or password"))
+    return Ok(Member(username=uname, password_hash=hash))
 
-    return Ok(Member(user_id=uid, username=uname, password_hash=hash))
+
+def is_password_incorect(member: Member, password: str) -> Result[Member, MemberErr]:
+    if not bcrypt.checkpw(password.encode(), member.password_hash.encode()):
+        return Err(ErrorOfMemberValidate("incorrect password hash"))
+
+    return Ok(member)
 
 
 @dataclass(frozen=True, slots=True)
