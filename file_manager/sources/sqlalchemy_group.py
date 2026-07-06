@@ -146,53 +146,53 @@ def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> Non
 
 
 def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
-    members_query = sa.text(
-        "SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)"
-    )
+    sql = """
+        SELECT g.id, g.name, g.owner_name, utg.username
+        FROM groups g
+        LEFT JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS CHAR)
+    """
 
-    def load_members(conn: sa.Connection, rows: Sequence[sa.RowMapping]) -> list[Group]:
-        groups: list[Group] = []
-        for row in rows:
-            members = [
-                row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
-            ]
-            groups.append(Group(row["name"], row["owner_name"], members))
-        return groups
+    params = {}
+    
+    if filter.owner and filter.member:
+        sql += """
+            WHERE g.owner_name = :owner
+              AND EXISTS (
+                  SELECT 1 FROM users_to_groups sub_utg 
+                  WHERE g.id = CAST(sub_utg.group_id AS CHAR) AND sub_utg.username = :member
+              )
+        """
+        params = {"owner": filter.owner, "member": filter.member}
+        
+    elif filter.owner:
+        sql += " WHERE g.owner_name = :owner"
+        params = {"owner": filter.owner}
+        
+    elif filter.member:
+        sql += """
+            WHERE EXISTS (
+                SELECT 1 FROM users_to_groups sub_utg 
+                WHERE g.id = CAST(sub_utg.group_id AS CHAR) AND sub_utg.username = :member
+            )
+        """
+        params = {"member": filter.member}
+        
 
     with engine.connect() as conn:
-        if filter.owner and filter.member:
-            query = sa.text("""
-                SELECT g.id, g.name, g.owner_name
-                FROM groups g
-                JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS INTEGER)
-                WHERE g.owner_name = :owner AND utg.username = :member
-            """)
-            rows = (
-                conn.execute(query, {"owner": filter.owner, "member": filter.member})
-                .mappings()
-                .all()
-            )
+        rows = conn.execute(sa.text(sql), params).mappings().all()
 
-        elif filter.owner:
-            query = sa.text(
-                "SELECT id, name, owner_name FROM groups WHERE owner_name = :owner"
-            )
-            rows = conn.execute(query, {"owner": filter.owner}).mappings().all()
+    groups_dict = {}
+    for row in rows:
+        group_key = (row["id"], row["name"], row["owner_name"])
+        members_list = groups_dict.setdefault(group_key, [])
+        
+        if row["username"]:
+            members_list.append(row["username"])
 
-        elif filter.member:
-            query = sa.text("""
-                SELECT g.id, g.name, g.owner_name
-                FROM groups g
-                JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS INTEGER)
-                WHERE utg.username = :member
-            """)
-            rows = conn.execute(query, {"member": filter.member}).mappings().all()
-
-        else:
-            query = sa.text("SELECT id, name, owner_name FROM groups")
-            rows = conn.execute(query).mappings().all()
-
-        return load_members(conn, rows)
+    return [
+        Group(name=name, owner=owner, members=members)
+        for (g_id, name, owner), members in groups_dict.items()
+    ]
 
 
 def fetch_groups_by_user(username: str) -> list[Group]:
