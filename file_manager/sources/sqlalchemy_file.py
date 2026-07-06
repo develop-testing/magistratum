@@ -14,21 +14,16 @@ sa.Table(
     sa.Column("file_id", sa.String(255), nullable=False, unique=True, primary_key=True),
     sa.Column("name", sa.String(255), nullable=False),
     sa.Column("content", sa.Text, nullable=False, unique=False),
+    sa.Column("parent_id", sa.String(255), nullable=False),
     sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
     sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
 )
 
-sa.Table(
-    "files_to_dirs",
-    metadata,
-    sa.Column("id", sa.Integer, primary_key=True),
-    sa.Column("file_id", sa.String(255), nullable=False),
-    sa.Column("dir_id", sa.Text, nullable=False, unique=False),
-)
-
 
 def fetch_file_by_name(name: str) -> Result[TextFile, str]:
-    query = sa.text("SELECT file_id, name, content FROM files WHERE name = :name")
+    query = sa.text(
+        "SELECT file_id, name, content, parent_id FROM files WHERE name = :name"
+    )
 
     with engine.connect() as conn:
         row = conn.execute(query, {"name": name}).mappings().first()
@@ -36,7 +31,11 @@ def fetch_file_by_name(name: str) -> Result[TextFile, str]:
         if row is None:
             return Err("file not found")
 
-        return Ok(TextFile(str(row["file_id"]), row["name"], row["content"], ""))
+        return Ok(
+            TextFile(
+                str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
+            )
+        )
 
 
 def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
@@ -47,9 +46,8 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
     with engine.connect() as conn:
         if filter.by_name and filter.by_directory:
             query = sa.text(
-                "SELECT f.file_id, f.name, f.content FROM files f"
-                " JOIN files_to_dirs ftd ON f.name = ftd.file_id"
-                " WHERE f.name = :name AND ftd.dir_id = :dir" + pagination
+                "SELECT file_id, name, content, parent_id FROM files"
+                " WHERE name = :name AND parent_id = :dir" + pagination
             )
             rows = (
                 conn.execute(
@@ -67,7 +65,7 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
 
         elif filter.by_name:
             query = sa.text(
-                "SELECT file_id, name, content FROM files WHERE name = :name"
+                "SELECT file_id, name, content, parent_id FROM files WHERE name = :name"
                 + pagination
             )
             rows = (
@@ -80,9 +78,8 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
 
         elif filter.by_directory:
             query = sa.text(
-                "SELECT f.file_id, f.name, f.content FROM files f"
-                " JOIN files_to_dirs ftd ON f.file_id = ftd.file_id"
-                " WHERE ftd.dir_id = :dir" + pagination
+                "SELECT file_id, name, content, parent_id FROM files WHERE parent_id = :dir"
+                + pagination
             )
             rows = (
                 conn.execute(
@@ -97,7 +94,9 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
             rows = []
 
         return [
-            TextFile(str(row["file_id"]), row["name"], row["content"], "")
+            TextFile(
+                str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
+            )
             for row in rows
         ]
 
@@ -119,7 +118,7 @@ def update_file(old_name: str, file: TextFile) -> Result[TextFile, str]:
 def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, str]:
     try:
         insert_file_query = sa.text(
-            "INSERT INTO files (file_id, name, content) VALUES (:file_id, :name, :content)"
+            "INSERT INTO files (file_id, name, content, parent_id) VALUES (:file_id, :name, :content, :parent_id)"
         )
 
         insert_perms_query = sa.text(
@@ -133,6 +132,7 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, str]:
                     "file_id": file.file_id,
                     "name": file.name,
                     "content": file.content,
+                    "parent_id": file.parent_id,
                 },
             )
 
@@ -156,9 +156,7 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, str]:
 
 
 def move_file(file_id: str, new_dir_id: str) -> Result[str, str]:
-    query = sa.text(
-        "UPDATE files_to_dirs SET dir_id = :dir_id WHERE file_id = :file_id"
-    )
+    query = sa.text("UPDATE files SET parent_id = :dir_id WHERE file_id = :file_id")
 
     with engine.connect() as conn:
         conn.execute(query, {"file_id": file_id, "dir_id": new_dir_id})
