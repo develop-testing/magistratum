@@ -5,7 +5,7 @@ from result import Ok, Err, Result
 from database.database import engine, metadata
 
 
-from ..directory import Directory, mk_directory
+from ..directory import Directory
 
 sa.Table(
     "directories",
@@ -49,6 +49,20 @@ def save_directory(dir: Directory) -> Directory:
         return dir
 
 
+def fetch_dir_by_id(dir_id: str) -> Result[Directory, str]:
+    query = sa.text(
+        "SELECT dir_id, name, parent_id FROM directories WHERE dir_id = :dir_id"
+    )
+
+    with engine.connect() as conn:
+        row = conn.execute(query, {"dir_id": dir_id}).mappings().first()
+
+        if row is None:
+            return Err("directory not found")
+
+        return Ok(Directory(row["dir_id"], row["name"], row["parent_id"], []))
+
+
 def fetch_dir_by_name(dirname: str) -> Result[Directory, str]:
     query = sa.text(
         "SELECT dir_id, name, parent_id FROM directories WHERE name = :dirname"
@@ -62,6 +76,25 @@ def fetch_dir_by_name(dirname: str) -> Result[Directory, str]:
             return Err("directory not found")
 
         return Ok(Directory(row["dir_id"], row["name"], row["parent_id"], []))
+
+
+def update_directory(d: Directory) -> Result[Directory, str]:
+    query = sa.text(
+        "UPDATE directories SET name = :name, parent_id = :parent_id WHERE dir_id = :dir_id"
+    )
+
+    with engine.connect() as conn:
+        conn.execute(
+            query,
+            {
+                "name": d.name,
+                "parent_id": d.parent_id,
+                "dir_id": d.dir_id,
+            },
+        )
+        conn.commit()
+
+        return Ok(d)
 
 
 def is_dir_exists(dirname: str) -> bool:

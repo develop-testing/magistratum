@@ -28,6 +28,20 @@ def mk_directory(dir_name: str, parent_id: str) -> Result[Directory, str]:
     return Ok(Directory("dir#" + str(uuid.uuid4()), dir_name, parent_id, []))
 
 
+def rename_directory(d: Directory, new_name: str) -> Result[Directory, str]:
+    if new_name == "":
+        return Ok(d)
+
+    return Ok(Directory(d.dir_id, new_name, d.parent_id, d.files))
+
+
+def change_directory_parent(d: Directory, new_parent_id: str) -> Result[Directory, str]:
+    if new_parent_id == "":
+        return Ok(d)
+
+    return Ok(Directory(d.dir_id, d.name, new_parent_id, d.files))
+
+
 def add_to_directory(d: Directory, file_name: str) -> Result[Directory, str]:
     return Ok(Directory(d.dir_id, d.name, d.parent_id, d.files + [file_name]))
 
