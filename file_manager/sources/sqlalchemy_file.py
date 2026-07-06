@@ -20,6 +20,24 @@ sa.Table(
 )
 
 
+def fetch_file_by_id(file_id: str) -> Result[TextFile, str]:
+    query = sa.text(
+        "SELECT file_id, name, content, parent_id FROM files WHERE file_id = :file_id"
+    )
+
+    with engine.connect() as conn:
+        row = conn.execute(query, {"file_id": file_id}).mappings().first()
+
+        if row is None:
+            return Err("file not found")
+
+        return Ok(
+            TextFile(
+                str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
+            )
+        )
+
+
 def fetch_file_by_name(name: str) -> Result[TextFile, str]:
     query = sa.text(
         "SELECT file_id, name, content, parent_id FROM files WHERE name = :name"

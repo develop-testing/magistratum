@@ -32,6 +32,10 @@ class TextFile:
     parent_id: str
 
 
+def copy_file(fl: TextFile, parent_id: str) -> Result[TextFile, str]:
+    return new_file(fl.name, fl.content, parent_id)
+
+
 def new_file(name: str, content: str, parent_id: str = "") -> Result[TextFile, str]:
     return Ok(TextFile("text-file#" + str(uuid.uuid4()), name, content, parent_id))
 

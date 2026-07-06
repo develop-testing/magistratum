@@ -10,14 +10,16 @@ from ..files import (
     BrokenFile,
     change_file_content,
     change_file_parent,
+    copy_file,
     rename_file,
     new_file,
     destroy_file,
 )
-from ..sources.sqlalchemy_dir import fetch_dir_by_name
+from ..sources.sqlalchemy_dir import fetch_dir_by_id, fetch_dir_by_name
 from ..sources.sqlalchemy_file import (
     save_file,
     fetch_file_by_filter,
+    fetch_file_by_id,
     fetch_file_by_name,
     delete_file_by_id,
     move_file,
@@ -100,6 +102,41 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
     )
 
     return save_file(fl, p).unwrap_or_raise(BadRequest)
+
+
+@dataclass(frozen=True, slots=True)
+class CopyFileRequest:
+    file_id: str
+    parent_id: str
+
+
+@files_router.post("/file/copy", tags=["Files"])
+async def copy_file_endpoint(req: Request, body: CopyFileRequest) -> TextFile:
+    username = req.state.session.owner
+    groups = fetch_groups_by_user(username)
+    group_names = [g.name for g in groups]
+
+    fl = fetch_file_by_id(body.file_id).unwrap_or_raise(BadRequest)
+
+    prms = fetch_permissions_for([fl.file_id])
+    prm = next((p for p in prms if p.item_id == fl.file_id), None)
+    if not prm or not has_read(prm, username, group_names):
+        raise Forbidden("access denied")
+
+    dir = fetch_dir_by_id(body.parent_id).unwrap_or_raise(BadRequest)
+
+    dir_prms = fetch_permissions_for([dir.dir_id])
+    dir_prm = next((p for p in dir_prms if p.item_id == dir.dir_id), None)
+    if not dir_prm or not has_write(dir_prm, username, group_names):
+        raise Forbidden("access denied")
+
+    new_fl = copy_file(fl, body.parent_id).unwrap_or_raise(InternalServerError)
+
+    p = new_permissions(new_fl.file_id, username, "root", "rwr-").unwrap_or_raise(
+        InternalServerError
+    )
+
+    return save_file(new_fl, p).unwrap_or_raise(BadRequest)
 
 
 @dataclass(frozen=True, slots=True)
