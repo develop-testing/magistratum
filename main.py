@@ -11,9 +11,9 @@ from fastapi.staticfiles import StaticFiles
 from auth.routes.auth_middleware import *
 
 from auth.routes.fastapi_auth import auth_router
-from files.routes.fastapi_file import files_router
-from files.routes.fastapi_dirs import dirs_router
-from files.routes.fastapi_groups import groups_router
+from file_manager.routes.fastapi_file import files_router
+from file_manager.routes.fastapi_dirs import dirs_router
+from file_manager.routes.fastapi_groups import groups_router
 
 app = FastAPI(docs_url=None, redoc_url=None)
 

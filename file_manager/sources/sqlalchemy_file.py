@@ -4,7 +4,7 @@ from result import Ok, Err, Result
 
 from database.database import engine, metadata
 
-from ..text_file import TextFile, TextFileFilter
+from ..files import TextFile, TextFileFilter
 
 from ..permissions import Permissions
 

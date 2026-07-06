@@ -4,7 +4,7 @@ from result import Ok, Err
 from fastapi import APIRouter, Depends, Response, Request
 
 from router.response import *
-from ..text_file import (
+from ..files import (
     TextFileFilter,
     BrokenFile,
     change_file_content,
