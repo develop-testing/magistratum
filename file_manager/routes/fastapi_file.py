@@ -107,7 +107,7 @@ class EditFileRequest:
     filename: str
     new_filename: str
     new_content: str
-    new_parent_id: str = ""
+    new_parent_id: str
 
 
 @files_router.patch("/file", tags=["Files"])
