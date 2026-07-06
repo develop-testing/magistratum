@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Response, Request
 from router.response import *
 from ..text_file import (
     TextFileFilter,
+    BrokenFile,
     change_file_content,
     rename_file,
     new_file,
@@ -21,7 +22,8 @@ from ..sources.sqlalchemy_file import (
     delete_file_by_id,
     update_file,
 )
-from ..permissions import new_permissions, has_permissions
+from ..sources.sqlalchemy_group import fetch_groups_by_user
+from ..permissions import new_permissions, has_read
 
 from ..sources.sqlalchemy_permissions import fetch_permissions_for
 
@@ -38,25 +40,29 @@ class FetchFileRequest:
 
 @files_router.get("/files", tags=["Files"])
 async def read_files(req: Request, query: FetchFileRequest = Depends()) -> Response:
-    # groups check
-
     session = req.state.session
 
+    groups = fetch_groups_by_user(session.owner)
+    
     files = fetch_file_by_filter(
         TextFileFilter(
             query.by_name, query.by_directory, query.limit, query.offset
         )
     )
 
-    ids = [file.file_id for file in files]
+    prms = fetch_permissions_for([file.file_id for file in files])
 
-    prms = fetch_permissions_for(ids)
+    group_names = [g.name for g in groups]
 
-    for prm in prms:
-        if not has_permissions(prm, "read", session.owner, "root"):
-            return Forbidden("access denied")
+    result = []
+    for f in files:
+        prm = next((p for p in prms if p.item_id == f.file_id), None)
+        if prm and has_read(prm, session.owner, group_names):
+            result.append(f)
+        else:
+            result.append(BrokenFile(name=f.name, reason="access not allowed"))
 
-    return Success(files)
+    return Success(result)
 
 
 @dataclass(frozen=True, slots=True)

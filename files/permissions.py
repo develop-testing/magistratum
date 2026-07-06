@@ -115,21 +115,21 @@ def revoke_for_other(
     return new_permissions(p.item_id, p.owner_name, p.group_name, new_value)
 
 
-def has_permissions(
-    p: Permissions, action: str, user_name: str, group_name: str
-) -> bool:
+def has_read(p: Permissions, user_name: str, group_names: list[str]) -> bool:
     if user_name != "" and p.owner_name == user_name:
         return True
 
-    if group_name != "" and p.group_name == group_name:
-        if action == "read":
-            return p.content[0] == "r"
-        if action == "write":
-            return p.content[1] == "w"
+    if p.group_name in group_names:
+        return p.content[0] == "r"
 
-    if action == "read":
-        return p.content[2] == "r"
-    elif action == "write":
-        return p.content[3] == "w"
+    return p.content[2] == "r"
 
-    return False
+
+def has_write(p: Permissions, user_name: str, group_names: list[str]) -> bool:
+    if user_name != "" and p.owner_name == user_name:
+        return True
+
+    if p.group_name in group_names:
+        return p.content[1] == "w"
+
+    return p.content[3] == "w"

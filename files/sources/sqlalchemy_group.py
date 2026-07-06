@@ -50,3 +50,31 @@ def save_group(grp: Group) -> Group:
         conn.commit()
 
     return grp
+
+
+def fetch_groups_by_user(username: str) -> list[Group]:
+    groups_query = sa.text("""
+        SELECT g.id, g.name, g.owner_name
+        FROM groups g
+        JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS INTEGER)
+        WHERE utg.username = :username
+    """)
+
+    members_query = sa.text("""
+        SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)
+    """)
+
+    with engine.connect() as conn:
+        group_rows = conn.execute(groups_query, {"username": username}).mappings().all()
+
+        groups: list[Group] = []
+        for row in group_rows:
+            members = [
+                row2[0]
+                for row2 in conn.execute(
+                    members_query, {"group_id": row["id"]}
+                )
+            ]
+            groups.append(Group(row["name"], row["owner_name"], members))
+
+    return groups
