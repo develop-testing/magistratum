@@ -77,7 +77,10 @@ async def edit_group(req: Request, body: EditGroupRequest) -> Group:
 
 @groups_router.get("/groups", tags=["Groups"])
 async def read_groups(req: Request, filter: FetchGroupReq = Depends()) -> list[Group]:
-    if not filter.owner and not filter.member:
+    owner = filter.owner if filter.owner != "" else req.state.session.owner
+    member = filter.member if filter.owner != "" else req.state.session.owner
+
+    if not owner and not member:
         return fetch_groups_by_user(req.state.session.owner)
 
     return fetch_groups_by_filter(filter)
