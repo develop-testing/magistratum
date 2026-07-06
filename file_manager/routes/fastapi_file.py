@@ -35,8 +35,8 @@ files_router = APIRouter()
 
 @dataclass(frozen=True, slots=True)
 class FetchFileReq:
-    by_name: str = ""
-    by_directory: str = ""
+    by_name: str
+    by_directory: str
     limit: int = 10
     offset: int = 0
 
