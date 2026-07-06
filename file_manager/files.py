@@ -32,7 +32,7 @@ class TextFile:
     parent_id: str
 
 
-def copy_file(fl: TextFile, parent_id: str) -> Result[TextFile, str]:
+def copy_file_to(fl: TextFile, parent_id: str) -> Result[TextFile, str]:
     return new_file(fl.name, fl.content, parent_id)
 
 

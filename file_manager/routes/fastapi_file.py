@@ -10,7 +10,7 @@ from ..files import (
     BrokenFile,
     change_file_content,
     change_file_parent,
-    copy_file,
+    copy_file_to,
     rename_file,
     new_file,
     destroy_file,
@@ -111,7 +111,7 @@ class CopyFileRequest:
 
 
 @files_router.post("/file/copy", tags=["Files"])
-async def copy_file_endpoint(req: Request, body: CopyFileRequest) -> TextFile:
+async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
     username = req.state.session.owner
     groups = fetch_groups_by_user(username)
     group_names = [g.name for g in groups]
@@ -130,7 +130,7 @@ async def copy_file_endpoint(req: Request, body: CopyFileRequest) -> TextFile:
     if not dir_prm or not has_write(dir_prm, username, group_names):
         raise Forbidden("access denied")
 
-    new_fl = copy_file(fl, body.parent_id).unwrap_or_raise(InternalServerError)
+    new_fl = copy_file_to(fl, body.parent_id).unwrap_or_raise(InternalServerError)
 
     p = new_permissions(new_fl.file_id, username, "root", "rwr-").unwrap_or_raise(
         InternalServerError
