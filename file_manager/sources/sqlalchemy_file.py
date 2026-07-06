@@ -27,24 +27,14 @@ sa.Table(
 )
 
 
-@dataclass(frozen=True, slots=True)
-class SaveFileError:
-    value: str
-
-
-@dataclass(frozen=True, slots=True)
-class FetchFileError:
-    value: str
-
-
-def fetch_file_by_name(name: str) -> Result[TextFile, FetchFileError]:
+def fetch_file_by_name(name: str) -> Result[TextFile, str]:
     query = sa.text("SELECT file_id, name, content FROM files WHERE name = :name")
 
     with engine.connect() as conn:
         row = conn.execute(query, {"name": name}).mappings().first()
 
         if row is None:
-            return Err(FetchFileError("file not found"))
+            return Err("file not found")
 
         return Ok(TextFile(str(row["file_id"]), row["name"], row["content"]))
 
@@ -111,7 +101,7 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
         ]
 
 
-def update_file(old_name: str, file: TextFile) -> Result[TextFile, SaveFileError]:
+def update_file(old_name: str, file: TextFile) -> Result[TextFile, str]:
     query = sa.text(
         "UPDATE files SET content = :content, name = :new_name WHERE name = :old_name"
     )
@@ -125,7 +115,7 @@ def update_file(old_name: str, file: TextFile) -> Result[TextFile, SaveFileError
         return Ok(file)
 
 
-def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, SaveFileError]:
+def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, str]:
     try:
         insert_file_query = sa.text(
             "INSERT INTO files (file_id, name, content) VALUES (:file_id, :name, :content)"
@@ -160,7 +150,7 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, SaveFileEr
             return Ok(TextFile(file.file_id, file.name, file.content))
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
-            return Err(SaveFileError("file with this name is exists"))
+            return Err("file with this name is exists")
         raise
 
 

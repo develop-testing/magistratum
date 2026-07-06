@@ -18,14 +18,6 @@ sa.Table(
 )
 
 
-@dataclass(frozen=True, slots=True)
-class FetchDirectoryError:
-    value: str
-
-
-DirErrs = FetchDirectoryError | str
-
-
 def save_directory(dir: Directory) -> Directory:
     query = sa.text(
         "INSERT INTO directories (dir_id, name, parent_id) VALUES (:dir_id, :name, :parent_id)"
@@ -45,7 +37,7 @@ def save_directory(dir: Directory) -> Directory:
         return dir
 
 
-def fetch_dir_by_name(dirname: str) -> Result[Directory, DirErrs]:
+def fetch_dir_by_name(dirname: str) -> Result[Directory, str]:
     query = sa.text(
         "SELECT dir_id, name, parent_id FROM directories WHERE name = :dirname"
     )
@@ -55,7 +47,7 @@ def fetch_dir_by_name(dirname: str) -> Result[Directory, DirErrs]:
         row = result.mappings().first()
 
         if row is None:
-            return Err(FetchDirectoryError("directory not found"))
+            return Err("directory not found")
 
         return Ok(Directory(row["dir_id"], row["name"], row["parent_id"], []))
 

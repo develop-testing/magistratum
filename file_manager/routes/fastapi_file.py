@@ -13,10 +13,8 @@ from ..files import (
     new_file,
     destroy_file,
 )
-from ..sources.sqlalchemy_dir import is_dir_exists
+from ..sources.sqlalchemy_dir import fetch_dir_by_name
 from ..sources.sqlalchemy_file import (
-    FetchFileError,
-    SaveFileError,
     save_file,
     fetch_file_by_filter,
     fetch_file_by_name,
@@ -24,7 +22,7 @@ from ..sources.sqlalchemy_file import (
     update_file,
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ..permissions import new_permissions, has_read, has_write
+from ..permissions import Permissions, new_permissions, has_read, has_write
 
 from ..sources.sqlalchemy_permissions import fetch_permissions_for
 
@@ -32,30 +30,31 @@ files_router = APIRouter()
 
 
 @dataclass(frozen=True, slots=True)
-class FetchFileRequest:
+class FetchFileReq:
     by_name: str = ""
     by_directory: str = ""
     limit: int = 10
     offset: int = 0
 
 
+ReadRet = list[TextFile | BrokenFile]
+
+
 @files_router.get("/files", tags=["Files"])
-async def read_files(req: Request, query: FetchFileRequest = Depends()) -> Response:
+async def read_files(req: Request, query: FetchFileReq = Depends()) -> ReadRet:
     session = req.state.session
 
     groups = fetch_groups_by_user(session.owner)
-    
+
     files = fetch_file_by_filter(
-        TextFileFilter(
-            query.by_name, query.by_directory, query.limit, query.offset
-        )
+        TextFileFilter(query.by_name, query.by_directory, query.limit, query.offset)
     )
 
     prms = fetch_permissions_for([file.file_id for file in files])
 
     group_names = [g.name for g in groups]
 
-    result = []
+    result: list[TextFile | BrokenFile] = []
     for f in files:
         prm = next((p for p in prms if p.item_id == f.file_id), None)
         if prm and has_read(prm, session.owner, group_names):
@@ -63,7 +62,7 @@ async def read_files(req: Request, query: FetchFileRequest = Depends()) -> Respo
         else:
             result.append(BrokenFile(name=f.name, reason="access not allowed"))
 
-    return Success(result)
+    return result
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,30 +73,27 @@ class CreateFileRequest:
 
 
 @files_router.post("/file", tags=["Files"])
-async def create_file(req: Request, body: CreateFileRequest) -> Response:
+async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
+    username = req.state.session.owner
 
-    if body.dirname != "" and not is_dir_exists(body.dirname):
-        return BadRequest("directory " + body.dirname + " not exists")
+    if body.dirname != "":
+        dir = fetch_dir_by_name(body.dirname).unwrap_or_raise(BadRequest)
 
-    session = req.state.session
+        groups = fetch_groups_by_user(username)
+        group_names = [g.name for g in groups]
 
-    result = (
-        new_file(body.filename, body.content)
-        .and_then(
-            lambda fl: new_permissions(fl.file_id, session.owner, "root", "r-r-").map(
-                lambda perm: (fl, perm)
-            )
-        )
-        .and_then(lambda rs: save_file(rs[0], rs[1]))
+        prms = fetch_permissions_for([dir.dir_id])
+        prm = next((p for p in prms if p.item_id == dir.dir_id), None)
+        if not prm or not has_write(prm, username, group_names):
+            raise Forbidden("access denied")
+
+    fl = new_file(body.filename, body.content).unwrap_or_raise(InternalServerError)
+
+    p = new_permissions(fl.file_id, username, "root", "rwr-").unwrap_or_raise(
+        InternalServerError
     )
 
-    match result:
-        case Ok(file):
-            return Success(file)
-        case Err(SaveFileError() as err):
-            return BadRequest(err.value)
-        case _:
-            return InternalServerError()
+    return save_file(fl, p).unwrap_or_raise(BadRequest)
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,62 +104,37 @@ class EditFileRequest:
 
 
 @files_router.patch("/file", tags=["Files"])
-async def edit_file(req: Request, body: EditFileRequest) -> Response:
+async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
     session = req.state.session
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    def allow_write(fl: TextFile, user_name: str, group_names: list[str]) -> Result[TextFile, str]:
-        prms = fetch_permissions_for([fl.file_id])
-        prm = next((p for p in prms if p.item_id == fl.file_id), None)
-        if not prm or not has_write(prm, user_name, group_names):
-            return Err("access denied")
-        return Ok(fl)
+    fl = fetch_file_by_name(body.filename).unwrap_or_raise(BadRequest)
 
-    result = (
-        fetch_file_by_name(body.filename)
-        .and_then(lambda fl: allow_write(fl, session.owner, group_names))
-        .and_then(lambda fl: change_file_content(fl, body.new_content))
-        .and_then(lambda fl: rename_file(fl, body.new_filename))
-        .and_then(lambda fl: update_file(body.filename, fl))
-    )
-
-    match result:
-        case Ok(file):
-            return Success(file)
-        case Err(SaveFileError() as err):
-            return BadRequest(err.value)
-        case Err(FetchFileError() as err):
-            return BadRequest(err.value)
-        case Err(str() as err):
-            return Forbidden(err)
-        case _:
-            return InternalServerError()
-
-
-@files_router.delete("/file", tags=["Files"])
-async def delete_file(req: Request, file_name: str) -> Response:
-    session = req.state.session
-    groups = fetch_groups_by_user(session.owner)
-    group_names = [g.name for g in groups]
-
-    file_result = fetch_file_by_name(file_name)
-    match file_result:
-        case Err(FetchFileError() as err):
-            return BadRequest(err.value)
-        case _:
-            pass
-
-    fl = file_result.unwrap()
     prms = fetch_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)
     if not prm or not has_write(prm, session.owner, group_names):
-        return Forbidden("access denied")
+        raise Forbidden("access denied")
 
-    result = Ok(fl).map(destroy_file).map(lambda rm: delete_file_by_id(rm.file_id))
+    fl = change_file_content(fl, body.new_content).unwrap_or_raise(InternalServerError)
+    fl = rename_file(fl, body.new_filename).unwrap_or_raise(InternalServerError)
 
-    match result:
-        case Ok():
-            return Success(True)
-        case _:
-            return InternalServerError()
+    return update_file(body.filename, fl).unwrap_or_raise(BadRequest)
+
+
+@files_router.delete("/file", tags=["Files"])
+async def delete_file(req: Request, file_name: str) -> bool:
+    session = req.state.session
+    groups = fetch_groups_by_user(session.owner)
+    group_names = [g.name for g in groups]
+
+    fl = fetch_file_by_name(file_name).unwrap_or_raise(BadRequest)
+
+    prms = fetch_permissions_for([fl.file_id])
+    prm = next((p for p in prms if p.item_id == fl.file_id), None)
+    if not prm or not has_write(prm, session.owner, group_names):
+        raise Forbidden("access denied")
+
+    destroy_file(fl)
+
+    return delete_file_by_id(fl.file_id)

@@ -17,20 +17,7 @@ sa.Table(
 )
 
 
-@dataclass(frozen=True, slots=True)
-class SaveDuplicateError:
-    value: str
-
-
-@dataclass(frozen=True, slots=True)
-class NotFoundMemberError:
-    value: str
-
-
-MemberErrors = SaveDuplicateError | NotFoundMemberError | MemberErr
-
-
-def fetch_member_by_username(username: str) -> Result[Member, MemberErrors]:
+def fetch_member_by_username(username: str) -> Result[Member, str]:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )
@@ -40,12 +27,12 @@ def fetch_member_by_username(username: str) -> Result[Member, MemberErrors]:
         row = result.mappings().first()
 
         if row is None:
-            return Err(NotFoundMemberError("user not found"))
+            return Err("user not found")
 
         return new_member(row["username"], row["password"])
 
 
-def save_candidate(cnd: Candidate) -> Result[Member, MemberErrors]:
+def save_candidate(cnd: Candidate) -> Result[Member, str]:
     try:
         with engine.connect() as conn:
             query = sa.text(
@@ -63,5 +50,5 @@ def save_candidate(cnd: Candidate) -> Result[Member, MemberErrors]:
             return new_member(cnd.username, cnd.password_hash)
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
-            return Err(SaveDuplicateError("user is exists"))
+            return Err("user is exists")
         raise

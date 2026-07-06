@@ -1,10 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from result import Ok, Err
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter
 
-from router.response import *
-from ..groups import mk_group
+from ..groups import Group, mk_group
 from ..sources.sqlalchemy_group import save_group
 
 groups_router = APIRouter()
@@ -18,13 +16,7 @@ class CreateGroupRequest:
 
 
 @groups_router.post("/group", tags=["Groups"])
-async def create_group(body: CreateGroupRequest) -> Response:
-    group = mk_group(body.name, body.owner, body.members).map(
-        lambda grp: save_group(grp)
-    )
-
-    match group:
-        case Ok(g):
-            return Success(g)
-        case _:
-            return InternalServerError()
+async def create_group(body: CreateGroupRequest) -> Group:
+    g = mk_group(body.name, body.owner, body.members).unwrap()
+    save_group(g)
+    return g
