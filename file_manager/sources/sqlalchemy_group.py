@@ -167,17 +167,17 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
                 JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS INTEGER)
                 WHERE g.owner_name = :owner AND utg.username = :member
             """)
-            rows = conn.execute(
-                query, {"owner": filter.owner, "member": filter.member}
-            ).mappings().all()
+            rows = (
+                conn.execute(query, {"owner": filter.owner, "member": filter.member})
+                .mappings()
+                .all()
+            )
 
         elif filter.owner:
             query = sa.text(
                 "SELECT id, name, owner_name FROM groups WHERE owner_name = :owner"
             )
-            rows = conn.execute(
-                query, {"owner": filter.owner}
-            ).mappings().all()
+            rows = conn.execute(query, {"owner": filter.owner}).mappings().all()
 
         elif filter.member:
             query = sa.text("""
@@ -186,9 +186,7 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
                 JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS INTEGER)
                 WHERE utg.username = :member
             """)
-            rows = conn.execute(
-                query, {"member": filter.member}
-            ).mappings().all()
+            rows = conn.execute(query, {"member": filter.member}).mappings().all()
 
         else:
             query = sa.text("SELECT id, name, owner_name FROM groups")

@@ -93,7 +93,9 @@ async def delete_group(req: Request, group_name: str) -> RemovedGroup:
         raise Forbidden("only root or group owner can delete groups")
 
     perms = fetch_permissions_by_group(g.name)
-    updated = [change_group(p, "root").unwrap_or_raise(InternalServerError) for p in perms]
+    updated = [
+        change_group(p, "root").unwrap_or_raise(InternalServerError) for p in perms
+    ]
 
     removed = destroy_group(g)
     delete_group_by_name(removed, updated)
