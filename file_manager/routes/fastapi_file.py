@@ -1,11 +1,12 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from result import Ok, Err
+from result import Result, Ok, Err
 from fastapi import APIRouter, Depends, Response, Request
 
 from router.response import *
 from ..files import (
     TextFileFilter,
+    TextFile,
     BrokenFile,
     change_file_content,
     rename_file,
@@ -23,7 +24,7 @@ from ..sources.sqlalchemy_file import (
     update_file,
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ..permissions import new_permissions, has_read
+from ..permissions import new_permissions, has_read, has_write
 
 from ..sources.sqlalchemy_permissions import fetch_permissions_for
 
@@ -107,9 +108,21 @@ class EditFileRequest:
 
 
 @files_router.patch("/file", tags=["Files"])
-async def edit_file(body: EditFileRequest) -> Response:
+async def edit_file(req: Request, body: EditFileRequest) -> Response:
+    session = req.state.session
+    groups = fetch_groups_by_user(session.owner)
+    group_names = [g.name for g in groups]
+
+    def allow_write(fl: TextFile, user_name: str, group_names: list[str]) -> Result[TextFile, str]:
+        prms = fetch_permissions_for([fl.file_id])
+        prm = next((p for p in prms if p.item_id == fl.file_id), None)
+        if not prm or not has_write(prm, user_name, group_names):
+            return Err("access denied")
+        return Ok(fl)
+
     result = (
         fetch_file_by_name(body.filename)
+        .and_then(lambda fl: allow_write(fl, session.owner, group_names))
         .and_then(lambda fl: change_file_content(fl, body.new_content))
         .and_then(lambda fl: rename_file(fl, body.new_filename))
         .and_then(lambda fl: update_file(body.filename, fl))
@@ -122,22 +135,35 @@ async def edit_file(body: EditFileRequest) -> Response:
             return BadRequest(err.value)
         case Err(FetchFileError() as err):
             return BadRequest(err.value)
+        case Err(str() as err):
+            return Forbidden(err)
         case _:
             return InternalServerError()
 
 
 @files_router.delete("/file", tags=["Files"])
-async def delete_file(file_name: str) -> Response:
-    result = (
-        fetch_file_by_name(file_name)
-        .map(lambda fl: destroy_file(fl))
-        .map(lambda fl: delete_file_by_id(fl.file_id))
-    )
+async def delete_file(req: Request, file_name: str) -> Response:
+    session = req.state.session
+    groups = fetch_groups_by_user(session.owner)
+    group_names = [g.name for g in groups]
+
+    file_result = fetch_file_by_name(file_name)
+    match file_result:
+        case Err(FetchFileError() as err):
+            return BadRequest(err.value)
+        case _:
+            pass
+
+    fl = file_result.unwrap()
+    prms = fetch_permissions_for([fl.file_id])
+    prm = next((p for p in prms if p.item_id == fl.file_id), None)
+    if not prm or not has_write(prm, session.owner, group_names):
+        return Forbidden("access denied")
+
+    result = Ok(fl).map(destroy_file).map(lambda rm: delete_file_by_id(rm.file_id))
 
     match result:
         case Ok():
             return Success(True)
-        case Err(FetchFileError() as err):
-            return BadRequest(err.value)
         case _:
             return InternalServerError()
