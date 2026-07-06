@@ -4,8 +4,15 @@ from fastapi import APIRouter, Request
 
 from router.response import *
 
-from ..groups import Group, mk_group
-from ..sources.sqlalchemy_group import save_group
+from ..groups import (
+    Group,
+    add_member,
+    change_owner,
+    mk_group,
+    remove_member,
+    rename_group,
+)
+from ..sources.sqlalchemy_group import fetch_group_by_name, save_group, update_group
 
 groups_router = APIRouter()
 
@@ -25,3 +32,32 @@ async def create_group(req: Request, body: CreateGroupRequest) -> Group:
     g = mk_group(body.name, body.owner, body.members).unwrap()
     save_group(g)
     return g
+
+
+@dataclass(frozen=True, slots=True)
+class EditGroupRequest:
+    name: str
+    new_name: str
+    new_owner: str
+    new_members: list[str]
+
+
+@groups_router.patch("/group", tags=["Groups"])
+async def edit_group(req: Request, body: EditGroupRequest) -> Group:
+    session_owner: str = req.state.session.owner
+
+    g = fetch_group_by_name(body.name).unwrap_or_raise(BadRequest)
+
+    if session_owner != "root" and session_owner != g.owner:
+        raise Forbidden("only root or group owner can edit groups")
+
+    g = rename_group(g, body.new_name).unwrap_or_raise(InternalServerError)
+    g = change_owner(g, body.new_owner).unwrap_or_raise(InternalServerError)
+
+    for username in g.members:
+        g = remove_member(g, username).unwrap_or_raise(InternalServerError)
+
+    for username in body.new_members:
+        g = add_member(g, username).unwrap_or_raise(InternalServerError)
+
+    return update_group(body.name, g).unwrap_or_raise(BadRequest)
