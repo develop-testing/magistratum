@@ -9,6 +9,7 @@ from ..files import (
     TextFile,
     BrokenFile,
     change_file_content,
+    change_file_parent,
     rename_file,
     new_file,
     destroy_file,
@@ -19,6 +20,7 @@ from ..sources.sqlalchemy_file import (
     fetch_file_by_filter,
     fetch_file_by_name,
     delete_file_by_id,
+    move_file,
     update_file,
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
@@ -76,8 +78,10 @@ class CreateFileRequest:
 async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
     username = req.state.session.owner
 
+    parent_id = ""
     if body.dirname != "":
         dir = fetch_dir_by_name(body.dirname).unwrap_or_raise(BadRequest)
+        parent_id = dir.dir_id
 
         groups = fetch_groups_by_user(username)
         group_names = [g.name for g in groups]
@@ -87,7 +91,9 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
         if not prm or not has_write(prm, username, group_names):
             raise Forbidden("access denied")
 
-    fl = new_file(body.filename, body.content).unwrap_or_raise(InternalServerError)
+    fl = new_file(body.filename, body.content, parent_id).unwrap_or_raise(
+        InternalServerError
+    )
 
     p = new_permissions(fl.file_id, username, "root", "rwr-").unwrap_or_raise(
         InternalServerError
@@ -101,6 +107,7 @@ class EditFileRequest:
     filename: str
     new_filename: str
     new_content: str
+    new_parent_id: str = ""
 
 
 @files_router.patch("/file", tags=["Files"])
@@ -118,6 +125,10 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
 
     fl = change_file_content(fl, body.new_content).unwrap_or_raise(InternalServerError)
     fl = rename_file(fl, body.new_filename).unwrap_or_raise(InternalServerError)
+    fl = change_file_parent(fl, body.new_parent_id).unwrap_or_raise(InternalServerError)
+
+    if body.new_parent_id:
+        move_file(fl.file_id, body.new_parent_id).unwrap_or_raise(BadRequest)
 
     return update_file(body.filename, fl).unwrap_or_raise(BadRequest)
 

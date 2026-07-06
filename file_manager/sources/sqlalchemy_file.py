@@ -36,7 +36,7 @@ def fetch_file_by_name(name: str) -> Result[TextFile, str]:
         if row is None:
             return Err("file not found")
 
-        return Ok(TextFile(str(row["file_id"]), row["name"], row["content"]))
+        return Ok(TextFile(str(row["file_id"]), row["name"], row["content"], ""))
 
 
 def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
@@ -97,7 +97,8 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
             rows = []
 
         return [
-            TextFile(str(row["file_id"]), row["name"], row["content"]) for row in rows
+            TextFile(str(row["file_id"]), row["name"], row["content"], "")
+            for row in rows
         ]
 
 
@@ -147,11 +148,22 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, str]:
 
             conn.commit()
 
-            return Ok(TextFile(file.file_id, file.name, file.content))
+            return Ok(TextFile(file.file_id, file.name, file.content, file.parent_id))
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
             return Err("file with this name is exists")
         raise
+
+
+def move_file(file_id: str, new_dir_id: str) -> Result[str, str]:
+    query = sa.text(
+        "UPDATE files_to_dirs SET dir_id = :dir_id WHERE file_id = :file_id"
+    )
+
+    with engine.connect() as conn:
+        conn.execute(query, {"file_id": file_id, "dir_id": new_dir_id})
+        conn.commit()
+        return Ok(file_id)
 
 
 def delete_file_by_id(file_id: str) -> bool:
