@@ -46,7 +46,9 @@ def save_directory(dir: Directory) -> Directory:
 
 
 def fetch_dir_by_name(dirname: str) -> Result[Directory, DirErrs]:
-    query = sa.text("SELECT dir_id, name, parent_id FROM directories WHERE name = :dirname")
+    query = sa.text(
+        "SELECT dir_id, name, parent_id FROM directories WHERE name = :dirname"
+    )
 
     with engine.connect() as conn:
         result = conn.execute(query, {"dirname": dirname})

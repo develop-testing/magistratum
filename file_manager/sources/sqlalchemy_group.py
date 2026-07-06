@@ -70,10 +70,7 @@ def fetch_groups_by_user(username: str) -> list[Group]:
         groups: list[Group] = []
         for row in group_rows:
             members = [
-                row2[0]
-                for row2 in conn.execute(
-                    members_query, {"group_id": row["id"]}
-                )
+                row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
             ]
             groups.append(Group(row["name"], row["owner_name"], members))
 
