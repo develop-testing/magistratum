@@ -18,6 +18,18 @@ sa.Table(
 )
 
 
+def fetch_dirs_by_parent(parent_id: str) -> list[Directory]:
+    query = sa.text(
+        "SELECT dir_id, name, parent_id FROM directories WHERE parent_id = :parent_id"
+    )
+
+    with engine.connect() as conn:
+        rows = conn.execute(query, {"parent_id": parent_id}).mappings().all()
+        return [
+            Directory(row["dir_id"], row["name"], row["parent_id"], []) for row in rows
+        ]
+
+
 def save_directory(dir: Directory) -> Directory:
     query = sa.text(
         "INSERT INTO directories (dir_id, name, parent_id) VALUES (:dir_id, :name, :parent_id)"

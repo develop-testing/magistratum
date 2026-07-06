@@ -5,6 +5,17 @@ from result import Ok, Result
 import uuid
 
 
+@dataclass(frozen=True, slots=True)
+class DirFilter:
+    parent_id: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class BrokenDirectory:
+    name: str
+    reason: str
+
+
 @dataclass(slots=True)
 class Directory:
     dir_id: str
