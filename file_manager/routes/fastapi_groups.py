@@ -21,10 +21,7 @@ from ..sources.sqlalchemy_group import (
     save_group,
     update_group,
 )
-from ..sources.sqlalchemy_permissions import (
-    fetch_permissions_by_group,
-    update_permissions,
-)
+from ..sources.sqlalchemy_permissions import fetch_permissions_by_group
 
 groups_router = APIRouter()
 
@@ -87,10 +84,7 @@ async def delete_group(req: Request, group_name: str) -> RemovedGroup:
     perms = fetch_permissions_by_group(g.name)
     updated = [change_group(p, "root").unwrap_or_raise(InternalServerError) for p in perms]
 
-    if updated:
-        update_permissions(updated)
-
     removed = destroy_group(g)
-    delete_group_by_name(g.name)
+    delete_group_by_name(removed, updated)
 
     return removed

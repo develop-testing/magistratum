@@ -3,7 +3,8 @@ from result import Err, Ok, Result
 
 from database.database import engine, metadata
 
-from ..groups import Group
+from ..groups import Group, RemovedGroup
+from ..permissions import Permissions
 
 sa.Table(
     "groups",
@@ -108,8 +109,14 @@ def update_group(old_name: str, group: Group) -> Result[Group, str]:
         return Ok(group)
 
 
-def delete_group_by_name(name: str) -> None:
+def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> None:
     id_query = sa.text("SELECT id FROM groups WHERE name = :name")
+
+    update_perms_query = sa.text("""
+        UPDATE permissions
+        SET owner_name = :owner_name, group_name = :group_name, content = :content
+        WHERE item_id = :item_id
+    """)
 
     delete_members_query = sa.text(
         "DELETE FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)"
@@ -118,12 +125,22 @@ def delete_group_by_name(name: str) -> None:
     delete_group_query = sa.text("DELETE FROM groups WHERE name = :name")
 
     with engine.connect() as conn:
-        row = conn.execute(id_query, {"name": name}).mappings().first()
-        if row is None:
-            return
+        for p in perms:
+            conn.execute(
+                update_perms_query,
+                {
+                    "item_id": p.item_id,
+                    "owner_name": p.owner_name,
+                    "group_name": p.group_name,
+                    "content": p.content,
+                },
+            )
 
-        conn.execute(delete_members_query, {"group_id": row["id"]})
-        conn.execute(delete_group_query, {"name": name})
+        row = conn.execute(id_query, {"name": removed.name}).mappings().first()
+        if row is not None:
+            conn.execute(delete_members_query, {"group_id": row["id"]})
+            conn.execute(delete_group_query, {"name": removed.name})
+
         conn.commit()
 
 
