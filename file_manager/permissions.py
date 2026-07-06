@@ -72,6 +72,10 @@ def revoke_for_group(p: Permissions, who: str, what: str) -> Result[Permissions,
     return new_permissions(p.item_id, p.owner_name, p.group_name, new_value)
 
 
+def change_group(p: Permissions, new_group_name: str) -> Result[Permissions, str]:
+    return new_permissions(p.item_id, p.owner_name, new_group_name, p.content)
+
+
 def revoke_for_other(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
     if p.owner_name != who:
         return Err("only owner can change permissions")

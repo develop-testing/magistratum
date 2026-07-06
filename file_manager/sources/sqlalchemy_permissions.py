@@ -40,6 +40,51 @@ def save_permissions(prms: Permissions) -> Permissions:
     return prms
 
 
+def fetch_permissions_by_group(group_name: str) -> list[Permissions]:
+    query = sa.text("""
+        SELECT item_id, owner_name, group_name, content
+        FROM permissions
+        WHERE group_name = :group_name
+    """)
+
+    with engine.connect() as conn:
+        r = conn.execute(query, {"group_name": group_name}).mappings().all()
+
+        out = []
+        for item in r:
+            prms = new_permissions(
+                str(item["item_id"]),
+                str(item["owner_name"]),
+                str(item["group_name"]),
+                str(item["content"]),
+            )
+            if not is_err(prms):
+                out.append(prms.unwrap())
+
+    return out
+
+
+def update_permissions(perms: list[Permissions]) -> None:
+    query = sa.text("""
+        UPDATE permissions
+        SET owner_name = :owner_name, group_name = :group_name, content = :content
+        WHERE item_id = :item_id
+    """)
+
+    with engine.connect() as conn:
+        for p in perms:
+            conn.execute(
+                query,
+                {
+                    "item_id": p.item_id,
+                    "owner_name": p.owner_name,
+                    "group_name": p.group_name,
+                    "content": p.content,
+                },
+            )
+        conn.commit()
+
+
 def fetch_permissions_for(item_ids: list[str]) -> list[Permissions]:
     query = sa.text("""
         SELECT item_id, owner_name, group_name, content

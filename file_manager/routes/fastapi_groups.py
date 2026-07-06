@@ -6,13 +6,25 @@ from router.response import *
 
 from ..groups import (
     Group,
+    RemovedGroup,
     add_member,
     change_owner,
+    destroy_group,
     mk_group,
     remove_member,
     rename_group,
 )
-from ..sources.sqlalchemy_group import fetch_group_by_name, save_group, update_group
+from ..permissions import change_group
+from ..sources.sqlalchemy_group import (
+    delete_group_by_name,
+    fetch_group_by_name,
+    save_group,
+    update_group,
+)
+from ..sources.sqlalchemy_permissions import (
+    fetch_permissions_by_group,
+    update_permissions,
+)
 
 groups_router = APIRouter()
 
@@ -61,3 +73,24 @@ async def edit_group(req: Request, body: EditGroupRequest) -> Group:
         g = add_member(g, username).unwrap_or_raise(InternalServerError)
 
     return update_group(body.name, g).unwrap_or_raise(BadRequest)
+
+
+@groups_router.delete("/group", tags=["Groups"])
+async def delete_group(req: Request, group_name: str) -> RemovedGroup:
+    session_owner: str = req.state.session.owner
+
+    g = fetch_group_by_name(group_name).unwrap_or_raise(BadRequest)
+
+    if session_owner != "root" and session_owner != g.owner:
+        raise Forbidden("only root or group owner can delete groups")
+
+    perms = fetch_permissions_by_group(g.name)
+    updated = [change_group(p, "root").unwrap_or_raise(InternalServerError) for p in perms]
+
+    if updated:
+        update_permissions(updated)
+
+    removed = destroy_group(g)
+    delete_group_by_name(g.name)
+
+    return removed

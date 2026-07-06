@@ -108,6 +108,25 @@ def update_group(old_name: str, group: Group) -> Result[Group, str]:
         return Ok(group)
 
 
+def delete_group_by_name(name: str) -> None:
+    id_query = sa.text("SELECT id FROM groups WHERE name = :name")
+
+    delete_members_query = sa.text(
+        "DELETE FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)"
+    )
+
+    delete_group_query = sa.text("DELETE FROM groups WHERE name = :name")
+
+    with engine.connect() as conn:
+        row = conn.execute(id_query, {"name": name}).mappings().first()
+        if row is None:
+            return
+
+        conn.execute(delete_members_query, {"group_id": row["id"]})
+        conn.execute(delete_group_query, {"name": name})
+        conn.commit()
+
+
 def fetch_groups_by_user(username: str) -> list[Group]:
     groups_query = sa.text("""
         SELECT g.id, g.name, g.owner_name

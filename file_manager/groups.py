@@ -10,6 +10,11 @@ class Group:
     members: list[str]
 
 
+@dataclass(frozen=True, slots=True)
+class RemovedGroup:
+    name: str
+
+
 def rename_group(g: Group, new_name: str) -> Result[Group, str]:
     if new_name == "":
         return Ok(g)
@@ -41,3 +46,7 @@ def remove_member(g: Group, username: str) -> Result[Group, str]:
 def mk_group(name: str, owner: str, members: list[str]) -> Result[Group, str]:
     members = [name] + members if name not in members else members
     return Ok(Group(name, owner, members))
+
+
+def destroy_group(g: Group) -> RemovedGroup:
+    return RemovedGroup(g.name)
