@@ -23,7 +23,6 @@ from ..sources.sqlalchemy_file import (
 )
 from ..permissions import new_permissions, has_permissions
 
-from auth.sources.redis_sessions import fetch_session_by_id
 from ..sources.sqlalchemy_permissions import fetch_permissions_for
 
 files_router = APIRouter()
@@ -41,12 +40,13 @@ class FetchFileRequest:
 async def read_files(req: Request, query: FetchFileRequest = Depends()) -> Response:
     # groups check
 
-    filter = TextFileFilter(
-        query.by_name, query.by_directory, query.limit, query.offset
-    )
-    session = fetch_session_by_id(req.cookies["access_token"]).unwrap()
+    session = req.state.session
 
-    files = fetch_file_by_filter(filter)
+    files = fetch_file_by_filter(
+        TextFileFilter(
+            query.by_name, query.by_directory, query.limit, query.offset
+        )
+    )
 
     ids = [file.file_id for file in files]
 
@@ -72,7 +72,7 @@ async def create_file(req: Request, body: CreateFileRequest) -> Response:
     if body.dirname != "" and not is_dir_exists(body.dirname):
         return BadRequest("directory " + body.dirname + " not exists")
 
-    session = fetch_session_by_id(req.cookies["access_token"]).unwrap()
+    session = req.state.session
 
     result = (
         new_file(body.filename, body.content)

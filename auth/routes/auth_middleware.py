@@ -11,11 +11,11 @@ class UnauthorizedException(HTTPException):
         super().__init__(status_code=401, detail=message)
 
 
-async def auth_middleware(request: Request) -> bool:
+async def auth_middleware(request: Request) -> None:
     token = request.cookies.get("access_token", "")
 
     match fetch_session_by_id(token):
-        case Ok():
-            return True
+        case Ok(session):
+            request.state.session = session
         case _:
             raise UnauthorizedException("you are not authorized")
