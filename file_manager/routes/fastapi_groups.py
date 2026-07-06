@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
 from router.response import *
 
@@ -76,9 +76,7 @@ async def edit_group(req: Request, body: EditGroupRequest) -> Group:
 
 
 @groups_router.get("/groups", tags=["Groups"])
-async def read_groups(req: Request, owner: str = "", member: str = "") -> list[Group]:
-    filter = FetchGroupReq(owner=owner, member=member)
-
+async def read_groups(req: Request, filter: FetchGroupReq = Depends()) -> list[Group]:
     if filter.owner and filter.member:
         by_owner = fetch_groups_by_owner(filter.owner)
         by_member = fetch_groups_by_user(filter.member)
