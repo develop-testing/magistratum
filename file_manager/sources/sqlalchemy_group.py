@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 import sqlalchemy as sa
 from result import Err, Ok, Result
 
@@ -149,7 +150,7 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
         "SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)"
     )
 
-    def load_members(conn, rows):
+    def load_members(conn: sa.Connection, rows: Sequence[sa.RowMapping]) -> list[Group]:
         groups: list[Group] = []
         for row in rows:
             members = [
@@ -194,3 +195,28 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
             rows = conn.execute(query).mappings().all()
 
         return load_members(conn, rows)
+
+
+def fetch_groups_by_user(username: str) -> list[Group]:
+    groups_query = sa.text("""
+        SELECT g.id, g.name, g.owner_name
+        FROM groups g
+        JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS INTEGER)
+        WHERE utg.username = :username
+    """)
+
+    members_query = sa.text("""
+        SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)
+    """)
+
+    with engine.connect() as conn:
+        group_rows = conn.execute(groups_query, {"username": username}).mappings().all()
+
+        groups: list[Group] = []
+        for row in group_rows:
+            members = [
+                row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
+            ]
+            groups.append(Group(row["name"], row["owner_name"], members))
+
+    return groups
