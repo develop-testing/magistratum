@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import sqlalchemy as sa
-from result import Err, Result
+from result import Ok, Err, Result
 
 from database.database import engine, metadata
 
@@ -46,7 +46,7 @@ def save_directory(dir: Directory) -> Directory:
 
 
 def fetch_dir_by_name(dirname: str) -> Result[Directory, DirErrs]:
-    query = sa.text("SELECT name, parent_name FROM directories WHERE name = :dirname")
+    query = sa.text("SELECT dir_id, name, parent_id FROM directories WHERE name = :dirname")
 
     with engine.connect() as conn:
         result = conn.execute(query, {"dirname": dirname})
@@ -55,7 +55,7 @@ def fetch_dir_by_name(dirname: str) -> Result[Directory, DirErrs]:
         if row is None:
             return Err(FetchDirectoryError("directory not found"))
 
-        return mk_directory(row["name"], row["parent_name"])
+        return Ok(Directory(row["dir_id"], row["name"], row["parent_id"], []))
 
 
 def is_dir_exists(dirname: str) -> bool:
