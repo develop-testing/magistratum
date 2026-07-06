@@ -9,11 +9,13 @@ from ..directory import (
     DirFilter,
     Directory,
     change_directory_parent,
+    destroy_directory,
     mk_directory,
     rename_directory,
 )
 from ..permissions import has_read, has_write
 from ..sources.sqlalchemy_dir import (
+    delete_directory,
     fetch_dir_by_id,
     fetch_dirs_by_parent,
     save_directory,
@@ -64,6 +66,23 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
     )
 
     return update_directory(d).unwrap_or_raise(BadRequest)
+
+
+@dirs_router.delete("/directory", tags=["Directories"])
+async def delete_dir(req: Request, dir_id: str) -> bool:
+    session = req.state.session
+    groups = fetch_groups_by_user(session.owner)
+    group_names = [g.name for g in groups]
+
+    d = fetch_dir_by_id(dir_id).unwrap_or_raise(BadRequest)
+
+    prms = fetch_permissions_for([d.dir_id])
+    prm = next((p for p in prms if p.item_id == d.dir_id), None)
+    if not prm or not has_write(prm, session.owner, group_names):
+        raise Forbidden("access denied")
+
+    destroy_directory(d)
+    return delete_directory(d.dir_id)
 
 
 @dirs_router.get("/directories", tags=["Directories"])

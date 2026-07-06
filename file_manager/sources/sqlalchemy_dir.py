@@ -97,6 +97,15 @@ def update_directory(d: Directory) -> Result[Directory, str]:
         return Ok(d)
 
 
+def delete_directory(dir_id: str) -> bool:
+    query = sa.text("DELETE FROM directories WHERE dir_id = :dir_id")
+
+    with engine.connect() as conn:
+        conn.execute(query, {"dir_id": dir_id})
+        conn.commit()
+        return True
+
+
 def is_dir_exists(dirname: str) -> bool:
     query = sa.text("SELECT EXISTS(SELECT 1 FROM directories WHERE name = :dirname)")
 

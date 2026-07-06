@@ -24,6 +24,10 @@ class Directory:
     files: list[str]
 
 
+def destroy_directory(d: Directory) -> str:
+    return d.dir_id
+
+
 def mk_directory(dir_name: str, parent_id: str) -> Result[Directory, str]:
     return Ok(Directory("dir#" + str(uuid.uuid4()), dir_name, parent_id, []))
 
