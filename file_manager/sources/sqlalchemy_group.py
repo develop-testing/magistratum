@@ -144,6 +144,48 @@ def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> Non
         conn.commit()
 
 
+def fetch_all_groups() -> list[Group]:
+    query = sa.text("SELECT id, name, owner_name FROM groups")
+
+    members_query = sa.text(
+        "SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)"
+    )
+
+    with engine.connect() as conn:
+        rows = conn.execute(query).mappings().all()
+
+        groups: list[Group] = []
+        for row in rows:
+            members = [
+                row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
+            ]
+            groups.append(Group(row["name"], row["owner_name"], members))
+
+    return groups
+
+
+def fetch_groups_by_owner(owner: str) -> list[Group]:
+    query = sa.text(
+        "SELECT id, name, owner_name FROM groups WHERE owner_name = :owner"
+    )
+
+    members_query = sa.text(
+        "SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)"
+    )
+
+    with engine.connect() as conn:
+        rows = conn.execute(query, {"owner": owner}).mappings().all()
+
+        groups: list[Group] = []
+        for row in rows:
+            members = [
+                row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
+            ]
+            groups.append(Group(row["name"], row["owner_name"], members))
+
+    return groups
+
+
 def fetch_groups_by_user(username: str) -> list[Group]:
     groups_query = sa.text("""
         SELECT g.id, g.name, g.owner_name

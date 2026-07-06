@@ -5,6 +5,7 @@ from fastapi import APIRouter, Request
 from router.response import *
 
 from ..groups import (
+    FetchGroupReq,
     Group,
     RemovedGroup,
     add_member,
@@ -18,6 +19,8 @@ from ..permissions import change_group
 from ..sources.sqlalchemy_group import (
     delete_group_by_name,
     fetch_group_by_name,
+    fetch_groups_by_owner,
+    fetch_groups_by_user,
     save_group,
     update_group,
 )
@@ -70,6 +73,25 @@ async def edit_group(req: Request, body: EditGroupRequest) -> Group:
         g = add_member(g, username).unwrap_or_raise(InternalServerError)
 
     return update_group(body.name, g).unwrap_or_raise(BadRequest)
+
+
+@groups_router.get("/groups", tags=["Groups"])
+async def read_groups(req: Request, owner: str = "", member: str = "") -> list[Group]:
+    filter = FetchGroupReq(owner=owner, member=member)
+
+    if filter.owner and filter.member:
+        by_owner = fetch_groups_by_owner(filter.owner)
+        by_member = fetch_groups_by_user(filter.member)
+        owner_names = {g.name for g in by_owner}
+        return [g for g in by_member if g.name in owner_names]
+
+    if filter.owner:
+        return fetch_groups_by_owner(filter.owner)
+
+    if filter.member:
+        return fetch_groups_by_user(filter.member)
+
+    return fetch_groups_by_user(req.state.session.owner)
 
 
 @groups_router.delete("/group", tags=["Groups"])

@@ -15,6 +15,12 @@ class RemovedGroup:
     name: str
 
 
+@dataclass(frozen=True, slots=True)
+class FetchGroupReq:
+    owner: str
+    member: str
+
+
 def rename_group(g: Group, new_name: str) -> Result[Group, str]:
     if new_name == "":
         return Ok(g)
