@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <title>{{title}}</title>
-        <style>{{styles}}</style>
+        <style>{{{styles}}}</style>
     </head>
     <body>
         <header class="header">
@@ -28,6 +28,31 @@
                 </div>
             </div>
         </main>
+    
+    <div id="add-dir-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                Добавить директорию
+            </div>
+            <form id="add-dir-form" class="modal-body form">
+                <input
+                    type="hidden"
+                    name="parent_id"
+                    value="dir#2443e7b0-41b5-49ab-bbca-f195dc2e958b"
+                >
+                <label>
+                    <input
+                        type="text"
+                        name="name" 
+                        placeholder="имя директории"
+                        value=""
+                    >
+                </label>
+                <button type="submit">Создать</button>
+            </form>
+        </div> 
+    </div>
+    
     <script src="/static/dashboard/dashboard.js"></script>
     </body>
 </html>

@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", (e) => {
   const parent = document.querySelector("#manager-grid");
+  const add_directory_modal = document.querySelector("#add-dir-modal");
+  const add_directory_form = document.querySelector("#add-dir-form");
   const add_directory_button = document.querySelector("#add-directory");
 
   const manager_item = (item) => {
@@ -42,6 +44,29 @@ document.addEventListener("DOMContentLoaded", (e) => {
     });
 
   add_directory_button.addEventListener("click", (e) => {
-    console.log(e);
+    add_directory_modal.classList.toggle("-show");
+  });
+
+  document.querySelectorAll(".modal").forEach((item) => {
+    item.addEventListener("click", (e) => {
+      if (e.target.classList.contains("modal")) {
+        item.classList.remove("-show");
+      }
+    });
+  });
+
+  add_directory_form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const form_data = new FormData(e.target);
+    const json_object = Object.fromEntries(form_data.entries());
+
+    fetch("http://127.0.0.0:8800/directory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(json_object),
+    })
+      .then((response) => response.json())
+      .then((data) => window.location.reload());
   });
 });

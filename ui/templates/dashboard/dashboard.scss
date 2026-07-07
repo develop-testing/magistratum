@@ -37,6 +37,13 @@ $font-color: #000;
   padding-bottom: ($step * 2);
 }
 
+.p-2 {
+  padding-top: ($step * 2);
+  padding-left: ($step * 2);
+  padding-right: ($step * 2);
+  padding-bottom: ($step * 2);
+}
+
 .py-4 {
   padding-top: ($step * 4);
   padding-bottom: ($step * 4);
@@ -158,8 +165,82 @@ body {
 }
 
 .manager-button {
-  @extend .px-2;
-  @extend .py-2;
+  @extend .p-2;
   border: 1px solid #000;
   cursor: pointer;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  z-index: 1;
+  box-sizing: border-box;
+  background-color: #000;
+  background-color: rgba(0, 0, 0, 0.75);
+  text-align: center;
+
+  &.-show {
+    display: block;
+  }
+
+  &::before {
+    content: "";
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    margin-right: -0.05em;
+  }
+
+  &-header {
+    @extend .p-2;
+    @extend .mb-4;
+    font-weight: 800;
+    border-bottom: 1px solid #000;
+  }
+
+  &-content {
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    z-index: 2;
+    max-width: 500px;
+    box-sizing: border-box;
+    width: 90%;
+    background: #fff;
+    text-align: left;
+  }
+}
+
+.form {
+  @extend .p-2;
+
+  & label,
+  & input {
+    display: block;
+    width: 100%;
+  }
+
+  & input {
+    font-family: monospace;
+    @extend .p-2;
+    border: 1px solid #000;
+    outline: none;
+  }
+
+  & label {
+    @extend .mb-4;
+  }
+
+  & button[type="submit"] {
+    @extend .p-2;
+    cursor: pointer;
+    border: 1px solid #000;
+  }
 }
