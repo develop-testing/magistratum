@@ -24,7 +24,7 @@ if __name__ == "__main__":
     rgroup = mk_group("root", root.username, []).unwrap()
     rgroup = save_group(rgroup)
 
-    rhome = mk_directory("root", root.username).unwrap()
+    rhome = mk_directory("root", "").unwrap()
     prmns = new_permissions(rhome.dir_id, root.username, "root", "r-r-").unwrap()
 
     save_directory(rhome)
