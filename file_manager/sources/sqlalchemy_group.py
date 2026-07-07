@@ -204,7 +204,7 @@ def fetch_groups_by_user(username: str) -> list[Group]:
     """)
 
     members_query = sa.text("""
-        SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)
+        SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS CHAR)
     """)
 
     with engine.connect() as conn:

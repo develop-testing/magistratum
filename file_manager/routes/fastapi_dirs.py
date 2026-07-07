@@ -20,6 +20,7 @@ from ..sources.sqlalchemy_dir import (
     fetch_dirs_by_parent,
     save_directory,
     update_directory,
+    fetch_dir_by_name,
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..sources.sqlalchemy_permissions import fetch_permissions_for
@@ -34,10 +35,25 @@ class CreateDirectoryRequest:
 
 
 @dirs_router.post("/directory", tags=["Directories"])
-async def create_directory(body: CreateDirectoryRequest) -> Directory:
-    d = mk_directory(body.name, body.parent_id).unwrap()
-    save_directory(d)
-    return d
+async def create_directory(
+    req: Request, body: CreateDirectoryRequest
+) -> Directory:
+    session_owner = req.state.session.owner
+
+    groups = fetch_groups_by_user(session_owner)
+    group_names = [g.name for g in groups]
+
+    parent_dir = fetch_dir_by_name(body.parent_id).unwrap_or_raise(BadRequest)
+
+    prm = fetch_permissions_for([parent_dir])
+
+    if not prm or not has_write(prm, session_owner, group_names):
+        raise Forbidden("access denied")
+
+    dir = mk_directory(body.name, body.parent_id).unwrap()
+    save_directory(dir)
+
+    return dir
 
 
 @dataclass(frozen=True, slots=True)
