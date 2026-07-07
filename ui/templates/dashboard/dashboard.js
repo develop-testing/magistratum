@@ -1,47 +1,45 @@
+import {
+  mk_manager_item,
+  mk_file_manager,
+  append_item,
+  make_item_html,
+} from "./file_manager.js";
+
 document.addEventListener("DOMContentLoaded", (e) => {
-  const parent = document.querySelector("#manager-grid");
   const add_directory_modal = document.querySelector("#add-dir-modal");
   const add_directory_form = document.querySelector("#add-dir-form");
   const add_directory_button = document.querySelector("#add-directory");
 
-  const manager_item = (item) => {
-    const types = {
-      dir: "Директория",
-      text_file: "Файл",
-      broken: "Ошибка доступа",
-    };
-
-    const type_classes = {
-      dir: "type-dir",
-      text_file: "type-file",
-      broken: "type-broken",
-    };
-
-    const current_class = type_classes[item.type] || "type-unknown";
-    const current_name = types[item.type] || "Неизвестно";
-
-    return `<div data-id="${item.id}" class="file-item">
-        <div class="file-item-img">
-            <img src="${item.img}">
-        </div>
-        <div class="file-item-content">
-            <div class="file-item-type ${current_class}">${current_name}</div>    
-            <div class="file-item-title">${item.name}</div>
-            <div class="file-item-owner">Владелец: ${item.owner}</div>
-            <div class="file-item-group">Группа: ${item.group}</div>
-        </div>
-      </div>`;
+  const show_file_manager = (html) => {
+    const parent = document.querySelector("#manager-grid");
+    parent.insertAdjacentHTML("beforeend", html);
   };
 
-  fetch(
-    "http://127.0.0.0:8800/directory/content?dir_id=dir%232443e7b0-41b5-49ab-bbca-f195dc2e958b",
-  )
-    .then((res) => res.json())
-    .then((res) => {
-      let data = "";
-      res.map((item) => (data += manager_item(item)));
-      parent.insertAdjacentHTML("beforeend", data);
-    });
+  const fetch_directory_content = () => {
+    return fetch(
+      "http://127.0.0.0:8800/directory/content?dir_id=dir%232443e7b0-41b5-49ab-bbca-f195dc2e958b",
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        return mk_file_manager([
+          ...res.map((item) =>
+            mk_manager_item(
+              item.item_id,
+              item.type,
+              item.img,
+              item.name,
+              item.owner,
+              item.group,
+            ),
+          ),
+        ]);
+      });
+  };
+
+  let file_manager = fetch_directory_content().then((fm) => {
+    show_file_manager(fm.items.map(make_item_html).join(""));
+    return fm;
+  });
 
   add_directory_button.addEventListener("click", (e) => {
     add_directory_modal.classList.toggle("-show");
@@ -67,6 +65,12 @@ document.addEventListener("DOMContentLoaded", (e) => {
       body: JSON.stringify(json_object),
     })
       .then((response) => response.json())
-      .then((data) => window.location.reload());
+      .then((data) => {
+        file_manager = fetch_directory_content().then((fm) => {
+          show_file_manager(fm.items.map(make_item_html).join(""));
+          return fm;
+        });
+        add_directory_modal.classList.toggle("-show");
+      });
   });
 });
