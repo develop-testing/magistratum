@@ -15,7 +15,7 @@ from ..files import (
     new_file,
     destroy_file,
 )
-from ..sources.sqlalchemy_dir import fetch_dir_by_id, fetch_dir_by_name
+from ..sources.sqlalchemy_dir import fetch_dir_by_id
 from ..sources.sqlalchemy_file import (
     save_file,
     fetch_file_by_filter,
@@ -35,8 +35,8 @@ files_router = APIRouter()
 
 @dataclass(frozen=True, slots=True)
 class FetchFileReq:
-    by_name: str
-    by_directory: str
+    by_name: str = ""
+    by_directory: str = ""
     limit: int = 10
     offset: int = 0
 
@@ -72,7 +72,7 @@ async def read_files(req: Request, query: FetchFileReq = Depends()) -> ReadRet:
 @dataclass(frozen=True, slots=True)
 class CreateFileRequest:
     filename: str
-    dirname: str
+    dir_id: str
     content: str
 
 
@@ -81,8 +81,8 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
     username = req.state.session.owner
 
     parent_id = ""
-    if body.dirname != "":
-        dir = fetch_dir_by_name(body.dirname).unwrap_or_raise(BadRequest)
+    if body.dir_id != "":
+        dir = fetch_dir_by_id(body.dir_id).unwrap_or_raise(BadRequest)
         parent_id = dir.dir_id
 
         groups = fetch_groups_by_user(username)
