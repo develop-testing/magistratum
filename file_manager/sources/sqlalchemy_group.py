@@ -181,7 +181,7 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
     with engine.connect() as conn:
         rows = conn.execute(sa.text(sql), params).mappings().all()
 
-    groups_dict = {}
+    groups_dict: dict[tuple[int, str, str], list[str]] = {}
     for row in rows:
         group_key = (row["id"], row["name"], row["owner_name"])
         members_list = groups_dict.setdefault(group_key, [])
