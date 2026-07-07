@@ -153,7 +153,7 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
     """
 
     params = {}
-    
+
     if filter.owner and filter.member:
         sql += """
             WHERE g.owner_name = :owner
@@ -163,11 +163,11 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
               )
         """
         params = {"owner": filter.owner, "member": filter.member}
-        
+
     elif filter.owner:
         sql += " WHERE g.owner_name = :owner"
         params = {"owner": filter.owner}
-        
+
     elif filter.member:
         sql += """
             WHERE EXISTS (
@@ -176,7 +176,6 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
             )
         """
         params = {"member": filter.member}
-        
 
     with engine.connect() as conn:
         rows = conn.execute(sa.text(sql), params).mappings().all()
@@ -185,7 +184,7 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
     for row in rows:
         group_key = (row["id"], row["name"], row["owner_name"])
         members_list = groups_dict.setdefault(group_key, [])
-        
+
         if row["username"]:
             members_list.append(row["username"])
 

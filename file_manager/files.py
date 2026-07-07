@@ -7,8 +7,8 @@ import uuid
 
 @dataclass(frozen=True, slots=True)
 class TextFileFilter:
-    by_name: str
-    by_directory: str
+    by_name: str | None
+    by_directory: str | None
     limit: int
     offset: int
 

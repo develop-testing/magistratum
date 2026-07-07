@@ -132,9 +132,8 @@ async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
 
     new_fl = copy_file_to(fl, body.parent_id).unwrap_or_raise(BadRequest)
 
-    p = (
-        new_permissions(new_fl.file_id, username, "root", "rwr-")
-        .unwrap_or_raise(BadRequest)
+    p = new_permissions(new_fl.file_id, username, "root", "rwr-").unwrap_or_raise(
+        BadRequest
     )
 
     return save_file(new_fl, p).unwrap_or_raise(BadRequest)

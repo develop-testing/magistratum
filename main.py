@@ -23,12 +23,16 @@ app.mount("/static", StaticFiles(directory="ui/templates/assets"), name="static"
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, err: HTTPException) -> PlainTextResponse:
+async def http_exception_handler(
+    request: Request, err: HTTPException
+) -> PlainTextResponse:
     return PlainTextResponse(content=str(err.detail), status_code=err.status_code)
 
 
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, err: Exception) -> PlainTextResponse:
+async def global_exception_handler(
+    request: Request, err: Exception
+) -> PlainTextResponse:
     return PlainTextResponse(content="Internal Server Error", status_code=500)
 
 
