@@ -54,6 +54,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(ui_dashboard_router)
 app.include_router(dirs_router, dependencies=[Depends(auth_middleware)])
 app.include_router(groups_router, dependencies=[Depends(auth_middleware)])
 app.include_router(files_router, dependencies=[Depends(auth_middleware)])
