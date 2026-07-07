@@ -19,7 +19,7 @@ from ui.routes.fastapi_dashboard import ui_dashboard_router
 app = FastAPI(docs_url=None, redoc_url=None)
 
 app.mount("/public", StaticFiles(directory="public/admin"), name="static")
-app.mount("/static", StaticFiles(directory="ui/templates/assets"), name="static")
+app.mount("/static", StaticFiles(directory="ui/templates"), name="static")
 
 
 @app.exception_handler(HTTPException)

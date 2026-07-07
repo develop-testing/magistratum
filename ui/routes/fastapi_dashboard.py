@@ -18,11 +18,11 @@ data = {"title": "Lorica Administratum"}
 @ui_dashboard_router.get("/dashboar", tags=["Auth"])
 async def login() -> HTMLResponse:
 
-    with open("ui/templates/assets/dashboard.scss", "r", encoding="utf-8") as f:
+    with open("ui/templates/dashboard/dashboard.scss", "r", encoding="utf-8") as f:
         scss_content = f.read()
 
     result = sass_embedded.compile_string(
-        scss_content, load_paths=[Path("ui/templates/assets/")]
+        scss_content, load_paths=[Path("ui/templates/")]
     )
 
     data = {
@@ -30,7 +30,7 @@ async def login() -> HTMLResponse:
         "styles": result.output,
     }
 
-    with open("ui/templates/dashboard.mustache", "r", encoding="utf-8") as f:
+    with open("ui/templates/dashboard/dashboard.mustache", "r", encoding="utf-8") as f:
         html_content = chevron.render(f, data)
 
     return HTMLResponse(html_content)

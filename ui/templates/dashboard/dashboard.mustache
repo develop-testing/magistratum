@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{title}}</title>
+        <style>{{styles}}</style>
+    </head>
+    <body>
+        <header class="header">
+            <div class="header-content">
+                {{title}} - Root
+            </div>
+        </header>
+        <main class="main">
+            <div class="main-content">
+                <div class="manager-grid">
+                    <div class="manager-grid-header">
+                        <button
+                            title="добавить директорию"
+                            class="manager-button"
+                            id="add-directory"
+                        >
+                        📁
+                        </button>
+                        <button title="добавить файл" class="manager-button">📄</button>
+                    </div>
+                    <div id="manager-grid" class="manager-grid-content"></div>
+                </div>
+            </div>
+        </main>
+    <script src="/static/dashboard/dashboard.js"></script>
+    </body>
+</html>
