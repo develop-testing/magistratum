@@ -141,8 +141,21 @@ async def read_dirs(
     return result
 
 
-Result = list[Directory | TextFile | BrokenDirectory | BrokenFile]
+@dataclass(frozen=True, slots=True)
+class DirectoryItem:
+    item_id: str
+    type: str
+    img: str
+    name: str
+    owner: str
+    group: str
 
+@dataclass(frozen=True, slots=True)
+class BrokenItem:
+    name: str
+    reason: str
+
+Result = list[DirectoryItem | BrokenItem]
 
 @dirs_router.get("/directory/content", tags=["Directories"])
 async def directory_content(req: Request, dir_id: str) -> Result:
@@ -163,18 +176,36 @@ async def directory_content(req: Request, dir_id: str) -> Result:
         prm = next((p for p in prms if p.item_id == d.dir_id), None)
 
         if not prm or not has_read(prm, session_owner, group_names):
-            result.append(BrokenDirectory(name=d.name, reason="access not allowed"))
+            result += [BrokenItem(name=d.name, reason="access not allowed")]
             continue
-
-        result.append(d)
+        
+        result += [
+            DirectoryItem(
+                type="dir",
+                item_id=d.dir_id,
+                img="https://warhammergames.ru/_pu/3/s42932075.jpg",
+                name=d.name,
+                owner=prm.owner_name,
+                group=prm.group_name,
+            )
+        ]
 
     for f in files:
         prm = next((p for p in prms if p.item_id == f.file_id), None)
 
         if not prm or not has_read(prm, session_owner, group_names):
-            result.append(BrokenFile(name=f.name, reason="access not allowed"))
+            result += [BrokenFile(name=f.name, reason="access not allowed")]
             continue
 
-        result.append(f)
+        result += [
+            DirectoryItem(
+                type="text_file",
+                item_id=d.dir_id,
+                img="https://warhammergames.ru/_pu/3/s42932075.jpg",
+                name=d.name,
+                owner=prm.owner_name,
+                group=prm.group_name,
+            )
+        ]
 
     return result
