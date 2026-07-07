@@ -13,7 +13,7 @@ from ..directory import (
     mk_directory,
     rename_directory,
 )
-from ..permissions import has_read, has_write
+from ..permissions import has_read, has_write, new_permissions
 from ..sources.sqlalchemy_dir import (
     delete_directory,
     fetch_dir_by_id,
@@ -23,7 +23,7 @@ from ..sources.sqlalchemy_dir import (
     fetch_dir_by_name,
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ..sources.sqlalchemy_permissions import fetch_permissions_for
+from ..sources.sqlalchemy_permissions import fetch_permissions_for, save_permissions
 
 dirs_router = APIRouter()
 
@@ -43,17 +43,23 @@ async def create_directory(
     groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
 
-    parent_dir = fetch_dir_by_name(body.parent_id).unwrap_or_raise(BadRequest)
+    parent_dir = fetch_dir_by_id(body.parent_id).unwrap_or_raise(BadRequest)
 
-    prm = fetch_permissions_for([parent_dir])
+    if not parent_dir:
+        raise BadRequest("directories not found")
+
+    prm = fetch_permissions_for([parent_dir.dir_id])[0]
 
     if not prm or not has_write(prm, session_owner, group_names):
         raise Forbidden("access denied")
 
-    dir = mk_directory(body.name, body.parent_id).unwrap()
-    save_directory(dir)
+    new_dir = mk_directory(body.name, body.parent_id).unwrap_or_raise(BadRequest)
+    new_perm = new_permissions(new_dir.dir_id, session_owner, prm.group_name, "rwr-").unwrap_or_raise(BadRequest)
 
-    return dir
+    new_dir = save_directory(new_dir)
+    new_perm = save_permissions(new_perm)
+
+    return new_dir
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,21 +111,32 @@ async def delete_dir(req: Request, dir_id: str) -> bool:
 async def read_dirs(
     req: Request, query: DirFilter = Depends()
 ) -> list[Directory | BrokenDirectory]:
-    session = req.state.session
+    session_owner = req.state.session.owner
 
-    groups = fetch_groups_by_user(session.owner)
+    groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
 
     dirs = fetch_dirs_by_parent(query.parent_id)
 
+    if not dirs:
+        return []
+
     prms = fetch_permissions_for([d.dir_id for d in dirs])
+
+    if not prms:
+        raise BadRequest("invalid directorises")
 
     result: list[Directory | BrokenDirectory] = []
     for d in dirs:
         prm = next((p for p in prms if p.item_id == d.dir_id), None)
-        if prm and has_read(prm, session.owner, group_names):
-            result.append(d)
-        else:
+
+        # print(prms, prm, session_owner, group_names)
+
+        if not prm or not has_read(prm, session_owner, group_names):
             result.append(BrokenDirectory(name=d.name, reason="access not allowed"))
+            continue
+
+        result.append(d)
+            
 
     return result
