@@ -22,7 +22,7 @@
                         >
                         📁
                         </button>
-                        <button title="добавить файл" class="manager-button">📄</button>
+                        <button title="добавить файл" class="manager-button" id="add-file">📄</button>
                     </div>
                     <div id="manager-grid" class="manager-grid-content"></div>
                 </div>
@@ -45,6 +45,30 @@
                         type="text"
                         name="name" 
                         placeholder="имя директории"
+                        value=""
+                    >
+                </label>
+                <button type="submit">Создать</button>
+            </form>
+        </div> 
+    </div>
+
+    <div id="add-file-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                Добавить файл
+            </div>
+            <form id="add-file-form" class="modal-body form">
+                <input
+                    type="hidden"
+                    name="parent_id"
+                    value="dir#2443e7b0-41b5-49ab-bbca-f195dc2e958b"
+                >
+                <label>
+                    <input
+                        type="text"
+                        name="name" 
+                        placeholder="имя файла"
                         value=""
                     >
                 </label>
