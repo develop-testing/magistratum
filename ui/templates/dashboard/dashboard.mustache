@@ -8,7 +8,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&display=swap" rel="stylesheet">
     </head>
-    <body>
+    <body data-dir-id="{{dir_id}}">
         <header class="header">
             <div class="header-content">
                 {{title}} - Root
@@ -32,11 +32,7 @@
             </div>
         </main>
     
-    <div
-        data-category-id="dir@190f2434-405d-4f4f-b3c8-ad4dd4765ce0"
-        id="add-dir-modal"
-        class="modal"
-    >
+    <div id="add-dir-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 Добавить директорию
@@ -49,6 +45,7 @@
                         name="name" 
                         placeholder="имя директории"
                         value=""
+                        autocomplete="off"
                     >
                 </label>
                 <button type="submit">Создать</button>
@@ -69,6 +66,7 @@
                         name="filename" 
                         placeholder="имя файла"
                         value=""
+                        autocomplete="off"
                     >
                 </label>
                 <button type="submit">Создать</button>

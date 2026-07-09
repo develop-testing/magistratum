@@ -19,9 +19,12 @@ document.addEventListener("DOMContentLoaded", (e) => {
     parent.insertAdjacentHTML("beforeend", html);
   };
 
+  const dir_id = document.body.dataset.dirId;
+
   const fetch_directory_content = () => {
     return fetch(
-      "http://127.0.0.1:8800/directory/content?dir_id=dir@190f2434-405d-4f4f-b3c8-ad4dd4765ce0",
+      `http://127.0.0.1:8800/directory/content?dir_id=${dir_id}`,
+      { credentials: "include" },
     )
       .then((res) => res.json())
       .then((res) => {
@@ -71,6 +74,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(json_object),
+      credentials: "include",
     })
       .then((response) => response.json())
       .then((data) => {
@@ -93,6 +97,7 @@ document.addEventListener("DOMContentLoaded", (e) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(json_object),
+      credentials: "include",
     })
       .then((response) => response.json())
       .then((data) => {

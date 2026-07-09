@@ -159,6 +159,11 @@ body {
     @extend .mb-4;
     font-weight: 800;
     border-bottom: 2px solid #000;
+    color: #000;
+  }
+
+  &-body {
+    @extend .p-2;
   }
 
   &-content {
