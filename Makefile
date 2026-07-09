@@ -2,7 +2,7 @@ run:
 	docker compose up --build
 
 stop:
-	docker compose down
+	docker compose stop
 
 logs:
 	docker compose logs -f
@@ -13,8 +13,10 @@ lint:
 format:
 	docker compose run --rm web black .
 
-install:
-	docker compose exec web pip install $(pkgs)
+web-command:
+	docker compose exec web $(cmd)
+
+dump-req:
 	docker compose exec web pip freeze > requirements.txt
 
 install-req:
