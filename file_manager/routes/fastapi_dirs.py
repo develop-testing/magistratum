@@ -164,9 +164,15 @@ async def directory_content(req: Request, dir_id: str) -> Result:
     groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
 
+    print( "asdasd",dir_id)
+
     dirs = fetch_dirs_by_parent(dir_id)
 
     files = fetch_file_by_filter(TextFileFilter("", dir_id, 0, 0))
+
+
+    if not dirs and not files:
+        raise BadRequest("no one dir or files not found")
 
     prms = fetch_permissions_for([d.dir_id for d in dirs] + [f.file_id for f in files])
 
@@ -200,9 +206,9 @@ async def directory_content(req: Request, dir_id: str) -> Result:
         result += [
             DirectoryItem(
                 type="text_file",
-                item_id=d.dir_id,
+                item_id=f.file_id,
                 img="https://warhammergames.ru/_pu/3/s42932075.jpg",
-                name=d.name,
+                name=f.name,
                 owner=prm.owner_name,
                 group=prm.group_name,
             )

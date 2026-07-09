@@ -29,7 +29,7 @@ def destroy_directory(d: Directory) -> str:
 
 
 def mk_directory(dir_name: str, parent_id: str) -> Result[Directory, str]:
-    return Ok(Directory("dir#" + str(uuid.uuid4()), dir_name, parent_id, []))
+    return Ok(Directory("dir@" + str(uuid.uuid4()), dir_name, parent_id, []))
 
 
 def rename_directory(d: Directory, new_name: str) -> Result[Directory, str]:
