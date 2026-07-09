@@ -15,8 +15,8 @@ ui_dashboard_router = APIRouter()
 data = {"title": "Lorica Administratum"}
 
 
-@ui_dashboard_router.get("/dashboar", tags=["Auth"])
-async def login() -> HTMLResponse:
+@ui_dashboard_router.get("/dashboar/{dir_id}", tags=["Auth"])
+async def dashboar(dir_id: str) -> HTMLResponse:
 
     with open("ui/templates/dashboard/dashboard.scss", "r", encoding="utf-8") as f:
         scss_content = f.read()
@@ -28,6 +28,7 @@ async def login() -> HTMLResponse:
     data = {
         "title": "Lorice Administratum",
         "styles": result.output,
+        "dir_id": dir_id
     }
 
     with open("ui/templates/dashboard/dashboard.mustache", "r", encoding="utf-8") as f:

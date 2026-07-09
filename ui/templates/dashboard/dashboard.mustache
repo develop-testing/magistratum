@@ -29,17 +29,17 @@
             </div>
         </main>
     
-    <div id="add-dir-modal" class="modal">
+    <div
+        data-category-id="dir@190f2434-405d-4f4f-b3c8-ad4dd4765ce0"
+        id="add-dir-modal"
+        class="modal"
+    >
         <div class="modal-content">
             <div class="modal-header">
                 Добавить директорию
             </div>
             <form id="add-dir-form" class="modal-body form">
-                <input
-                    type="hidden"
-                    name="parent_id"
-                    value="dir#2443e7b0-41b5-49ab-bbca-f195dc2e958b"
-                >
+                <input type="hidden" name="parent_id" value="{{dir_id}}">
                 <label>
                     <input
                         type="text"
@@ -59,15 +59,11 @@
                 Добавить файл
             </div>
             <form id="add-file-form" class="modal-body form">
-                <input
-                    type="hidden"
-                    name="parent_id"
-                    value="dir#2443e7b0-41b5-49ab-bbca-f195dc2e958b"
-                >
+                <input type="hidden" name="dir_id" value="{{dir_id}}">
                 <label>
                     <input
                         type="text"
-                        name="name" 
+                        name="filename" 
                         placeholder="имя файла"
                         value=""
                     >
