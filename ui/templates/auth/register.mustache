@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{title}} — Регистрация</title>
+        <style>{{{styles}}}</style>
+    </head>
+    <body>
+        <header class="header">
+            <div class="header-content">
+                {{title}}
+            </div>
+        </header>
+        <main class="main">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    Регистрация
+                </div>
+                <div class="auth-card-body">
+                    <div id="auth-error" class="auth-error"></div>
+                    <form id="auth-form" class="form">
+                        <label>
+                            <input
+                                type="text"
+                                name="username"
+                                placeholder="имя пользователя"
+                                autocomplete="username"
+                            >
+                        </label>
+                        <label>
+                            <input
+                                type="password"
+                                name="password"
+                                placeholder="пароль"
+                                autocomplete="new-password"
+                            >
+                        </label>
+                        <button type="submit">Зарегистрироваться</button>
+                    </form>
+                    <a href="/login" class="auth-link">Уже есть аккаунт? Войти</a>
+                </div>
+            </div>
+        </main>
+        <script src="/static/auth/auth.js" data-action="register"></script>
+    </body>
+</html>

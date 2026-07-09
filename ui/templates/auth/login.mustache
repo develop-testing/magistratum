@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{title}}</title>
+        <style>{{{styles}}}</style>
+    </head>
+    <body>
+        <header class="header">
+            <div class="header-content">
+                {{title}}
+            </div>
+        </header>
+        <main class="main">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    Вход
+                </div>
+                <div class="auth-card-body">
+                    <div id="auth-error" class="auth-error"></div>
+                    <form id="auth-form" class="form">
+                        <label>
+                            <input
+                                type="text"
+                                name="username"
+                                placeholder="имя пользователя"
+                                autocomplete="username"
+                            >
+                        </label>
+                        <label>
+                            <input
+                                type="password"
+                                name="password"
+                                placeholder="пароль"
+                                autocomplete="current-password"
+                            >
+                        </label>
+                        <button type="submit">Войти</button>
+                    </form>
+                    <a href="/register" class="auth-link">Зарегистрироваться</a>
+                </div>
+            </div>
+        </main>
+        <script src="/static/auth/auth.js" data-action="login"></script>
+    </body>
+</html>

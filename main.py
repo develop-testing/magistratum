@@ -16,6 +16,7 @@ from file_manager.routes.fastapi_dirs import dirs_router
 from file_manager.routes.fastapi_dir_node import dir_node_router
 from file_manager.routes.fastapi_groups import groups_router
 from ui.routes.fastapi_dashboard import ui_dashboard_router
+from ui.routes.fastapi_auth_ui import ui_auth_router
 
 app = FastAPI(docs_url=None, redoc_url=None)
 
@@ -58,6 +59,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(ui_dashboard_router)
+app.include_router(ui_auth_router)
 app.include_router(dirs_router, dependencies=[Depends(auth_middleware)])
 app.include_router(dir_node_router, dependencies=[Depends(auth_middleware)])
 app.include_router(groups_router, dependencies=[Depends(auth_middleware)])

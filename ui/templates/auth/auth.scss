@@ -1,0 +1,40 @@
+@use "common" as *;
+
+.auth-card {
+  max-width: 400px;
+  width: 90%;
+  border: 2px solid $main-color;
+}
+
+.auth-card-header {
+  @extend .p-2;
+  font-weight: 800;
+  border-bottom: 2px solid $main-color;
+}
+
+.auth-card-body {
+  @extend .p-4;
+}
+
+.auth-error {
+  display: none;
+  padding: ($step * 2);
+  margin-bottom: ($step * 4);
+  border: 2px solid $main-color;
+  color: #c00;
+
+  &.-show {
+    display: block;
+  }
+}
+
+.auth-link {
+  display: block;
+  text-align: center;
+  margin-top: ($step * 4);
+  color: $font-color;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
