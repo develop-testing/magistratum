@@ -3,6 +3,7 @@ from fastapi import APIRouter, Request
 
 from router.response import *
 
+from ..directories.directory import Directory
 from ..directory_node import (
     BrokeNode,
     RichNode,
@@ -11,16 +12,56 @@ from ..directory_node import (
     mk_node_perms,
     mk_node_meta,
 )
-from ..files import TextFileFilter
-from ..permissions import has_read
+from ..files import TextFile, TextFileFilter
+from ..permissions import Permissions, has_read
 from ..sources.sqlalchemy_dir import fetch_dirs_by_parent
 from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ..sources.sqlalchemy_permissions import fetch_permissions_for
+from ..sources.sqlalchemy_permissions import fetch_permissions_for as fetch_perms
 from ..sources.sqlalchemy_file import fetch_file_by_filter
+from ..sources.sqlalchemy_home_dir import fetch_home_dir_by_username
 
 dir_node_router = APIRouter()
 
 Result = list[RichNode | BrokeNode]
+
+IMG_URL = "https://byzantium-blogger.blog/wp-content/uploads/2020/03/2600-skull.jpg?w=1024&h=576"
+
+
+def _build_nodes(
+    dirs: list[Directory],
+    files: list[TextFile],
+    prms: list[Permissions],
+    session_owner: str,
+    group_names: list[str],
+) -> Result:
+    items: list[tuple[str, str, str]] = [(d.dir_id, "dir", d.name) for d in dirs] + [
+        (f.file_id, "text_file", f.name) for f in files
+    ]
+
+    result: Result = []
+    for item_id, item_type, name in items:
+        prm = next((p for p in prms if p.item_id == item_id), None)
+
+        if not prm or not has_read(prm, session_owner, group_names):
+            result += [
+                BrokeNode(name=name, type=item_type, reason="access not allowed")
+            ]
+            continue
+
+        result += [
+            mk_rich_node(
+                mk_node(item_type, item_id),
+                mk_node_perms(
+                    prm.owner_name,
+                    prm.group_name,
+                    prm.content[:2],
+                    prm.content[2:],
+                ),
+                mk_node_meta(name, IMG_URL),
+            )
+        ]
+
+    return result
 
 
 @dir_node_router.get("/directory/content", tags=["DirNode"])
@@ -31,59 +72,31 @@ async def directory_content(req: Request, dir_id: str) -> Result:
     group_names = [g.name for g in groups]
 
     dirs = fetch_dirs_by_parent(dir_id)
-
     files = fetch_file_by_filter(TextFileFilter("", dir_id, 0, 0))
 
     if not dirs and not files:
         raise BadRequest("no one dir or files not found")
 
-    prms = fetch_permissions_for([d.dir_id for d in dirs] + [f.file_id for f in files])
+    prms = fetch_perms([d.dir_id for d in dirs] + [f.file_id for f in files])
 
-    result: Result = []
+    return _build_nodes(dirs, files, prms, session_owner, group_names)
 
-    for d in dirs:
-        prm = next((p for p in prms if p.item_id == d.dir_id), None)
 
-        if not prm or not has_read(prm, session_owner, group_names):
-            result += [BrokeNode(name=d.name, type="dir", reason="access not allowed")]
-            continue
+@dir_node_router.get("/directory/home", tags=["DirNode"])
+async def home_content(req: Request) -> Result:
+    session_owner = req.state.session.owner
 
-        result += [
-            mk_rich_node(
-                mk_node("dir", d.dir_id),
-                mk_node_perms(
-                    prm.owner_name,
-                    prm.group_name,
-                    prm.content[:2],
-                    prm.content[2:],
-                ),
-                mk_node_meta(
-                    d.name,
-                    "https://byzantium-blogger.blog/wp-content/uploads/2020/03/2600-skull.jpg?w=1024&h=576",
-                ),
-            )
-        ]
+    home = fetch_home_dir_by_username(session_owner).unwrap_or_raise(BadRequest)
 
-    for f in files:
-        prm = next((p for p in prms if p.item_id == f.file_id), None)
+    groups = fetch_groups_by_user(session_owner)
+    group_names = [g.name for g in groups]
 
-        if not prm or not has_read(prm, session_owner, group_names):
-            result += [
-                BrokeNode(name=f.name, type="text_file", reason="access not allowed")
-            ]
-            continue
+    dirs = fetch_dirs_by_parent(home.dir_id)
+    files = fetch_file_by_filter(TextFileFilter("", home.dir_id, 0, 0))
 
-        result += [
-            mk_rich_node(
-                mk_node("text_file", f.file_id),
-                mk_node_perms(
-                    prm.owner_name, prm.group_name, prm.content[:2], prm.content[2:]
-                ),
-                mk_node_meta(
-                    d.name,
-                    "https://byzantium-blogger.blog/wp-content/uploads/2020/03/2600-skull.jpg?w=1024&h=576",
-                ),
-            )
-        ]
+    if not dirs and not files:
+        raise BadRequest("no one dir or files not found")
 
-    return result
+    prms = fetch_perms([d.dir_id for d in dirs] + [f.file_id for f in files])
+
+    return _build_nodes(dirs, files, prms, session_owner, group_names)

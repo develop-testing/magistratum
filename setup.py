@@ -3,8 +3,11 @@ from database.database import metadata, engine
 from auth.member import make_candidate
 from auth.sources.sqlalchemy_member import save_candidate
 
-from file_manager.directories.directory import mk_directory
+from file_manager.directories.directory import mk_directory as mk_dir
 from file_manager.sources.sqlalchemy_dir import save_directory
+
+from file_manager.directories.home_directory import mk_directory as mk_home_dir
+from file_manager.sources.sqlalchemy_home_dir import save_home_dir
 
 from file_manager.permissions import new_permissions
 from file_manager.sources.sqlalchemy_permissions import save_permissions
@@ -24,8 +27,11 @@ if __name__ == "__main__":
     rgroup = mk_group("root", root.username, []).unwrap()
     rgroup = save_group(rgroup)
 
-    rhome = mk_directory("root", "").unwrap()
+    rhome = mk_dir("root", "").unwrap()
     prmns = new_permissions(rhome.dir_id, root.username, "root", "r-r-").unwrap()
 
     save_directory(rhome)
     save_permissions(prmns)
+
+    home = mk_home_dir("root", rhome.dir_id, root.username).unwrap()
+    save_home_dir(home)
