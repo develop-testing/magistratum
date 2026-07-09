@@ -5,12 +5,11 @@ from router.response import *
 
 from ..directory_node import (
     BrokeNode,
-    DirNode,
-    Perms,
-    RichDirNode,
-    mk_dir_item,
-    mk_item_perms,
-    mk_rich_dir_item,
+    RichNode,
+    mk_rich_node,
+    mk_node,
+    mk_node_perms,
+    mk_node_meta,
 )
 from ..files import TextFileFilter
 from ..permissions import has_read
@@ -21,10 +20,10 @@ from ..sources.sqlalchemy_file import fetch_file_by_filter
 
 dir_node_router = APIRouter()
 
-Result = list[RichDirNode | BrokeNode]
+Result = list[RichNode | BrokeNode]
 
 
-@dir_node_router.get("/directory/content", tags=["Directories"])
+@dir_node_router.get("/directory/content", tags=["DirNode"])
 async def directory_content(req: Request, dir_id: str) -> Result:
     session_owner = req.state.session.owner
 
@@ -50,11 +49,18 @@ async def directory_content(req: Request, dir_id: str) -> Result:
             continue
 
         result += [
-            mk_rich_dir_item(
-                mk_dir_item("dir", d.dir_id),
-                mk_item_perms(prm.content[:2], prm.content[2:]),
-                prm.owner_name,
-                prm.group_name,
+            mk_rich_node(
+                mk_node("dir", d.dir_id),
+                mk_node_perms(
+                    prm.owner_name,
+                    prm.group_name,
+                    prm.content[:2],
+                    prm.content[2:],
+                ),
+                mk_node_meta(
+                    d.name,
+                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoIPFR64MC6wq6bYaT-2HSO3F8nphG5oLYYo1Od2Mv5w&s=10",
+                ),
             )
         ]
 
@@ -68,11 +74,15 @@ async def directory_content(req: Request, dir_id: str) -> Result:
             continue
 
         result += [
-            mk_rich_dir_item(
-                mk_dir_item("text_file", f.file_id),
-                mk_item_perms(prm.content[:2], prm.content[2:]),
-                prm.owner_name,
-                prm.group_name,
+            mk_rich_node(
+                mk_node("text_file", f.file_id),
+                mk_node_perms(
+                    prm.owner_name, prm.group_name, prm.content[:2], prm.content[2:]
+                ),
+                mk_node_meta(
+                    d.name,
+                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoIPFR64MC6wq6bYaT-2HSO3F8nphG5oLYYo1Od2Mv5w&s=10",
+                ),
             )
         ]
 

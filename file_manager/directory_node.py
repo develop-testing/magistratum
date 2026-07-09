@@ -10,34 +10,43 @@ class BrokeNode:
 
 
 @dataclass(frozen=True, slots=True)
-class DirNode:
+class Node:
     type: str
     node_id: str
 
 
 @dataclass(frozen=True, slots=True)
 class Perms:
+    owner_name: str
+    group_name: str
     group: str
     other: str
 
 
 @dataclass(frozen=True, slots=True)
-class RichDirNode:
-    node: DirNode
+class NodeMeta:
+    name: str
+    img: str
+
+
+@dataclass(frozen=True, slots=True)
+class RichNode:
+    node: Node
     perms: Perms
-    owner_name: str
-    group_name: str
+    meta: NodeMeta
 
 
-def mk_dir_item(type: str, node_id: str) -> DirNode:
-    return DirNode(type, node_id)
+def mk_node(type: str, node_id: str) -> Node:
+    return Node(type, node_id)
 
 
-def mk_item_perms(group: str, other: str) -> Perms:
-    return Perms(group, other)
+def mk_node_perms(owner_name: str, group_name: str, group: str, other: str) -> Perms:
+    return Perms(owner_name, group_name, group, other)
 
 
-def mk_rich_dir_item(
-    node: DirNode, perms: Perms, owner_name: str, group_name: str
-) -> RichDirNode:
-    return RichDirNode(node, perms, owner_name, group_name)
+def mk_node_meta(name: str, img: str) -> NodeMeta:
+    return NodeMeta(name, img)
+
+
+def mk_rich_node(node: Node, perms: Perms, meta: NodeMeta) -> RichNode:
+    return RichNode(node, perms, meta)

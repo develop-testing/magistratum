@@ -28,12 +28,12 @@ document.addEventListener("DOMContentLoaded", (e) => {
         return mk_file_manager([
           ...res.map((item) =>
             mk_manager_item(
-              item.item_id,
-              item.type,
-              item.img,
-              item.name,
-              item.owner,
-              item.group,
+              item.node.node_id,
+              item.node.type,
+              item.meta.img,
+              item.meta.name,
+              item.perms.owner_name,
+              item.perms.group_name,
             ),
           ),
         ]);
