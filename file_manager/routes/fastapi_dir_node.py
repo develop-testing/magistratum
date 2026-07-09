@@ -59,7 +59,7 @@ async def directory_content(req: Request, dir_id: str) -> Result:
                 ),
                 mk_node_meta(
                     d.name,
-                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoIPFR64MC6wq6bYaT-2HSO3F8nphG5oLYYo1Od2Mv5w&s=10",
+                    "https://byzantium-blogger.blog/wp-content/uploads/2020/03/2600-skull.jpg?w=1024&h=576",
                 ),
             )
         ]
@@ -81,7 +81,7 @@ async def directory_content(req: Request, dir_id: str) -> Result:
                 ),
                 mk_node_meta(
                     d.name,
-                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoIPFR64MC6wq6bYaT-2HSO3F8nphG5oLYYo1Od2Mv5w&s=10",
+                    "https://byzantium-blogger.blog/wp-content/uploads/2020/03/2600-skull.jpg?w=1024&h=576",
                 ),
             )
         ]
