@@ -3,10 +3,10 @@
 ## Quick start
 
 ```bash
-make run          # docker compose up --build (web:8800, db:8810, adminer:8820, redis:8830)
-make lint         # docker compose run --rm web mypy .
-make format       # docker compose run --rm web black .
-make setup        # docker compose exec web python setup.py (init DB tables + seed root user)
+make run          # docker compose up --build (backend:8800, frontend:8840, db:8810, adminer:8820, redis:8830)
+make lint         # docker compose run --rm backend mypy .
+make format       # docker compose run --rm backend black .
+make setup        # docker compose exec backend python setup.py (init DB tables + seed root user)
 make apply-migrations  # alembic upgrade head
 ```
 

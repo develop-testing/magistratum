@@ -7,11 +7,21 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: lorica_db
       MYSQL_USER: admin
-      MYSQL_PASSWORD: 'hdjywee2'
+      MYSQL_PASSWORD: "hdjywee2"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-ppassword" ]
+      test:
+        [
+          "CMD",
+          "mariadb-admin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-ppassword",
+        ]
       timeout: 10s
       interval: 5s
       retries: 5
@@ -25,8 +35,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      fast-store:
-        condition: service_started
 
   fast-store:
     image: redis:8.8.0
@@ -34,7 +42,7 @@ services:
       - "8830:6379"
     command: redis-server --requirepass fhy6asd
 
-  web:
+  backend:
     build: .
     ports:
       - "8800:8000"
@@ -42,10 +50,27 @@ services:
       - .:/app
     environment:
       - PYTHONPYCACHEPREFIX=/app/.cache/pycache
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn main:backend --host 0.0.0.0 --port 8000 --reload
     depends_on:
       db:
         condition: service_healthy
+      fast-store:
+        condition: service_started
+
+  frontend:
+    build: .
+    ports:
+      - "8840:8100"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPYCACHEPREFIX=/app/.cache/pycache
+    command: uvicorn main:frontend --host 0.0.0.0 --port 8100 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+      fast-store:
+        condition: service_started
 
 volumes:
   mysql_data:

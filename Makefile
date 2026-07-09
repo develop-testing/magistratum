@@ -8,28 +8,28 @@ logs:
 	docker compose logs -f
 
 lint:
-	docker compose run --rm web mypy .
+	docker compose run --rm backend mypy .
 
 format:
-	docker compose run --rm web black .
+	docker compose run --rm backend black .
 
 web-command:
-	docker compose exec web $(cmd)
+	docker compose exec backend $(cmd)
 
 dump-req:
-	docker compose exec web pip freeze > requirements.txt
+	docker compose exec backend pip freeze > requirements.txt
 
 install-req:
-	docker compose exec web pip install -r requirements.txt
+	docker compose exec backend pip install -r requirements.txt
 
 setup:
-	docker compose exec web python setup.py
+	docker compose exec backend python setup.py
 
 init-alembic:
-	docker compose exec web alembic init database/alembic
+	docker compose exec backend alembic init database/alembic
 
 create-migrations:
-	docker compose exec web alembic revision --autogenerate -m "init"
+	docker compose exec backend alembic revision --autogenerate -m "init"
 
 apply-migrations:
-	docker compose exec web alembic upgrade head
+	docker compose exec backend alembic upgrade head
