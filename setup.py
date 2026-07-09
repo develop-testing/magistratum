@@ -3,7 +3,7 @@ from database.database import metadata, engine
 from auth.member import make_candidate
 from auth.sources.sqlalchemy_member import save_candidate
 
-from file_manager.directory import mk_directory
+from file_manager.directories.directory import mk_directory
 from file_manager.sources.sqlalchemy_dir import save_directory
 
 from file_manager.permissions import new_permissions

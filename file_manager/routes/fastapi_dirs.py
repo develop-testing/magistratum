@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 
 from router.response import *
 
-from ..directory import (
+from ..directories.directory import (
     BrokenDirectory,
     DirFilter,
     Directory,
