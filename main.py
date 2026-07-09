@@ -13,6 +13,7 @@ from auth.routes.auth_middleware import *
 from auth.routes.fastapi_auth import auth_router
 from file_manager.routes.fastapi_file import files_router
 from file_manager.routes.fastapi_dirs import dirs_router
+from file_manager.routes.fastapi_dir_node import dir_node_router
 from file_manager.routes.fastapi_groups import groups_router
 from ui.routes.fastapi_dashboard import ui_dashboard_router
 
@@ -58,5 +59,6 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(ui_dashboard_router)
 app.include_router(dirs_router, dependencies=[Depends(auth_middleware)])
+app.include_router(dir_node_router, dependencies=[Depends(auth_middleware)])
 app.include_router(groups_router, dependencies=[Depends(auth_middleware)])
 app.include_router(files_router, dependencies=[Depends(auth_middleware)])

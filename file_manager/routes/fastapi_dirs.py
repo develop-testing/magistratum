@@ -13,7 +13,7 @@ from ..directory import (
     mk_directory,
     rename_directory,
 )
-from ..files import BrokenFile, TextFile, TextFileFilter
+
 from ..permissions import has_read, has_write, new_permissions
 from ..sources.sqlalchemy_dir import (
     delete_directory,
@@ -25,7 +25,6 @@ from ..sources.sqlalchemy_dir import (
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..sources.sqlalchemy_permissions import fetch_permissions_for, save_permissions
-from ..sources.sqlalchemy_file import fetch_file_by_filter
 
 dirs_router = APIRouter()
 
@@ -137,81 +136,5 @@ async def read_dirs(
             continue
 
         result.append(d)
-
-    return result
-
-
-@dataclass(frozen=True, slots=True)
-class DirectoryItem:
-    item_id: str
-    type: str
-    img: str
-    name: str
-    owner: str
-    group: str
-
-@dataclass(frozen=True, slots=True)
-class BrokenItem:
-    name: str
-    reason: str
-
-Result = list[DirectoryItem | BrokenItem]
-
-@dirs_router.get("/directory/content", tags=["Directories"])
-async def directory_content(req: Request, dir_id: str) -> Result:
-    session_owner = req.state.session.owner
-
-    groups = fetch_groups_by_user(session_owner)
-    group_names = [g.name for g in groups]
-
-    print( "asdasd",dir_id)
-
-    dirs = fetch_dirs_by_parent(dir_id)
-
-    files = fetch_file_by_filter(TextFileFilter("", dir_id, 0, 0))
-
-
-    if not dirs and not files:
-        raise BadRequest("no one dir or files not found")
-
-    prms = fetch_permissions_for([d.dir_id for d in dirs] + [f.file_id for f in files])
-
-    result: Result = []
-
-    for d in dirs:
-        prm = next((p for p in prms if p.item_id == d.dir_id), None)
-
-        if not prm or not has_read(prm, session_owner, group_names):
-            result += [BrokenItem(name=d.name, reason="access not allowed")]
-            continue
-        
-        result += [
-            DirectoryItem(
-                type="dir",
-                item_id=d.dir_id,
-                img="https://warhammergames.ru/_pu/3/s42932075.jpg",
-                name=d.name,
-                owner=prm.owner_name,
-                group=prm.group_name,
-            )
-        ]
-
-    for f in files:
-        prm = next((p for p in prms if p.item_id == f.file_id), None)
-
-        if not prm or not has_read(prm, session_owner, group_names):
-            result += [BrokenFile(name=f.name, reason="access not allowed")]
-            continue
-
-        result += [
-            DirectoryItem(
-                type="text_file",
-                item_id=f.file_id,
-                img="https://warhammergames.ru/_pu/3/s42932075.jpg",
-                name=f.name,
-                owner=prm.owner_name,
-                group=prm.group_name,
-            )
-        ]
 
     return result
