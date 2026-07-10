@@ -14,7 +14,6 @@
     @extend .mb-4;
 
     &-content {
-      @extend .container;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -43,8 +42,6 @@
   }
 }
 
-
-
 .btn {
   padding: ($step * 2) ($step * 4);
   cursor: pointer;
@@ -68,6 +65,17 @@
   font-size: 0.8rem;
   text-align: center;
   color: $gold;
+}
+
+.article-card {
+  background-color: $second-color;
+  padding: ($step * 4);
+  line-height: 1.6;
+  color: $font-color;
+
+  img {
+    max-width: 100%;
+  }
 }
 
 .tox-tinymce {

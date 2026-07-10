@@ -43,8 +43,8 @@ async def dashboar_home(req: Request) -> HTMLResponse:
     return render_dashboard(home.dir_id)
 
 
-@ui_dashboard_router.get("/dashboar/text_file/{file_id}", tags=["Auth"])
-async def dashboar_text_file(file_id: str) -> HTMLResponse:
+@ui_dashboard_router.get("/dashboar/text_file/edit/{file_id}", tags=["Auth"])
+async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
     fl = fetch_file_by_id(file_id).unwrap_or_raise(BadRequest)
 
     with open("ui/templates/dashboard/text_file.scss", "r", encoding="utf-8") as f:
@@ -64,6 +64,32 @@ async def dashboar_text_file(file_id: str) -> HTMLResponse:
     }
 
     with open("ui/templates/dashboard/text_file.mustache", "r", encoding="utf-8") as f:
+        html_content = chevron.render(f, data)
+
+    return HTMLResponse(html_content)
+
+
+@ui_dashboard_router.get("/dashboar/text_file/{file_id}", tags=["Auth"])
+async def dashboar_text_file(file_id: str) -> HTMLResponse:
+    fl = fetch_file_by_id(file_id).unwrap_or_raise(BadRequest)
+
+    with open("ui/templates/dashboard/text_file.scss", "r", encoding="utf-8") as f:
+        scss_content = f.read()
+
+    result = sass_embedded.compile_string(
+        scss_content, load_paths=[Path("ui/templates/")]
+    )
+
+    data = {
+        "title": "Lorice Administratum",
+        "styles": result.output,
+        "file_id": file_id,
+        "file_name": fl.name,
+        "file_content": fl.content,
+        "parent_id": fl.parent_id,
+    }
+
+    with open("ui/templates/dashboard/text_file_read.mustache", "r", encoding="utf-8") as f:
         html_content = chevron.render(f, data)
 
     return HTMLResponse(html_content)

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{title}}</title>
+        <style>{{{styles}}}</style>
+    </head>
+    <body>
+        <header class="header">
+            <div class="header-content">
+                <a href="/dashboar/directory/{{parent_id}}" style="color:inherit;text-decoration:none;">←</a>
+                {{title}} — {{file_name}}
+            </div>
+        </header>
+        <main class="main">
+            <div class="main-content">
+                <div class="editor-header">
+                    <div class="editor-header-content">
+                        <span class="editor--title">{{file_name}}</span>
+                        <a href="/dashboar/text_file/edit/{{file_id}}" class="btn btn-gold">Редактировать</a>
+                    </div>
+                </div>
+                <div class="article-card">
+                    {{{file_content}}}
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
