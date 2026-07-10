@@ -14,7 +14,7 @@ async def login_page() -> HTMLResponse:
     return render_auth_page("Lorice Administratum — Вход", "login")
 
 
-@ui_auth_router.get("/register", tags=["Auth UI"])
+""" @ui_auth_router.get("/register", tags=["Auth UI"])
 async def register_page() -> HTMLResponse:
     return render_auth_page("Lorice Administratum — Регистрация", "register")
 
@@ -34,4 +34,4 @@ def render_auth_page(title: str, template_name: str) -> HTMLResponse:
     ) as f:
         html_content = chevron.render(f, data)
 
-    return HTMLResponse(html_content)
+    return HTMLResponse(html_content) """
