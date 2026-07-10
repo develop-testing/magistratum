@@ -133,6 +133,19 @@ def update_file(old_name: str, file: TextFile) -> Result[TextFile, str]:
         return Ok(file)
 
 
+def update_file_by_id(file_id: str, file: TextFile) -> Result[TextFile, str]:
+    query = sa.text(
+        "UPDATE files SET content = :content, name = :name WHERE file_id = :file_id"
+    )
+    with engine.connect() as conn:
+        conn.execute(
+            query,
+            {"content": file.content, "name": file.name, "file_id": file_id},
+        )
+        conn.commit()
+        return Ok(file)
+
+
 def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, str]:
     try:
         insert_file_query = sa.text(

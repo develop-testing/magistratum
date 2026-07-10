@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{title}}</title>
+        <style>{{{styles}}}</style>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="/static/dashboard/tinymce/skins/ui/oxide/skin.min.css">
+    </head>
+    <body data-file-id="{{file_id}}" data-parent-id="{{parent_id}}">
+        <header class="header">
+            <div class="header-content">
+                <a href="/dashboar/directory/{{parent_id}}" style="color:inherit;text-decoration:none;">←</a>
+                {{title}} — {{file_name}}
+            </div>
+        </header>
+        <main class="main">
+            <div class="main-content">
+                <div class="editor-header">
+                    <div class="editor-header-content">
+                        <span class="editor--title">{{file_name}}</span>
+                        <button id="save-btn" class="btn btn-gold">Сохранить</button>
+                    </div>
+                </div>
+                <div class="editor-card">
+                    <div class="editor-body">
+                        <textarea id="editor">{{{file_content}}}</textarea>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    <script src="/static/dashboard/tinymce/tinymce.min.js"></script>
+    <script>
+        const file_id = document.body.dataset.fileId;
+        const save_btn = document.getElementById("save-btn");
+        const status_el = document.getElementById("editor-status");
+
+        tinymce.init({
+            selector: "#editor",
+            menubar: false,
+            branding: false,
+            promotion: false,
+            height: "100%",
+            plugins: "lists link image code fullscreen preview",
+            toolbar: "bold italic | blocks | bullist numlist | link image | code fullscreen preview",
+            content_style: "body { font-family: Cinzel, serif; }",
+            setup: function (editor) {
+                editor.on("init", function () {
+                    editor.setContent(document.getElementById("editor").value || "");
+                });
+            }
+        });
+
+        const change_file = (file_id, content) => {
+            return fetch("http://127.0.0.1:8800/file", {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ file_id: file_id, new_content: content }),
+            }).then(res => res.json())
+        }
+
+        save_btn.addEventListener("click", async () => {
+            const content = tinymce.get("editor").getContent();
+            change_file(file_id, content)
+        });
+    </script>
+    </body>
+</html>

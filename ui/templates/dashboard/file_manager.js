@@ -40,8 +40,15 @@ export const make_item_html = (item) => {
     broken: "type-broken",
   };
 
+  const type_links = {
+    dir: "/dashboar/directory/",
+    text_file: "/dashboar/text_file/",
+    broken: "type-broken",
+  };
+
   const current_class = type_classes[item.type] || "type-unknown";
   const current_name = types[item.type] || "Неизвестно";
+  const link = type_links[item.type] + encodeURIComponent(item.id);
 
   return `<div data-type="${item.type}" data-id="${item.id}" class="file-item">
 		<div class="file-item-img">
@@ -50,7 +57,7 @@ export const make_item_html = (item) => {
 		<div class="file-item-content">
         <div data-node-remove class="file-item-close">&#128473;</div>
 				<div class="file-item-type ${current_class}">${current_name}</div>    
-				<a href="/dashboar/directory/${item.id}" class="file-item-title">${item.name}</a>
+				<a href="${link}" class="file-item-title">${item.name}</a>
 				<div class="file-item-owner">Владелец: ${item.owner}</div>
 				<div class="file-item-group">Группа: ${item.group}</div>
 		</div>

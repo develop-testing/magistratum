@@ -20,9 +20,7 @@ async def login_page() -> HTMLResponse:
 
     data = {"title": "Magistratum", "styles": result.output}
 
-    with open(
-        f"ui/templates/auth/login.mustache", "r", encoding="utf-8"
-    ) as f:
+    with open(f"ui/templates/auth/login.mustache", "r", encoding="utf-8") as f:
         html_content = chevron.render(f, data)
 
     return HTMLResponse(html_content)

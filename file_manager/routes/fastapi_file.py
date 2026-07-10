@@ -20,10 +20,9 @@ from ..sources.sqlalchemy_file import (
     save_file,
     fetch_file_by_filter,
     fetch_file_by_id,
-    fetch_file_by_name,
     delete_file_by_id,
     move_file,
-    update_file,
+    update_file_by_id,
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..permissions import Permissions, new_permissions, has_read, has_write
@@ -35,6 +34,7 @@ files_router = APIRouter()
 
 @dataclass(frozen=True, slots=True)
 class FetchFileReq:
+    by_id: str = ""
     by_name: str = ""
     by_directory: str = ""
     limit: int = 10
@@ -50,19 +50,27 @@ async def read_files(req: Request, query: FetchFileReq = Depends()) -> ReadRet:
 
     groups = fetch_groups_by_user(session.owner)
 
+    group_names = [g.name for g in groups]
+
+    if query.by_id:
+        fl = fetch_file_by_id(query.by_id).unwrap_or_raise(BadRequest)
+        prms = fetch_permissions_for([fl.file_id])
+        prm = next((p for p in prms if p.item_id == fl.file_id), None)
+        if not prm or not has_read(prm, session.owner, group_names):
+            return [BrokenFile(name=fl.name, reason="access not allowed")]
+        return [TextFile(fl.file_id, fl.name, fl.content, fl.parent_id)]
+
     files = fetch_file_by_filter(
         TextFileFilter(query.by_name, query.by_directory, query.limit, query.offset)
     )
 
     prms = fetch_permissions_for([file.file_id for file in files])
 
-    group_names = [g.name for g in groups]
-
     result: list[TextFile | BrokenFile] = []
     for f in files:
         prm = next((p for p in prms if p.item_id == f.file_id), None)
         if prm and has_read(prm, session.owner, group_names):
-            result.append(f)
+            result.append(TextFile(f.file_id, f.name, f.content, f.parent_id))
         else:
             result.append(BrokenFile(name=f.name, reason="access not allowed"))
 
@@ -141,10 +149,10 @@ async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
 
 @dataclass(frozen=True, slots=True)
 class EditFileRequest:
-    filename: str
-    new_filename: str
-    new_content: str
-    new_parent_id: str
+    file_id: str
+    new_filename: str = ""
+    new_content: str = ""
+    new_parent_id: str = ""
 
 
 @files_router.patch("/file", tags=["Files"])
@@ -153,7 +161,7 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    fl = fetch_file_by_name(body.filename).unwrap_or_raise(BadRequest)
+    fl = fetch_file_by_id(body.file_id).unwrap_or_raise(BadRequest)
 
     prms = fetch_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)
@@ -167,7 +175,7 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
     if body.new_parent_id:
         move_file(fl.file_id, body.new_parent_id).unwrap_or_raise(BadRequest)
 
-    return update_file(body.filename, fl).unwrap_or_raise(BadRequest)
+    return update_file_by_id(body.file_id, fl).unwrap_or_raise(BadRequest)
 
 
 @dataclass(frozen=True, slots=True)

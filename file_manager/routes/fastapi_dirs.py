@@ -90,9 +90,11 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
 
     return update_directory(d).unwrap_or_raise(BadRequest)
 
+
 @dataclass(frozen=True, slots=True)
 class DeleteDirectoryReq:
     dir_id: str
+
 
 @dirs_router.delete("/directory", tags=["Directories"])
 async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
