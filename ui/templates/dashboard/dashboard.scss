@@ -6,7 +6,7 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    border: 0.3rem solid $main-color;
+    // border: 0.3rem solid $main-color;
     background-color: $second-color;
   }
 
@@ -27,7 +27,7 @@
 
 .file-item {
   @extend .manager-grid-item;
-  border: 0.3rem solid $gold;
+  box-shadow: 0px 0px 10px 5px rgba(166, 124, 67, 0.7);
 
   &-img {
     @extend .mb-4;
