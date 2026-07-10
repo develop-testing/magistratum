@@ -4,9 +4,6 @@
         <meta charset="utf-8">
         <title>{{title}}</title>
         <style>{{{styles}}}</style>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="/static/dashboard/tinymce/skins/ui/oxide/skin.min.css">
     </head>
     <body data-file-id="{{file_id}}" data-parent-id="{{parent_id}}">
@@ -46,7 +43,7 @@
             height: "100%",
             plugins: "lists link image code fullscreen preview",
             toolbar: "bold italic | blocks | bullist numlist | link image | code fullscreen preview",
-            content_style: "body { font-family: Cinzel, serif; }",
+            content_style: "body { font-family: monospace; }",
             setup: function (editor) {
                 editor.on("init", function () {
                     editor.setContent(document.getElementById("editor").value || "");
