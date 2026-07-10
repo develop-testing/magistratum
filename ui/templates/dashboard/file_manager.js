@@ -50,7 +50,7 @@ export const make_item_html = (item) => {
 		<div class="file-item-content">
         <div data-node-remove class="file-item-close">&#128473;</div>
 				<div class="file-item-type ${current_class}">${current_name}</div>    
-				<div class="file-item-title">${item.name}</div>
+				<a href="/dashboar/directory/${item.id}" class="file-item-title">${item.name}</a>
 				<div class="file-item-owner">Владелец: ${item.owner}</div>
 				<div class="file-item-group">Группа: ${item.group}</div>
 		</div>
