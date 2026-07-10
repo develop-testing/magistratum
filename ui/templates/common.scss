@@ -78,8 +78,8 @@ body {
 }
 
 .header {
-  border-bottom: 2px solid $second-color;
-  background-color: $second-color;
+  backdrop-filter: blur(4px);
+  box-shadow: 0px 0px 4px 3px rgba(0, 0, 0, 0.75);
 
   &-content {
     @extend .container;
