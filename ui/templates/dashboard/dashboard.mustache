@@ -16,6 +16,9 @@
             <div class="main-content">
                 <div class="manager-grid">
                     <div class="manager-grid-header">
+                        {{#parent_id}}
+                        <a href="/dashboar/directory/{{parent_id}}" title="назад" class="manager-button">⬅️</a>
+                        {{/parent_id}}
                         <button
                             title="добавить директорию"
                             class="manager-button"

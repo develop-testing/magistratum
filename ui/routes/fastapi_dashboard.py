@@ -10,11 +10,14 @@ import chevron  # type: ignore[import-untyped]
 from router.response import BadRequest
 from file_manager.sources.sqlalchemy_home_dir import fetch_home_dir_by_username
 from file_manager.sources.sqlalchemy_file import fetch_file_by_id
+from file_manager.sources.sqlalchemy_dir import fetch_dir_by_id
 
 ui_dashboard_router = APIRouter()
 
 
 def render_dashboard(dir_id: str) -> HTMLResponse:
+    dr = fetch_dir_by_id(dir_id).unwrap_or_raise(BadRequest)
+
     with open("ui/templates/dashboard/dashboard.scss", "r", encoding="utf-8") as f:
         scss_content = f.read()
 
@@ -22,7 +25,12 @@ def render_dashboard(dir_id: str) -> HTMLResponse:
         scss_content, load_paths=[Path("ui/templates/")]
     )
 
-    data = {"title": "Lorice Administratum", "styles": result.output, "dir_id": dir_id}
+    data = {
+        "title": "Lorice Administratum",
+        "styles": result.output,
+        "dir_id": dir_id,
+        "parent_id": dr.parent_id,
+    }
 
     with open("ui/templates/dashboard/dashboard.mustache", "r", encoding="utf-8") as f:
         html_content = chevron.render(f, data)
