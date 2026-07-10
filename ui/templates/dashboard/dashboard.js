@@ -13,19 +13,36 @@ document.addEventListener("DOMContentLoaded", (e) => {
   const add_file_form = document.querySelector("#add-file-form");
   const add_file_button = document.querySelector("#add-file");
 
-  const show_file_manager = (html) => {
-    const parent = document.querySelector("#manager-grid");
-    parent.innerHTML = "";
-    parent.insertAdjacentHTML("beforeend", html);
+  const remove_directory = (id) => {
+    return fetch(`http://127.0.0.1:8800/directory`, {
+      credentials: "include",
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dir_id: id }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        return res;
+      });
   };
 
-  const dir_id = document.body.dataset.dirId;
+  const remove_text_file = (id) => {
+    return fetch(`http://127.0.0.1:8800/file`, {
+      credentials: "include",
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file_id: id }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        return res;
+      });
+  };
 
   const fetch_directory_content = () => {
-    return fetch(
-      `http://127.0.0.1:8800/directory/content?dir_id=${dir_id}`,
-      { credentials: "include" },
-    )
+    return fetch(`http://127.0.0.1:8800/directory/content?dir_id=${dir_id}`, {
+      credentials: "include",
+    })
       .then((res) => res.json())
       .then((res) => {
         return mk_file_manager([
@@ -42,6 +59,51 @@ document.addEventListener("DOMContentLoaded", (e) => {
         ]);
       });
   };
+
+  const show_file_manager = (html) => {
+    const parent = document.querySelector("#manager-grid");
+    parent.innerHTML = "";
+    parent.insertAdjacentHTML("beforeend", html);
+
+    let remove_node_buttons = document.querySelectorAll("[data-node-remove]");
+
+    remove_node_buttons.forEach((node) => {
+      node.addEventListener("click", (e) => {
+        const type = e.target.closest(".file-item").getAttribute("data-type");
+        const id = e.target.closest(".file-item").getAttribute("data-id");
+
+        let result =
+          type === "dir" ? remove_directory(id) : remove_text_file(id);
+
+        result.then((res) => {
+          file_manager = fetch_directory_content().then((fm) => {
+            show_file_manager(fm.items.map(make_item_html).join(""));
+            return fm;
+          });
+        });
+      });
+    });
+  };
+
+  const create_directory = (data) => {
+    return fetch("http://127.0.0.1:8800/directory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    }).then((response) => response.json());
+  };
+
+  const create_file = (data) => {
+    return fetch("http://127.0.0.1:8800/file", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    }).then((response) => response.json());
+  };
+
+  const dir_id = document.body.dataset.dirId;
 
   let file_manager = fetch_directory_content().then((fm) => {
     show_file_manager(fm.items.map(make_item_html).join(""));
@@ -70,20 +132,13 @@ document.addEventListener("DOMContentLoaded", (e) => {
     const form_data = new FormData(e.target);
     const json_object = Object.fromEntries(form_data.entries());
 
-    fetch("http://127.0.0.1:8800/directory", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(json_object),
-      credentials: "include",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        file_manager = fetch_directory_content().then((fm) => {
-          show_file_manager(fm.items.map(make_item_html).join(""));
-          return fm;
-        });
-        add_directory_modal.classList.toggle("-show");
+    create_directory(json_object).then((_) => {
+      file_manager = fetch_directory_content().then((fm) => {
+        show_file_manager(fm.items.map(make_item_html).join(""));
+        return fm;
       });
+      add_directory_modal.classList.toggle("-show");
+    });
   });
 
   add_file_form.addEventListener("submit", (e) => {
@@ -93,19 +148,12 @@ document.addEventListener("DOMContentLoaded", (e) => {
     const json_object = Object.fromEntries(form_data.entries());
     json_object.content = "";
 
-    fetch("http://127.0.0.1:8800/file", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(json_object),
-      credentials: "include",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        file_manager = fetch_directory_content().then((fm) => {
-          show_file_manager(fm.items.map(make_item_html).join(""));
-          return fm;
-        });
-        add_file_modal.classList.toggle("-show");
+    create_file(json_object).then((_) => {
+      file_manager = fetch_directory_content().then((fm) => {
+        show_file_manager(fm.items.map(make_item_html).join(""));
+        return fm;
       });
+      add_file_modal.classList.toggle("-show");
+    });
   });
 });

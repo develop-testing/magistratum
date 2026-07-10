@@ -90,14 +90,17 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
 
     return update_directory(d).unwrap_or_raise(BadRequest)
 
+@dataclass(frozen=True, slots=True)
+class DeleteDirectoryReq:
+    dir_id: str
 
 @dirs_router.delete("/directory", tags=["Directories"])
-async def delete_dir(req: Request, dir_id: str) -> bool:
+async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
     session = req.state.session
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    d = fetch_dir_by_id(dir_id).unwrap_or_raise(BadRequest)
+    d = fetch_dir_by_id(body.dir_id).unwrap_or_raise(BadRequest)
 
     prms = fetch_permissions_for([d.dir_id])
     prm = next((p for p in prms if p.item_id == d.dir_id), None)

@@ -43,11 +43,12 @@ export const make_item_html = (item) => {
   const current_class = type_classes[item.type] || "type-unknown";
   const current_name = types[item.type] || "Неизвестно";
 
-  return `<div data-id="${item.id}" class="file-item">
+  return `<div data-type="${item.type}" data-id="${item.id}" class="file-item">
 		<div class="file-item-img">
 				<img src="${item.img}">
 		</div>
 		<div class="file-item-content">
+        <div data-node-remove class="file-item-close">&#128473;</div>
 				<div class="file-item-type ${current_class}">${current_name}</div>    
 				<div class="file-item-title">${item.name}</div>
 				<div class="file-item-owner">Владелец: ${item.owner}</div>

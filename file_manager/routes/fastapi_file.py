@@ -170,13 +170,18 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
     return update_file(body.filename, fl).unwrap_or_raise(BadRequest)
 
 
+@dataclass(frozen=True, slots=True)
+class DeletFileReq:
+    file_id: str
+
+
 @files_router.delete("/file", tags=["Files"])
-async def delete_file(req: Request, file_name: str) -> bool:
+async def delete_file(req: Request, body: DeletFileReq) -> bool:
     session = req.state.session
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    fl = fetch_file_by_name(file_name).unwrap_or_raise(BadRequest)
+    fl = fetch_file_by_id(body.file_id).unwrap_or_raise(BadRequest)
 
     prms = fetch_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)
