@@ -91,9 +91,9 @@ body {
 
 .main {
   flex: 1 0 0;
-  display: flex;
+  /* display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: center; */
   margin-top: $step * 4;
 
   &-content {
