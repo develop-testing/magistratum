@@ -78,9 +78,13 @@
                             </label>
                         </div>
                         <div data-tab-content="meta" class="tabs-content">
+                            <div class="def-field">
+                                <span>Текущее изображение</span>
+                                <img id="image-preview" src="{{image_url}}" style="max-width:300px;max-height:200px;{{^image_url}}display:none;{{/image_url}}">
+                            </div>
                             <label class="def-field">
                                 <span>Изображение</span>
-                                <input type="file" name="image">
+                                <input type="file" name="image" accept="image/*">
                             </label>
                         </div>
                     </div>
@@ -127,7 +131,7 @@
             }
         });
 
-        const change_file = (file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName) => {
+        const change_file = (file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName, cover) => {
             return fetch("http://127.0.0.1:8800/file", {
                 method: "PATCH",
                 credentials: "include",
@@ -141,9 +145,25 @@
                     new_parent_id: parentDir,
                     new_owner: owner,
                     new_group_name: groupName,
+                    new_cover: cover,
                 }),
             }).then(res => res.json())
         }
+
+        const imageInput = document.querySelector('[name="image"]');
+        const imagePreview = document.getElementById("image-preview");
+
+        imageInput.addEventListener("change", () => {
+            const file = imageInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    imagePreview.src = reader.result;
+                    imagePreview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            }
+        });
 
         save_btn.addEventListener("click", async () => {
             const filename = document.querySelector('[name="file-name"]').value;
@@ -153,7 +173,17 @@
             const parentDir = document.querySelector('[name="perm-parent-dir"]').value;
             const owner = document.querySelector('[name="perm-owner"]').value;
             const groupName = document.querySelector('[name="perm-group-name"]').value;
-            change_file(file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName)
+            const imageInput = document.querySelector('[name="image"]');
+            const file = imageInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async () => {
+                    await change_file(file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName, reader.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                await change_file(file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName, "");
+            }
         });
     </script>
     </body>

@@ -23,6 +23,7 @@ backend = FastAPI(docs_url=None, redoc_url=None)
 frontend = FastAPI()
 
 backend.mount("/public", StaticFiles(directory="public/admin"), name="static")
+backend.mount("/public/images", StaticFiles(directory="public/images"), name="images")
 backend.mount("/static/auth", StaticFiles(directory="auth/shell/skins/default/auth"), name="static-auth")
 backend.mount("/static/file_manager", StaticFiles(directory="file_manager/shell/skins/default"), name="static-fm")
 
@@ -73,6 +74,7 @@ backend.include_router(files_router, dependencies=[Depends(auth_middleware)])
 
 frontend.mount("/static/auth", StaticFiles(directory="auth/shell/skins/default/auth"), name="static-auth")
 frontend.mount("/static/file_manager", StaticFiles(directory="file_manager/shell/skins/default"), name="static-fm")
+frontend.mount("/public/images", StaticFiles(directory="public/images"), name="images")
 
 frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)])

@@ -19,6 +19,14 @@ sa.Table(
     sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
 )
 
+sa.Table(
+    "files_to_image",
+    metadata,
+    sa.Column("file_id", sa.String(255), nullable=False, unique=True, primary_key=True),
+    sa.Column("image_path", sa.String(500), nullable=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+)
+
 
 def fetch_file_by_id(file_id: str) -> Result[TextFile, str]:
     query = sa.text(
@@ -203,3 +211,32 @@ def delete_file_by_id(file_id: str) -> bool:
         conn.commit()
 
         return True
+
+
+def add_image_to_file(file_id: str, image_path: str) -> Result[str, str]:
+    query = sa.text(
+        "INSERT INTO files_to_image (file_id, image_path) VALUES (:file_id, :image_path)"
+        " ON DUPLICATE KEY UPDATE image_path = :image_path"
+    )
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(query, {"file_id": file_id, "image_path": image_path})
+            conn.commit()
+            return Ok(image_path)
+    except sa.exc.IntegrityError:
+        return Err("failed to save image")
+
+
+def fetch_image_by_file(file_id: str) -> Result[str, str]:
+    query = sa.text(
+        "SELECT image_path FROM files_to_image WHERE file_id = :file_id"
+    )
+
+    with engine.connect() as conn:
+        row = conn.execute(query, {"file_id": file_id}).mappings().first()
+
+        if row is None:
+            return Err("no image")
+
+        return Ok(str(row["image_path"]))

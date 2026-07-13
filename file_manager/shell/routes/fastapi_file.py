@@ -1,5 +1,8 @@
 from __future__ import annotations
+import base64
+import uuid
 from dataclasses import dataclass
+from pathlib import Path
 from result import Result, Ok, Err
 from fastapi import APIRouter, Depends, Response, Request
 
@@ -23,6 +26,7 @@ from ..sources.sqlalchemy_file import (
     delete_file_by_id,
     move_file,
     update_file_by_id,
+    add_image_to_file,
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ...permissions import Permissions, new_permissions, has_read, has_write
@@ -201,7 +205,37 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
         updated_prm = new_permissions(body.file_id, new_owner, new_grp, new_content).unwrap_or_raise(BadRequest)
         update_permissions([updated_prm])
 
+    if body.new_cover:
+        _save_image(body.file_id, body.new_cover).unwrap_or_raise(BadRequest)
+
     return updated_fl
+
+
+def _save_image(file_id: str, data_url: str) -> Result[str, str]:
+    if "," not in data_url:
+        return Err("invalid image data")
+
+    header, encoded = data_url.split(",", 1)
+    ext = "png"
+    if "jpeg" in header or "jpg" in header:
+        ext = "jpg"
+    elif "gif" in header:
+        ext = "gif"
+    elif "webp" in header:
+        ext = "webp"
+
+    try:
+        raw = base64.b64decode(encoded)
+    except Exception:
+        return Err("invalid base64 data")
+
+    images_dir = Path("public/images")
+    images_dir.mkdir(parents=True, exist_ok=True)
+
+    file_path = images_dir / f"{uuid.uuid4().hex}.{ext}"
+    file_path.write_bytes(raw)
+
+    return add_image_to_file(file_id, f"/public/images/{file_path.name}")
 
 
 @dataclass(frozen=True, slots=True)

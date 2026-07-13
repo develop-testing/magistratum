@@ -9,6 +9,7 @@ import chevron  # type: ignore[import-untyped]
 
 from router.response import BadRequest
 from file_manager.shell.sources.sqlalchemy_file import fetch_file_by_id
+from file_manager.shell.sources.sqlalchemy_file import fetch_image_by_file
 from file_manager.shell.sources.sqlalchemy_permissions import fetch_permissions_for
 from file_manager.shell.sources.sqlalchemy_group import fetch_all_groups
 from file_manager.shell.sources.sqlalchemy_dir import fetch_all_dirs
@@ -59,6 +60,7 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
         "is_other_r": other_perm_value == "r",
         "is_other_w": other_perm_value == "w",
         "is_other_rw": other_perm_value == "rw",
+        "image_url": fetch_image_by_file(file_id).unwrap_or(""),
         "all_users": [
             {"name": m.username, "is_current": m.username == perm_owner}
             for m in fetch_all_members()
