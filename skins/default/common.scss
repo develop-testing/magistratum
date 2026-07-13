@@ -16,6 +16,17 @@ $warning-color: red;
   box-sizing: border-box;
 }
 
+.m-4 {
+  margin-top: ($step * 4);
+  margin-right: ($step * 4);
+  margin-bottom: ($step * 4);
+  margin-left: ($step * 4);
+}
+
+.mt-8 {
+  margin-top: ($step * 8);
+}
+
 .mb-4 {
   margin-bottom: ($step * 4);
 }
@@ -64,10 +75,6 @@ $warning-color: red;
 .py-4 {
   padding-top: ($step * 4);
   padding-bottom: ($step * 4);
-}
-
-.mt-8 {
-  margin-top: ($step * 8);
 }
 
 .flex-basic {

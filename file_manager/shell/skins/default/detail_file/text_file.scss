@@ -62,13 +62,99 @@
 }
 
 .article-card {
+  @extend .p-4;
   background-color: $second-color;
-  padding: ($step * 4);
   line-height: 1.6;
   color: $font-color;
 
   img {
     max-width: 100%;
+  }
+
+  p,
+  dd {
+    @extend .mb-4;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: bold;
+    @extend .mt-8;
+    @extend .mb-4;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  ul,
+  ol {
+    margin-left: ($step * 4);
+    @extend .mb-4;
+  }
+
+  li {
+    @extend .mb-2;
+  }
+
+  a {
+    color: $gold;
+    text-decoration: underline;
+  }
+
+  blockquote {
+    border-left: 3px solid $gold;
+    padding-left: ($step * 2);
+    margin: ($step * 2) 0;
+    opacity: 0.85;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: ($step * 2) 0;
+    @extend .m-4;
+  }
+
+  th,
+  td {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: ($step * 1) ($step * 2);
+    text-align: left;
+  }
+
+  th {
+    font-weight: bold;
+  }
+
+  pre {
+    background: rgba(255, 255, 255, 0.05);
+    padding: ($step * 2);
+    overflow-x: auto;
+    margin: ($step * 2) 0;
+  }
+
+  code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0 ($step * 1);
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin: ($step * 3) 0;
   }
 }
 
