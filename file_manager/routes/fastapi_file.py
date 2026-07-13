@@ -27,9 +27,19 @@ from ..sources.sqlalchemy_file import (
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..permissions import Permissions, new_permissions, has_read, has_write
 
-from ..sources.sqlalchemy_permissions import fetch_permissions_for
+from ..sources.sqlalchemy_permissions import fetch_permissions_for, update_permissions
 
 files_router = APIRouter()
+
+
+def _value_to_perm_code(value: str) -> str:
+    if value == "r":
+        return "r-"
+    if value == "w":
+        return "-w"
+    if value == "rw":
+        return "rw"
+    return "--"
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,6 +163,10 @@ class EditFileRequest:
     new_filename: str = ""
     new_content: str = ""
     new_parent_id: str = ""
+    new_owner: str = ""
+    new_group_perms: str = ""
+    new_other_perms: str = ""
+    new_cover: str = "" 
 
 
 @files_router.patch("/file", tags=["Files"])
@@ -175,7 +189,18 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
     if body.new_parent_id:
         move_file(fl.file_id, body.new_parent_id).unwrap_or_raise(BadRequest)
 
-    return update_file_by_id(body.file_id, fl).unwrap_or_raise(BadRequest)
+    updated_fl = update_file_by_id(body.file_id, fl).unwrap_or_raise(BadRequest)
+
+    if body.new_group_perms or body.new_other_perms or body.new_owner:
+        group_part = _value_to_perm_code(body.new_group_perms) if body.new_group_perms else (prm.content[0:2] if prm else "--")
+        other_part = _value_to_perm_code(body.new_other_perms) if body.new_other_perms else (prm.content[2:4] if prm else "--")
+        new_content = group_part + other_part
+        new_owner = body.new_owner if body.new_owner else (prm.owner_name if prm else session.owner)
+        new_grp = prm.group_name if prm else "root"
+        updated_prm = new_permissions(body.file_id, new_owner, new_grp, new_content).unwrap_or_raise(BadRequest)
+        update_permissions([updated_prm])
+
+    return updated_fl
 
 
 @dataclass(frozen=True, slots=True)

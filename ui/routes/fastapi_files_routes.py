@@ -9,6 +9,17 @@ import chevron  # type: ignore[import-untyped]
 
 from router.response import BadRequest
 from file_manager.sources.sqlalchemy_file import fetch_file_by_id
+from file_manager.sources.sqlalchemy_permissions import fetch_permissions_for
+
+
+def _perm_code_to_value(code: str) -> str:
+    if code == "r-":
+        return "r"
+    if code == "-w":
+        return "w"
+    if code == "rw":
+        return "rw"
+    return ""
 
 ui_files_router = APIRouter()
 
@@ -24,6 +35,13 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
         scss_content, load_paths=[Path("ui/templates/")]
     )
 
+    prms = fetch_permissions_for([fl.file_id])
+    prm = next((p for p in prms if p.item_id == fl.file_id), None)
+
+    group_perm_value = _perm_code_to_value(prm.content[0:2]) if prm else ""
+    other_perm_value = _perm_code_to_value(prm.content[2:4]) if prm else ""
+    perm_owner = prm.owner_name if prm else ""
+
     data = {
         "title": "Lorice Administratum",
         "styles": result.output,
@@ -31,6 +49,13 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
         "file_name": fl.name,
         "file_content": html.unescape(fl.content),
         "parent_id": fl.parent_id,
+        "perm_owner": perm_owner,
+        "is_group_r": group_perm_value == "r",
+        "is_group_w": group_perm_value == "w",
+        "is_group_rw": group_perm_value == "rw",
+        "is_other_r": other_perm_value == "r",
+        "is_other_w": other_perm_value == "w",
+        "is_other_rw": other_perm_value == "rw",
     }
 
     with open(

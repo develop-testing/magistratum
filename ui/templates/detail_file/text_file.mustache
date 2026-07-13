@@ -54,18 +54,18 @@
                             </label>
                             <label class="def-field">
                                 <span>Права Группы</span>
-                                <select name="groups-permissions">
-                                    <option value="r">Чтение</option>
-                                    <option value="w">Запись</option>
-                                    <option value="rw">Чтение и запись</option>
+                                <select id="perm-group-select" name="groups-permissions">
+                                    <option value="r" {{#is_group_r}}selected{{/is_group_r}}>Чтение</option>
+                                    <option value="w" {{#is_group_w}}selected{{/is_group_w}}>Запись</option>
+                                    <option value="rw" {{#is_group_rw}}selected{{/is_group_rw}}>Чтение и запись</option>
                                 </select>
                             </label>
                             <label class="def-field">
                                 <span>Права Остальных</span>
-                                <select name="other-permissions">
-                                    <option value="r">Чтение</option>
-                                    <option value="w">Запись</option>
-                                    <option value="rw">Чтение и запись</option>
+                                <select id="perm-other-select" name="other-permissions">
+                                    <option value="r" {{#is_other_r}}selected{{/is_other_r}}>Чтение</option>
+                                    <option value="w" {{#is_other_w}}selected{{/is_other_w}}>Запись</option>
+                                    <option value="rw" {{#is_other_rw}}selected{{/is_other_rw}}>Чтение и запись</option>
                                 </select>
                             </label>
                         </div>
@@ -119,18 +119,20 @@
             }
         });
 
-        const change_file = (file_id, content) => {
+        const change_file = (file_id, content, groupPerms, otherPerms) => {
             return fetch("http://127.0.0.1:8800/file", {
                 method: "PATCH",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ file_id: file_id, new_content: content }),
+                body: JSON.stringify({ file_id: file_id, new_content: content, new_group_perms: groupPerms, new_other_perms: otherPerms }),
             }).then(res => res.json())
         }
 
         save_btn.addEventListener("click", async () => {
             const content = tinymce.get("editor").getContent();
-            change_file(file_id, content)
+            const groupPerms = document.getElementById("perm-group-select").value;
+            const otherPerms = document.getElementById("perm-other-select").value;
+            change_file(file_id, content, groupPerms, otherPerms)
         });
     </script>
     </body>
