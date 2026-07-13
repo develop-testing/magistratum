@@ -111,3 +111,14 @@ def is_dir_exists(dirname: str) -> bool:
 
     with engine.connect() as conn:
         return bool(conn.execute(query, {"dirname": dirname}).scalar())
+
+
+def fetch_all_dirs() -> list[Directory]:
+    query = sa.text("SELECT dir_id, name, parent_id FROM directories")
+
+    with engine.connect() as conn:
+        rows = conn.execute(query).mappings().all()
+        return [
+            Directory(str(r["dir_id"]), str(r["name"]), str(r["parent_id"]), [])
+            for r in rows
+        ]

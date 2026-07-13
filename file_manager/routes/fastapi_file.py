@@ -164,9 +164,10 @@ class EditFileRequest:
     new_content: str = ""
     new_parent_id: str = ""
     new_owner: str = ""
+    new_group_name: str = ""
     new_group_perms: str = ""
     new_other_perms: str = ""
-    new_cover: str = "" 
+    new_cover: str = ""
 
 
 @files_router.patch("/file", tags=["Files"])
@@ -191,12 +192,12 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
 
     updated_fl = update_file_by_id(body.file_id, fl).unwrap_or_raise(BadRequest)
 
-    if body.new_group_perms or body.new_other_perms or body.new_owner:
+    if body.new_group_perms or body.new_other_perms or body.new_owner or body.new_group_name:
         group_part = _value_to_perm_code(body.new_group_perms) if body.new_group_perms else (prm.content[0:2] if prm else "--")
         other_part = _value_to_perm_code(body.new_other_perms) if body.new_other_perms else (prm.content[2:4] if prm else "--")
         new_content = group_part + other_part
         new_owner = body.new_owner if body.new_owner else (prm.owner_name if prm else session.owner)
-        new_grp = prm.group_name if prm else "root"
+        new_grp = body.new_group_name if body.new_group_name else (prm.group_name if prm else "root")
         updated_prm = new_permissions(body.file_id, new_owner, new_grp, new_content).unwrap_or_raise(BadRequest)
         update_permissions([updated_prm])
 

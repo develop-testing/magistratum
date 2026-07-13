@@ -29,7 +29,7 @@
                         <div data-tab-content="general" class="tabs-content active">
                             <label class="def-field">
                                 <span>Название</span>
-                                <input class="" value="{{file_name}}">
+                                <input name="file-name" class="" value="{{file_name}}">
                             </label>
                             <div class="editor-body">
                                 <textarea id="editor">{{{file_content}}}</textarea>
@@ -38,23 +38,31 @@
                         <div data-tab-content="perms" class="tabs-content">
                             <label class="def-field">
                                 <span>Родительская директория</span>
-                                <select name="owner">
-                                    <option>user-1</option>
-                                    <option>user-2</option>
-                                    <option>user-3</option>
+                                <select name="perm-parent-dir">
+                                    {{#all_dirs}}
+                                    <option value="{{dir_id}}" {{#is_current}}selected{{/is_current}}>{{name}}</option>
+                                    {{/all_dirs}}
                                 </select>
                             </label>
                             <label class="def-field">
                                 <span>Владелец</span>
-                                <select name="owner">
-                                    <option>user-1</option>
-                                    <option>user-2</option>
-                                    <option>user-3</option>
+                                <select name="perm-owner">
+                                    {{#all_users}}
+                                    <option value="{{name}}" {{#is_current}}selected{{/is_current}}>{{name}}</option>
+                                    {{/all_users}}
+                                </select>
+                            </label>
+                            <label class="def-field">
+                                <span>Группа</span>
+                                <select name="perm-group-name">
+                                    {{#all_groups}}
+                                    <option value="{{name}}" {{#is_current}}selected{{/is_current}}>{{name}}</option>
+                                    {{/all_groups}}
                                 </select>
                             </label>
                             <label class="def-field">
                                 <span>Права Группы</span>
-                                <select id="perm-group-select" name="groups-permissions">
+                                <select name="perm-group-perms">
                                     <option value="r" {{#is_group_r}}selected{{/is_group_r}}>Чтение</option>
                                     <option value="w" {{#is_group_w}}selected{{/is_group_w}}>Запись</option>
                                     <option value="rw" {{#is_group_rw}}selected{{/is_group_rw}}>Чтение и запись</option>
@@ -62,7 +70,7 @@
                             </label>
                             <label class="def-field">
                                 <span>Права Остальных</span>
-                                <select id="perm-other-select" name="other-permissions">
+                                <select name="perm-other-perms">
                                     <option value="r" {{#is_other_r}}selected{{/is_other_r}}>Чтение</option>
                                     <option value="w" {{#is_other_w}}selected{{/is_other_w}}>Запись</option>
                                     <option value="rw" {{#is_other_rw}}selected{{/is_other_rw}}>Чтение и запись</option>
@@ -85,7 +93,7 @@
         const file_id = document.body.dataset.fileId;
         const save_btn = document.getElementById("save-btn");
         const status_el = document.getElementById("editor-status");
-        
+
         const tabs_buttons = document.querySelectorAll("[data-tab]");
         const tabs = document.querySelectorAll("[data-tab-content]");
 
@@ -119,20 +127,33 @@
             }
         });
 
-        const change_file = (file_id, content, groupPerms, otherPerms) => {
+        const change_file = (file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName) => {
             return fetch("http://127.0.0.1:8800/file", {
                 method: "PATCH",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ file_id: file_id, new_content: content, new_group_perms: groupPerms, new_other_perms: otherPerms }),
+                body: JSON.stringify({
+                    file_id: file_id,
+                    new_filename: filename,
+                    new_content: content,
+                    new_group_perms: groupPerms,
+                    new_other_perms: otherPerms,
+                    new_parent_id: parentDir,
+                    new_owner: owner,
+                    new_group_name: groupName,
+                }),
             }).then(res => res.json())
         }
 
         save_btn.addEventListener("click", async () => {
+            const filename = document.querySelector('[name="file-name"]').value;
             const content = tinymce.get("editor").getContent();
-            const groupPerms = document.getElementById("perm-group-select").value;
-            const otherPerms = document.getElementById("perm-other-select").value;
-            change_file(file_id, content, groupPerms, otherPerms)
+            const groupPerms = document.querySelector('[name="perm-group-perms"]').value;
+            const otherPerms = document.querySelector('[name="perm-other-perms"]').value;
+            const parentDir = document.querySelector('[name="perm-parent-dir"]').value;
+            const owner = document.querySelector('[name="perm-owner"]').value;
+            const groupName = document.querySelector('[name="perm-group-name"]').value;
+            change_file(file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName)
         });
     </script>
     </body>

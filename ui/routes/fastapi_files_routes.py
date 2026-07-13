@@ -10,6 +10,9 @@ import chevron  # type: ignore[import-untyped]
 from router.response import BadRequest
 from file_manager.sources.sqlalchemy_file import fetch_file_by_id
 from file_manager.sources.sqlalchemy_permissions import fetch_permissions_for
+from file_manager.sources.sqlalchemy_group import fetch_all_groups
+from file_manager.sources.sqlalchemy_dir import fetch_all_dirs
+from auth.sources.sqlalchemy_member import fetch_all_members
 
 
 def _perm_code_to_value(code: str) -> str:
@@ -56,6 +59,18 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
         "is_other_r": other_perm_value == "r",
         "is_other_w": other_perm_value == "w",
         "is_other_rw": other_perm_value == "rw",
+        "all_users": [
+            {"name": m.username, "is_current": m.username == perm_owner}
+            for m in fetch_all_members()
+        ],
+        "all_groups": [
+            {"name": g, "is_current": g == (prm.group_name if prm else "")}
+            for g in fetch_all_groups()
+        ],
+        "all_dirs": [
+            {"dir_id": d.dir_id, "name": d.name, "is_current": d.dir_id == fl.parent_id}
+            for d in fetch_all_dirs()
+        ],
     }
 
     with open(

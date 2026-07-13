@@ -217,3 +217,10 @@ def fetch_groups_by_user(username: str) -> list[Group]:
             groups.append(Group(row["name"], row["owner_name"], members))
 
     return groups
+
+
+def fetch_all_groups() -> list[str]:
+    query = sa.text("SELECT name FROM groups")
+
+    with engine.connect() as conn:
+        return [str(r["name"]) for r in conn.execute(query).mappings().all()]

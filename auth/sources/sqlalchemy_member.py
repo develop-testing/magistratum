@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import sqlalchemy as sa
-from result import Err, Result
+from result import Err, Result, is_err
 
 
 from database.database import engine, metadata
@@ -52,3 +52,18 @@ def save_candidate(cnd: Candidate) -> Result[Member, str]:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
             return Err("user is exists")
         raise
+
+
+def fetch_all_members() -> list[Member]:
+    query = sa.text("SELECT username, password FROM users")
+
+    with engine.connect() as conn:
+        rows = conn.execute(query).mappings().all()
+
+        out: list[Member] = []
+        for row in rows:
+            m = new_member(str(row["username"]), str(row["password"]))
+            if not is_err(m):
+                out.append(m.unwrap())
+
+        return out
