@@ -47,6 +47,11 @@
     @extend .def-button;
     height: 2rem;
   }
+
+  & .tabs-body,
+  & .tabs-content {
+    height: 100%;
+  }
 }
 
 .editor-status {

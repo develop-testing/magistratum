@@ -4,24 +4,77 @@
         <meta charset="utf-8">
         <title>{{title}}</title>
         <style>{{{styles}}}</style>
-        <link rel="stylesheet" href="/static/dashboard/tinymce/skins/ui/oxide/skin.min.css">
+        <link rel="stylesheet" href="/static/detail_file/tinymce/skins/ui/oxide/skin.min.css">
     </head>
     <body data-file-id="{{file_id}}" data-parent-id="{{parent_id}}">
         <header class="header">
             <div class="header-content">{{title}}</div>
         </header>
         <main class="main">
-            <div class="main-content">
+            <div class="main-content editor">
                 <div class="editor-header">
                     <div class="editor-header-content">
-                        <span class="editor-title">{{file_name}}</span>
+                        <span class="editor-title">Редактировать статью</span>
                         <a href="/text_file/{{file_id}}" class="editor-btn">Читать</a>
                         <button id="save-btn" class="editor-btn">Сохранить</button>
                     </div>
                 </div>
-                <div class="editor-card">
-                    <div class="editor-body">
-                        <textarea id="editor">{{{file_content}}}</textarea>
+                <div class="editor-card tabs">
+                    <div class="tabs-header">
+                        <button data-tab="general" class="tabs-button def-button">Общее</button>
+                        <button data-tab="perms" class="tabs-button def-button">Доступ</button>
+                        <button data-tab="meta" class="tabs-button def-button">Мета</button>
+                    </div>
+                    <div class="tabs-body">
+                        <div data-tab-content="general" class="tabs-content active">
+                            <label class="def-field">
+                                <span>Название</span>
+                                <input class="" value="{{file_name}}">
+                            </label>
+                            <div class="editor-body">
+                                <textarea id="editor">{{{file_content}}}</textarea>
+                            </div>
+                        </div>
+                        <div data-tab-content="perms" class="tabs-content">
+                            <label class="def-field">
+                                <span>Родительская директория</span>
+                                <select name="owner">
+                                    <option>user-1</option>
+                                    <option>user-2</option>
+                                    <option>user-3</option>
+                                </select>
+                            </label>
+                            <label class="def-field">
+                                <span>Владелец</span>
+                                <select name="owner">
+                                    <option>user-1</option>
+                                    <option>user-2</option>
+                                    <option>user-3</option>
+                                </select>
+                            </label>
+                            <label class="def-field">
+                                <span>Права Группы</span>
+                                <select name="groups-permissions">
+                                    <option value="r">Чтение</option>
+                                    <option value="w">Запись</option>
+                                    <option value="rw">Чтение и запись</option>
+                                </select>
+                            </label>
+                            <label class="def-field">
+                                <span>Права Остальных</span>
+                                <select name="other-permissions">
+                                    <option value="r">Чтение</option>
+                                    <option value="w">Запись</option>
+                                    <option value="rw">Чтение и запись</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div data-tab-content="meta" class="tabs-content">
+                            <label class="def-field">
+                                <span>Изображение</span>
+                                <input type="file" name="image">
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -32,6 +85,23 @@
         const file_id = document.body.dataset.fileId;
         const save_btn = document.getElementById("save-btn");
         const status_el = document.getElementById("editor-status");
+        
+        const tabs_buttons = document.querySelectorAll("[data-tab]");
+        const tabs = document.querySelectorAll("[data-tab-content]");
+
+        tabs_buttons.forEach(button => {
+            button.addEventListener('click', e => {
+                const tab_name = e.target.getAttribute("data-tab")
+                tabs.forEach(tab => {
+                    if (tab_name !== tab.getAttribute("data-tab-content")) {
+                        tab.classList.remove('active')
+                    } else {
+                        tab.classList.add('active')
+                    }
+                })
+
+            })
+        })
 
         tinymce.init({
             selector: "#editor",
