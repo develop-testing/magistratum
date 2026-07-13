@@ -3,6 +3,8 @@
 .manager-grid {
   &-header {
     @extend .p-2;
+    display: flex;
+    gap: 0.5rem;
     position: sticky;
     top: 0;
     z-index: 1;
@@ -103,8 +105,13 @@
 }
 
 .manager-button {
-  @extend .p-2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  @extend .px-2;
+  height: 2rem;
   cursor: pointer;
   background-color: $gold;
   border: none;
+  text-decoration: none;
 }
