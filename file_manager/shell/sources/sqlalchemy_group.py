@@ -4,8 +4,8 @@ from result import Err, Ok, Result
 
 from database.database import engine, metadata
 
-from ..groups import FetchGroupReq, Group, RemovedGroup
-from ..permissions import Permissions
+from ...groups import FetchGroupReq, Group, RemovedGroup
+from ...permissions import Permissions
 
 sa.Table(
     "groups",

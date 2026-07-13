@@ -8,11 +8,11 @@ import sass_embedded
 import chevron  # type: ignore[import-untyped]
 
 from router.response import BadRequest
-from file_manager.sources.sqlalchemy_file import fetch_file_by_id
-from file_manager.sources.sqlalchemy_permissions import fetch_permissions_for
-from file_manager.sources.sqlalchemy_group import fetch_all_groups
-from file_manager.sources.sqlalchemy_dir import fetch_all_dirs
-from auth.sources.sqlalchemy_member import fetch_all_members
+from file_manager.shell.sources.sqlalchemy_file import fetch_file_by_id
+from file_manager.shell.sources.sqlalchemy_permissions import fetch_permissions_for
+from file_manager.shell.sources.sqlalchemy_group import fetch_all_groups
+from file_manager.shell.sources.sqlalchemy_dir import fetch_all_dirs
+from auth.shell.sources.sqlalchemy_member import fetch_all_members
 
 
 def _perm_code_to_value(code: str) -> str:
@@ -31,11 +31,11 @@ ui_files_router = APIRouter()
 async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
     fl = fetch_file_by_id(file_id).unwrap_or_raise(BadRequest)
 
-    with open("ui/templates/detail_file/text_file.scss", "r", encoding="utf-8") as f:
+    with open("file_manager/shell/skins/default/detail_file/text_file.scss", "r", encoding="utf-8") as f:
         scss_content = f.read()
 
     result = sass_embedded.compile_string(
-        scss_content, load_paths=[Path("ui/templates/")]
+        scss_content, load_paths=[Path("file_manager/shell/skins/default/"), Path("skins/default")]
     )
 
     prms = fetch_permissions_for([fl.file_id])
@@ -74,7 +74,7 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
     }
 
     with open(
-        "ui/templates/detail_file/text_file.mustache",
+        "file_manager/shell/skins/default/detail_file/text_file.mustache",
         "r",
         encoding="utf-8",
     ) as f:
@@ -87,11 +87,11 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
 async def dashboar_text_file(file_id: str) -> HTMLResponse:
     fl = fetch_file_by_id(file_id).unwrap_or_raise(BadRequest)
 
-    with open("ui/templates/detail_file/text_file.scss", "r", encoding="utf-8") as f:
+    with open("file_manager/shell/skins/default/detail_file/text_file.scss", "r", encoding="utf-8") as f:
         scss_content = f.read()
 
     result = sass_embedded.compile_string(
-        scss_content, load_paths=[Path("ui/templates/")]
+        scss_content, load_paths=[Path("file_manager/shell/skins/default/"), Path("skins/default")]
     )
 
     data = {
@@ -104,7 +104,7 @@ async def dashboar_text_file(file_id: str) -> HTMLResponse:
     }
 
     with open(
-        "ui/templates/detail_file/text_file_read.mustache",
+        "file_manager/shell/skins/default/detail_file/text_file_read.mustache",
         "r",
         encoding="utf-8",
     ) as f:

@@ -3,8 +3,8 @@ from fastapi import APIRouter, Request
 
 from router.response import *
 
-from ..directories.directory import Directory
-from ..directory_node import (
+from ...directories.directory import Directory
+from ...directory_node import (
     BrokeNode,
     RichNode,
     mk_rich_node,
@@ -12,8 +12,8 @@ from ..directory_node import (
     mk_node_perms,
     mk_node_meta,
 )
-from ..files import TextFile, TextFileFilter
-from ..permissions import Permissions, has_read
+from ...files import TextFile, TextFileFilter
+from ...permissions import Permissions, has_read
 from ..sources.sqlalchemy_dir import fetch_dirs_by_parent
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..sources.sqlalchemy_permissions import fetch_permissions_for as fetch_perms

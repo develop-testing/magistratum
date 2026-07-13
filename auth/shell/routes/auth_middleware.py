@@ -2,7 +2,7 @@ from __future__ import annotations
 from fastapi import Request, HTTPException
 from result import Ok
 
-from auth.sources.redis_sessions import *
+from auth.shell.sources.redis_sessions import *
 from router.response import *
 
 

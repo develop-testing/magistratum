@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 
 from router.response import *
 
-from ..groups import (
+from ...groups import (
     FetchGroupReq,
     Group,
     RemovedGroup,
@@ -15,7 +15,7 @@ from ..groups import (
     remove_member,
     rename_group,
 )
-from ..permissions import change_group
+from ...permissions import change_group
 from ..sources.sqlalchemy_group import (
     delete_group_by_name,
     fetch_group_by_name,

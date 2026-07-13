@@ -12,11 +12,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 from database.database import metadata
 
-import auth.sources.sqlalchemy_member
-import file_manager.sources.sqlalchemy_file
-import file_manager.sources.sqlalchemy_dir
-import file_manager.sources.sqlalchemy_permissions
-import file_manager.sources.sqlalchemy_group
+import auth.shell.sources.sqlalchemy_member
+import file_manager.shell.sources.sqlalchemy_file
+import file_manager.shell.sources.sqlalchemy_dir
+import file_manager.shell.sources.sqlalchemy_permissions
+import file_manager.shell.sources.sqlalchemy_group
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

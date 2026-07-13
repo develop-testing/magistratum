@@ -5,7 +5,7 @@ from result import Ok, Err, Result
 from database.database import engine, metadata
 
 
-from ..directories.directory import Directory
+from ...directories.directory import Directory
 
 sa.Table(
     "directories",

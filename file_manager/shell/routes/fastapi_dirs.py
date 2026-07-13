@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 
 from router.response import *
 
-from ..directories.directory import (
+from ...directories.directory import (
     BrokenDirectory,
     DirFilter,
     Directory,
@@ -14,7 +14,7 @@ from ..directories.directory import (
     rename_directory,
 )
 
-from ..permissions import has_read, has_write, new_permissions
+from ...permissions import has_read, has_write, new_permissions
 from ..sources.sqlalchemy_dir import (
     delete_directory,
     fetch_dir_by_id,

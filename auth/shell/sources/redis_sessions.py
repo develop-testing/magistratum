@@ -3,7 +3,7 @@ from result import Err, Result
 
 
 from database.redis import client
-from ..session import *
+from ...session import *
 
 
 def fetch_session_by_id(session_id: str) -> Result[Session, str]:

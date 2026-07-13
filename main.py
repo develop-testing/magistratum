@@ -8,22 +8,23 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import PlainTextResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from auth.routes.auth_middleware import *
+from auth.shell.routes.auth_middleware import *
 
-from auth.routes.fastapi_auth import auth_router
-from file_manager.routes.fastapi_file import files_router
-from file_manager.routes.fastapi_dirs import dirs_router
-from file_manager.routes.fastapi_dir_node import dir_node_router
-from file_manager.routes.fastapi_groups import groups_router
-from ui.routes.fastapi_dashboard import ui_dashboard_router
-from ui.routes.fastapi_files_routes import ui_files_router
-from ui.routes.fastapi_auth_ui import ui_auth_router
+from auth.shell.routes.fastapi_auth import auth_router
+from file_manager.shell.routes.fastapi_file import files_router
+from file_manager.shell.routes.fastapi_dirs import dirs_router
+from file_manager.shell.routes.fastapi_dir_node import dir_node_router
+from file_manager.shell.routes.fastapi_groups import groups_router
+from file_manager.shell.routes.fastapi_dashboard import ui_dashboard_router
+from file_manager.shell.routes.fastapi_files_routes import ui_files_router
+from auth.shell.routes.fastapi_auth_ui import ui_auth_router
 
 backend = FastAPI(docs_url=None, redoc_url=None)
 frontend = FastAPI()
 
 backend.mount("/public", StaticFiles(directory="public/admin"), name="static")
-backend.mount("/static", StaticFiles(directory="ui/templates"), name="static")
+backend.mount("/static/auth", StaticFiles(directory="auth/shell/skins/default/auth"), name="static-auth")
+backend.mount("/static/file_manager", StaticFiles(directory="file_manager/shell/skins/default"), name="static-fm")
 
 
 @backend.exception_handler(HTTPException)
@@ -70,7 +71,8 @@ backend.include_router(dir_node_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(groups_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(files_router, dependencies=[Depends(auth_middleware)])
 
-frontend.mount("/static", StaticFiles(directory="ui/templates"), name="static")
+frontend.mount("/static/auth", StaticFiles(directory="auth/shell/skins/default/auth"), name="static-auth")
+frontend.mount("/static/file_manager", StaticFiles(directory="file_manager/shell/skins/default"), name="static-fm")
 
 frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)])

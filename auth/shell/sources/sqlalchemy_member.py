@@ -4,7 +4,7 @@ from result import Err, Result, is_err
 
 
 from database.database import engine, metadata
-from ..member import *
+from ...member import *
 
 sa.Table(
     "users",

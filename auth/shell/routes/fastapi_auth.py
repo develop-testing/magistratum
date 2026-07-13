@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from fastapi import APIRouter, Request, Response
 
 from router.response import *
-from ..session import *
-from ..member import *
+from ...session import *
+from ...member import *
 from ..sources.sqlalchemy_member import *
 from ..sources.redis_sessions import *
 

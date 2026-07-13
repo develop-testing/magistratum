@@ -4,7 +4,7 @@ from result import Result, Ok, Err
 from fastapi import APIRouter, Depends, Response, Request
 
 from router.response import *
-from ..files import (
+from ...files import (
     TextFileFilter,
     TextFile,
     BrokenFile,
@@ -25,7 +25,7 @@ from ..sources.sqlalchemy_file import (
     update_file_by_id,
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ..permissions import Permissions, new_permissions, has_read, has_write
+from ...permissions import Permissions, new_permissions, has_read, has_write
 
 from ..sources.sqlalchemy_permissions import fetch_permissions_for, update_permissions
 
