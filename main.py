@@ -16,6 +16,7 @@ from file_manager.routes.fastapi_dirs import dirs_router
 from file_manager.routes.fastapi_dir_node import dir_node_router
 from file_manager.routes.fastapi_groups import groups_router
 from ui.routes.fastapi_dashboard import ui_dashboard_router
+from ui.routes.fastapi_files_routes import ui_files_router
 from ui.routes.fastapi_auth_ui import ui_auth_router
 
 backend = FastAPI(docs_url=None, redoc_url=None)
@@ -72,4 +73,5 @@ backend.include_router(files_router, dependencies=[Depends(auth_middleware)])
 frontend.mount("/static", StaticFiles(directory="ui/templates"), name="static")
 
 frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])
+frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_auth_router)
