@@ -105,13 +105,6 @@
 }
 
 .manager-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  @extend .px-2;
+  @extend .def-button;
   height: 2rem;
-  cursor: pointer;
-  background-color: $gold;
-  border: none;
-  text-decoration: none;
 }

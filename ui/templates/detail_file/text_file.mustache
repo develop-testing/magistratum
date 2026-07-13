@@ -8,20 +8,15 @@
     </head>
     <body data-file-id="{{file_id}}" data-parent-id="{{parent_id}}">
         <header class="header">
-            <div class="header-content">
-                <a href="/directory/{{parent_id}}" style="color:inherit;text-decoration:none;">←</a>
-                {{title}} — {{file_name}}
-            </div>
+            <div class="header-content">{{title}}</div>
         </header>
         <main class="main">
             <div class="main-content">
                 <div class="editor-header">
                     <div class="editor-header-content">
-                        <span class="editor--title">{{file_name}}</span>
-                        <div>
-                            <a href="/text_file/{{file_id}}" class="btn btn-gold">Читать</a>
-                            <button id="save-btn" class="btn btn-gold">Сохранить</button>
-                        </div>
+                        <span class="editor-title">{{file_name}}</span>
+                        <a href="/text_file/{{file_id}}" class="editor-btn">Читать</a>
+                        <button id="save-btn" class="editor-btn">Сохранить</button>
                     </div>
                 </div>
                 <div class="editor-card">

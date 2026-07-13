@@ -17,13 +17,15 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 1rem;
     }
   }
 
-  &--title {
+  &-title {
     font-size: 1.3rem;
     font-weight: bold;
     color: $font-color;
+    flex: 1 0 0;
   }
 
   &-card {
@@ -40,23 +42,10 @@
       flex: 1;
     }
   }
-}
 
-.btn {
-  padding: ($step * 2) ($step * 4);
-  cursor: pointer;
-  border: none;
-  font-family: monospace;
-  font-size: 0.9rem;
-  transition: 0.3s;
-
-  &-gold {
-    background-color: $gold;
-    color: #000;
-
-    &:hover {
-      background-color: lighten($gold, 10%);
-    }
+  &-btn {
+    @extend .def-button;
+    height: 2rem;
   }
 }
 
