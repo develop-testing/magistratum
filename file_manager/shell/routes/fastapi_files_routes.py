@@ -60,7 +60,7 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
         "is_other_r": other_perm_value == "r",
         "is_other_w": other_perm_value == "w",
         "is_other_rw": other_perm_value == "rw",
-        "image_url": fetch_image_by_file(file_id).unwrap_or(""),
+        "image_url": fetch_image_by_file(file_id).unwrap_or("/public/img/not-found.png"),
         "all_users": [
             {"name": m.username, "is_current": m.username == perm_owner}
             for m in fetch_all_members()

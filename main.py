@@ -22,8 +22,9 @@ from auth.shell.routes.fastapi_auth_ui import ui_auth_router
 backend = FastAPI(docs_url=None, redoc_url=None)
 frontend = FastAPI()
 
+backend.mount("/public/upload", StaticFiles(directory="public/upload"), name="upload")
+backend.mount("/public/img", StaticFiles(directory="public/img"), name="img")
 backend.mount("/public", StaticFiles(directory="public/admin"), name="static")
-backend.mount("/public/images", StaticFiles(directory="public/images"), name="images")
 backend.mount("/static/auth", StaticFiles(directory="auth/shell/skins/default/auth"), name="static-auth")
 backend.mount("/static/file_manager", StaticFiles(directory="file_manager/shell/skins/default"), name="static-fm")
 
@@ -74,7 +75,8 @@ backend.include_router(files_router, dependencies=[Depends(auth_middleware)])
 
 frontend.mount("/static/auth", StaticFiles(directory="auth/shell/skins/default/auth"), name="static-auth")
 frontend.mount("/static/file_manager", StaticFiles(directory="file_manager/shell/skins/default"), name="static-fm")
-frontend.mount("/public/images", StaticFiles(directory="public/images"), name="images")
+frontend.mount("/public/upload", StaticFiles(directory="public/upload"), name="upload")
+frontend.mount("/public/img", StaticFiles(directory="public/img"), name="img")
 
 frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)])

@@ -17,14 +17,12 @@ from ...permissions import Permissions, has_read
 from ..sources.sqlalchemy_dir import fetch_dirs_by_parent
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..sources.sqlalchemy_permissions import fetch_permissions_for as fetch_perms
-from ..sources.sqlalchemy_file import fetch_file_by_filter
+from ..sources.sqlalchemy_file import fetch_file_by_filter, fetch_image_by_file
 from ..sources.sqlalchemy_home_dir import fetch_home_dir_by_username
 
 dir_node_router = APIRouter()
 
 Result = list[RichNode | BrokeNode]
-
-IMG_URL = "https://byzantium-blogger.blog/wp-content/uploads/2020/03/2600-skull.jpg?w=1024&h=576"
 
 
 def _build_nodes(
@@ -33,6 +31,7 @@ def _build_nodes(
     prms: list[Permissions],
     session_owner: str,
     group_names: list[str],
+    file_images: dict[str, str],
 ) -> Result:
     items: list[tuple[str, str, str]] = [(d.dir_id, "dir", d.name) for d in dirs] + [
         (f.file_id, "text_file", f.name) for f in files
@@ -48,6 +47,8 @@ def _build_nodes(
             ]
             continue
 
+        img = file_images.get(item_id, "/public/img/not-found.png")
+
         result += [
             mk_rich_node(
                 mk_node(item_type, item_id),
@@ -57,7 +58,7 @@ def _build_nodes(
                     prm.content[:2],
                     prm.content[2:],
                 ),
-                mk_node_meta(name, IMG_URL),
+                mk_node_meta(name, img),
             )
         ]
 
@@ -78,8 +79,9 @@ async def directory_content(req: Request, dir_id: str) -> Result:
         raise BadRequest("no one dir or files not found")
 
     prms = fetch_perms([d.dir_id for d in dirs] + [f.file_id for f in files])
+    file_images = {f.file_id: fetch_image_by_file(f.file_id).unwrap_or("") for f in files}
 
-    return _build_nodes(dirs, files, prms, session_owner, group_names)
+    return _build_nodes(dirs, files, prms, session_owner, group_names, file_images)
 
 
 @dir_node_router.get("/directory/home", tags=["DirNode"])
@@ -98,5 +100,6 @@ async def home_content(req: Request) -> Result:
         raise BadRequest("no one dir or files not found")
 
     prms = fetch_perms([d.dir_id for d in dirs] + [f.file_id for f in files])
+    file_images = {f.file_id: fetch_image_by_file(f.file_id).unwrap_or("") for f in files}
 
-    return _build_nodes(dirs, files, prms, session_owner, group_names)
+    return _build_nodes(dirs, files, prms, session_owner, group_names, file_images)

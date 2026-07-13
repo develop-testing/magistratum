@@ -229,13 +229,13 @@ def _save_image(file_id: str, data_url: str) -> Result[str, str]:
     except Exception:
         return Err("invalid base64 data")
 
-    images_dir = Path("public/images")
+    images_dir = Path("public/upload")
     images_dir.mkdir(parents=True, exist_ok=True)
 
     file_path = images_dir / f"{uuid.uuid4().hex}.{ext}"
     file_path.write_bytes(raw)
 
-    return add_image_to_file(file_id, f"/public/images/{file_path.name}")
+    return add_image_to_file(file_id, f"/public/upload/{file_path.name}")
 
 
 @dataclass(frozen=True, slots=True)
