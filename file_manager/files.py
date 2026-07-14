@@ -11,6 +11,7 @@ class TextFileFilter:
     by_directory: str = ""
     limit: int = 10
     offset: int = 0
+    data_type: str = "min"
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,8 +33,27 @@ class TextFile:
     parent_id: str
 
 
-def copy_file_to(fl: TextFile, parent_id: str) -> TextFile:
-    return new_file(fl.name, fl.content, parent_id)
+@dataclass(frozen=True, slots=True)
+class TextFilePerms:
+    owner: str
+    group: str
+    group_perms: str
+    other_perms: str
+
+    @staticmethod
+    def create(owner: str, grp: str, grp_prms: str, other_prms: str) -> TextFilePerms:
+        return TextFilePerms(owner, grp, grp_prms, other_prms)
+
+
+@dataclass(frozen=True, slots=True)
+class RichTextFile:
+    text_file: TextFile
+    perms: TextFilePerms
+    image: str
+
+
+def mk_rich_text_file(file: TextFile, perms: TextFilePerms, image: str) -> RichTextFile:
+    return RichTextFile(file, perms, image)
 
 
 def mk_broken_file(name: str, reason: str) -> BrokenFile:
@@ -46,6 +66,30 @@ def mk_text_file(id: str, name: str, content: str, parent_id: str = "") -> TextF
 
 def new_file(name: str, content: str, parent_id: str = "") -> TextFile:
     return mk_text_file("text-file@" + str(uuid.uuid4()), name, content, parent_id)
+
+
+def name_of_file(f: TextFile | RichTextFile | BrokenFile) -> str:
+    match (f):
+        case TextFile():
+            return f.name
+        case RichTextFile():
+            return f.text_file.name
+        case BrokenFile():
+            return f.name
+
+
+def id_of_file(f: TextFile | RichTextFile | BrokenFile) -> str:
+    match (f):
+        case TextFile():
+            return f.file_id
+        case RichTextFile():
+            return f.text_file.file_id
+        case BrokenFile():
+            return ""
+
+
+def copy_file_to(fl: TextFile, parent_id: str) -> TextFile:
+    return new_file(fl.name, fl.content, parent_id)
 
 
 def rename_file(f: TextFile, new_name: str) -> TextFile:

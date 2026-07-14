@@ -3,9 +3,18 @@ import sqlalchemy as sa
 
 from database.database import engine, metadata
 
-from ...files import TextFile, TextFileFilter, mk_text_file
+from ...files import (
+    TextFile,
+    RichTextFile,
+    TextFileFilter,
+    TextFilePerms,
+    mk_text_file,
+    mk_rich_text_file,
+)
+from ...permissions import Permissions, group_access, other_access
 
-from ...permissions import Permissions
+
+from .sqlalchemy_permissions import fetch_permissions_for
 
 sa.Table(
     "files",
@@ -125,6 +134,33 @@ def fetch_files_by_filter(filter: TextFileFilter) -> list[TextFile]:
         ]
 
 
+def fetch_rich_files_by_filter(filter: TextFileFilter) -> list[RichTextFile]:
+    files = fetch_files_by_filter(filter)
+    prms = fetch_permissions_for([file.file_id for file in files])
+
+    out = []
+
+    for file in files:
+        prm = next((p for p in prms if p.item_id == file.file_id), None)
+
+        if prm is None:
+            raise ValueError(f"Missing permissions for file with ID: {file.file_id}")
+
+        image = fetch_image_by_file(file.file_id)
+
+        out.append(
+            mk_rich_text_file(
+                file,
+                TextFilePerms.create(
+                    prm.owner_name, prm.group_name, group_access(prm), other_access(prm)
+                ),
+                image,
+            )
+        )
+
+    return out
+
+
 def update_file(old_name: str, file: TextFile) -> TextFile:
     query = sa.text(
         "UPDATE files SET content = :content, name = :new_name WHERE name = :old_name"
@@ -233,6 +269,6 @@ def fetch_image_by_file(file_id: str) -> str:
         row = conn.execute(query, {"file_id": file_id}).mappings().first()
 
         if row is None:
-            raise ValueError("no image")
+            return "/public/img/not-found.png"
 
         return str(row["image_path"])

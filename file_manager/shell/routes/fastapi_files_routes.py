@@ -51,10 +51,7 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
     other_perm_value = _perm_code_to_value(prm.content[2:4]) if prm else ""
     perm_owner = prm.owner_name if prm else ""
 
-    try:
-        image_url = fetch_image_by_file(file_id)
-    except ValueError:
-        image_url = "/public/img/not-found.png"
+    image_url = fetch_image_by_file(file_id)
 
     data = {
         "title": "Lorice Administratum",

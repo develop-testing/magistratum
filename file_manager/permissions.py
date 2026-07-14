@@ -99,6 +99,28 @@ def has_read(p: Permissions, user_name: str, group_names: list[str]) -> bool:
     return p.content[2] == "r"
 
 
+def group_access(p: Permissions) -> str:
+    r, w = p.content[0] == "r", p.content[1] == "w"
+    if r and w:
+        return "read and write"
+    if r:
+        return "read"
+    if w:
+        return "write"
+    raise ValueError("no permissions for group")
+
+
+def other_access(p: Permissions) -> str:
+    r, w = p.content[2] == "r", p.content[3] == "w"
+    if r and w:
+        return "read and write"
+    if r:
+        return "read"
+    if w:
+        return "write"
+    raise ValueError("no permissions for other")
+
+
 def has_write(p: Permissions, user_name: str, group_names: list[str]) -> bool:
     if user_name != "" and p.owner_name == user_name:
         return True

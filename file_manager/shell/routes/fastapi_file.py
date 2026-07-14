@@ -11,6 +11,7 @@ from ..sources.sqlalchemy_dir import fetch_dir_by_id
 from ..sources.sqlalchemy_file import (
     save_file,
     fetch_files_by_filter,
+    fetch_rich_files_by_filter,
     fetch_file_by_id,
     delete_file_by_id,
     move_file,
@@ -35,7 +36,7 @@ def _value_to_perm_code(value: str) -> str:
     return "--"
 
 
-ReadRet = list[TextFile | BrokenFile]
+ReadRet = list[TextFile | BrokenFile | RichTextFile]
 
 
 @files_router.get("/files", tags=["Files"])
@@ -43,19 +44,25 @@ async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
     session = req.state.session
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
-    files = fetch_files_by_filter(fltr)
-    prms = fetch_permissions_for([file.file_id for file in files])
 
-    result: list[TextFile | BrokenFile] = []
-    for f in files:
-        prm = next((p for p in prms if p.item_id == f.file_id), None)
+    files: list[TextFile | RichTextFile | BrokenFile]
+    match (fltr.data_type):
+        case "min":
+            files = [*fetch_files_by_filter(fltr)]
+        case "rich":
+            files = [*fetch_rich_files_by_filter(fltr)]
+        case _:
+            files = [*fetch_files_by_filter(fltr)]
+
+    prms = fetch_permissions_for([id_of_file(f) for f in files])
+
+    for index, file in enumerate(files):
+        prm = next((p for p in prms if p.item_id == id_of_file(file)), None)
         if prm is None or has_read(prm, session.owner, group_names):
-            result.append(mk_broken_file(f.name, "access not allowed"))
+            files[index] = mk_broken_file(name_of_file(file), "access not allowed")
             continue
 
-        result.append(mk_text_file(f.file_id, f.name, f.content, f.parent_id))
-
-    return result
+    return files
 
 
 @dataclass(frozen=True, slots=True)

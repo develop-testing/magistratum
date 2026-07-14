@@ -81,10 +81,7 @@ async def directory_content(req: Request, dir_id: str) -> Result:
     prms = fetch_perms([d.dir_id for d in dirs] + [f.file_id for f in files])
     file_images: dict[str, str] = {}
     for f in files:
-        try:
-            file_images[f.file_id] = fetch_image_by_file(f.file_id)
-        except ValueError:
-            file_images[f.file_id] = ""
+        file_images[f.file_id] = fetch_image_by_file(f.file_id)
 
     return _build_nodes(dirs, files, prms, session_owner, group_names, file_images)
 
@@ -107,9 +104,6 @@ async def home_content(req: Request) -> Result:
     prms = fetch_perms([d.dir_id for d in dirs] + [f.file_id for f in files])
     file_images: dict[str, str] = {}
     for f in files:
-        try:
-            file_images[f.file_id] = fetch_image_by_file(f.file_id)
-        except ValueError:
-            file_images[f.file_id] = ""
+        file_images[f.file_id] = fetch_image_by_file(f.file_id)
 
     return _build_nodes(dirs, files, prms, session_owner, group_names, file_images)
