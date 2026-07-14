@@ -10,7 +10,7 @@ from ...files import *
 from ..sources.sqlalchemy_dir import fetch_dir_by_id
 from ..sources.sqlalchemy_file import (
     save_file,
-    fetch_file_by_filter,
+    fetch_files_by_filter,
     fetch_file_by_id,
     delete_file_by_id,
     move_file,
@@ -35,49 +35,25 @@ def _value_to_perm_code(value: str) -> str:
     return "--"
 
 
-@dataclass(frozen=True, slots=True)
-class FetchFileReq:
-    by_id: str = ""
-    by_name: str = ""
-    by_directory: str = ""
-    limit: int = 10
-    offset: int = 0
-
-
 ReadRet = list[TextFile | BrokenFile]
 
 
 @files_router.get("/files", tags=["Files"])
-async def read_files(req: Request, query: FetchFileReq = Depends()) -> ReadRet:
+async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
     session = req.state.session
-
     groups = fetch_groups_by_user(session.owner)
-
     group_names = [g.name for g in groups]
-
-    if query.by_id:
-        fl = fetch_file_by_id(query.by_id)
-        prms = fetch_permissions_for([fl.file_id])
-        prm = next((p for p in prms if p.item_id == fl.file_id), None)
-        if not prm or not has_read(prm, session.owner, group_names):
-            return [mk_broken_file(fl.name, "access not allowed")]
-        return [mk_text_file(fl.file_id, fl.name, fl.content, fl.parent_id)]
-
-    files = fetch_file_by_filter(
-        TextFileFilter(query.by_name, query.by_directory, query.limit, query.offset)
-    )
-
+    files = fetch_files_by_filter(fltr)
     prms = fetch_permissions_for([file.file_id for file in files])
 
     result: list[TextFile | BrokenFile] = []
     for f in files:
         prm = next((p for p in prms if p.item_id == f.file_id), None)
-        if not prm and not  has_read(prm, session.owner, group_names):
+        if prm is None or has_read(prm, session.owner, group_names):
             result.append(mk_broken_file(f.name, "access not allowed"))
             continue
-            
-        result.append(mk_text_file(f.file_id, f.name, f.content, f.parent_id))
 
+        result.append(mk_text_file(f.file_id, f.name, f.content, f.parent_id))
 
     return result
 

@@ -59,7 +59,10 @@ def fetch_file_by_name(name: str) -> TextFile:
         )
 
 
-def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
+def fetch_files_by_filter(filter: TextFileFilter) -> list[TextFile]:
+    if filter.by_id:
+        return [fetch_file_by_id(filter.by_id)]
+
     limit = filter.limit if filter.limit > 0 else 18446744073709551615
     offset = max(filter.offset, 0)
     pagination = " LIMIT :limit OFFSET :offset"

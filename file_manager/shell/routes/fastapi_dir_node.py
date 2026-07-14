@@ -17,7 +17,7 @@ from ...permissions import Permissions, has_read
 from ..sources.sqlalchemy_dir import fetch_dirs_by_parent
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..sources.sqlalchemy_permissions import fetch_permissions_for as fetch_perms
-from ..sources.sqlalchemy_file import fetch_file_by_filter, fetch_image_by_file
+from ..sources.sqlalchemy_file import fetch_files_by_filter, fetch_image_by_file
 from ..sources.sqlalchemy_home_dir import fetch_home_dir_by_username
 
 dir_node_router = APIRouter()
@@ -73,7 +73,7 @@ async def directory_content(req: Request, dir_id: str) -> Result:
     group_names = [g.name for g in groups]
 
     dirs = fetch_dirs_by_parent(dir_id)
-    files = fetch_file_by_filter(TextFileFilter("", dir_id, 0, 0))
+    files = fetch_files_by_filter(TextFileFilter("", "", dir_id, 0, 0))
 
     if not dirs and not files:
         raise BadRequest("no one dir or files not found")
@@ -99,7 +99,7 @@ async def home_content(req: Request) -> Result:
     group_names = [g.name for g in groups]
 
     dirs = fetch_dirs_by_parent(home.dir_id)
-    files = fetch_file_by_filter(TextFileFilter("", home.dir_id, 0, 0))
+    files = fetch_files_by_filter(TextFileFilter("", "", home.dir_id, 0, 0))
 
     if not dirs and not files:
         raise BadRequest("no one dir or files not found")

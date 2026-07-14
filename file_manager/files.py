@@ -6,10 +6,11 @@ import uuid
 
 @dataclass(frozen=True, slots=True)
 class TextFileFilter:
-    by_name: str | None
-    by_directory: str | None
-    limit: int
-    offset: int
+    by_id: str = ""
+    by_name: str = ""
+    by_directory: str = ""
+    limit: int = 10
+    offset: int = 0
 
 
 @dataclass(frozen=True, slots=True)
