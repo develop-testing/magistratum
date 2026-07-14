@@ -18,6 +18,12 @@ class RemovedFile:
 
 
 @dataclass(frozen=True, slots=True)
+class BrokenFile:
+    name: str
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
 class TextFile:
     file_id: str
     name: str
