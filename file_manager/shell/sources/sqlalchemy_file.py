@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import sqlalchemy as sa
-from result import Ok, Err, Result
 
 from database.database import engine, metadata
 
@@ -28,7 +27,7 @@ sa.Table(
 )
 
 
-def fetch_file_by_id(file_id: str) -> Result[TextFile, str]:
+def fetch_file_by_id(file_id: str) -> TextFile:
     query = sa.text(
         "SELECT file_id, name, content, parent_id FROM files WHERE file_id = :file_id"
     )
@@ -37,16 +36,14 @@ def fetch_file_by_id(file_id: str) -> Result[TextFile, str]:
         row = conn.execute(query, {"file_id": file_id}).mappings().first()
 
         if row is None:
-            return Err("file not found")
+            raise ValueError("file not found")
 
-        return Ok(
-            TextFile(
-                str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
-            )
+        return TextFile(
+            str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
         )
 
 
-def fetch_file_by_name(name: str) -> Result[TextFile, str]:
+def fetch_file_by_name(name: str) -> TextFile:
     query = sa.text(
         "SELECT file_id, name, content, parent_id FROM files WHERE name = :name"
     )
@@ -55,12 +52,10 @@ def fetch_file_by_name(name: str) -> Result[TextFile, str]:
         row = conn.execute(query, {"name": name}).mappings().first()
 
         if row is None:
-            return Err("file not found")
+            raise ValueError("file not found")
 
-        return Ok(
-            TextFile(
-                str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
-            )
+        return TextFile(
+            str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
         )
 
 
@@ -127,7 +122,7 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
         ]
 
 
-def update_file(old_name: str, file: TextFile) -> Result[TextFile, str]:
+def update_file(old_name: str, file: TextFile) -> TextFile:
     query = sa.text(
         "UPDATE files SET content = :content, name = :new_name WHERE name = :old_name"
     )
@@ -138,10 +133,10 @@ def update_file(old_name: str, file: TextFile) -> Result[TextFile, str]:
         )
         conn.commit()
 
-        return Ok(file)
+        return file
 
 
-def update_file_by_id(file_id: str, file: TextFile) -> Result[TextFile, str]:
+def update_file_by_id(file_id: str, file: TextFile) -> TextFile:
     query = sa.text(
         "UPDATE files SET content = :content, name = :name WHERE file_id = :file_id"
     )
@@ -151,10 +146,10 @@ def update_file_by_id(file_id: str, file: TextFile) -> Result[TextFile, str]:
             {"content": file.content, "name": file.name, "file_id": file_id},
         )
         conn.commit()
-        return Ok(file)
+        return file
 
 
-def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, str]:
+def save_file(file: TextFile, perms: Permissions) -> TextFile:
     try:
         insert_file_query = sa.text(
             "INSERT INTO files (file_id, name, content, parent_id) VALUES (:file_id, :name, :content, :parent_id)"
@@ -187,20 +182,20 @@ def save_file(file: TextFile, perms: Permissions) -> Result[TextFile, str]:
 
             conn.commit()
 
-            return Ok(TextFile(file.file_id, file.name, file.content, file.parent_id))
+            return TextFile(file.file_id, file.name, file.content, file.parent_id)
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
-            return Err("file with this name is exists")
+            raise ValueError("file with this name is exists")
         raise
 
 
-def move_file(file_id: str, new_dir_id: str) -> Result[str, str]:
+def move_file(file_id: str, new_dir_id: str) -> str:
     query = sa.text("UPDATE files SET parent_id = :dir_id WHERE file_id = :file_id")
 
     with engine.connect() as conn:
         conn.execute(query, {"file_id": file_id, "dir_id": new_dir_id})
         conn.commit()
-        return Ok(file_id)
+        return file_id
 
 
 def delete_file_by_id(file_id: str) -> bool:
@@ -213,7 +208,7 @@ def delete_file_by_id(file_id: str) -> bool:
         return True
 
 
-def add_image_to_file(file_id: str, image_path: str) -> Result[str, str]:
+def add_image_to_file(file_id: str, image_path: str) -> str:
     query = sa.text(
         "INSERT INTO files_to_image (file_id, image_path) VALUES (:file_id, :image_path)"
         " ON DUPLICATE KEY UPDATE image_path = :image_path"
@@ -223,20 +218,18 @@ def add_image_to_file(file_id: str, image_path: str) -> Result[str, str]:
         with engine.connect() as conn:
             conn.execute(query, {"file_id": file_id, "image_path": image_path})
             conn.commit()
-            return Ok(image_path)
+            return image_path
     except sa.exc.IntegrityError:
-        return Err("failed to save image")
+        raise RuntimeError("failed to save image")
 
 
-def fetch_image_by_file(file_id: str) -> Result[str, str]:
-    query = sa.text(
-        "SELECT image_path FROM files_to_image WHERE file_id = :file_id"
-    )
+def fetch_image_by_file(file_id: str) -> str:
+    query = sa.text("SELECT image_path FROM files_to_image WHERE file_id = :file_id")
 
     with engine.connect() as conn:
         row = conn.execute(query, {"file_id": file_id}).mappings().first()
 
         if row is None:
-            return Err("no image")
+            raise ValueError("no image")
 
-        return Ok(str(row["image_path"]))
+        return str(row["image_path"])

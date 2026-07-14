@@ -79,7 +79,12 @@ async def directory_content(req: Request, dir_id: str) -> Result:
         raise BadRequest("no one dir or files not found")
 
     prms = fetch_perms([d.dir_id for d in dirs] + [f.file_id for f in files])
-    file_images = {f.file_id: fetch_image_by_file(f.file_id).unwrap_or("") for f in files}
+    file_images: dict[str, str] = {}
+    for f in files:
+        try:
+            file_images[f.file_id] = fetch_image_by_file(f.file_id)
+        except ValueError:
+            file_images[f.file_id] = ""
 
     return _build_nodes(dirs, files, prms, session_owner, group_names, file_images)
 
@@ -88,7 +93,7 @@ async def directory_content(req: Request, dir_id: str) -> Result:
 async def home_content(req: Request) -> Result:
     session_owner = req.state.session.owner
 
-    home = fetch_home_dir_by_username(session_owner).unwrap_or_raise(BadRequest)
+    home = fetch_home_dir_by_username(session_owner)
 
     groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
@@ -100,6 +105,11 @@ async def home_content(req: Request) -> Result:
         raise BadRequest("no one dir or files not found")
 
     prms = fetch_perms([d.dir_id for d in dirs] + [f.file_id for f in files])
-    file_images = {f.file_id: fetch_image_by_file(f.file_id).unwrap_or("") for f in files}
+    file_images: dict[str, str] = {}
+    for f in files:
+        try:
+            file_images[f.file_id] = fetch_image_by_file(f.file_id)
+        except ValueError:
+            file_images[f.file_id] = ""
 
     return _build_nodes(dirs, files, prms, session_owner, group_names, file_images)

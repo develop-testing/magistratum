@@ -25,8 +25,16 @@ frontend = FastAPI()
 backend.mount("/public/upload", StaticFiles(directory="public/upload"), name="upload")
 backend.mount("/public/img", StaticFiles(directory="public/img"), name="img")
 backend.mount("/public", StaticFiles(directory="public/admin"), name="static")
-backend.mount("/static/auth", StaticFiles(directory="auth/shell/skins/default/auth"), name="static-auth")
-backend.mount("/static/file_manager", StaticFiles(directory="file_manager/shell/skins/default"), name="static-fm")
+backend.mount(
+    "/static/auth",
+    StaticFiles(directory="auth/shell/skins/default/auth"),
+    name="static-auth",
+)
+backend.mount(
+    "/static/file_manager",
+    StaticFiles(directory="file_manager/shell/skins/default"),
+    name="static-fm",
+)
 
 
 @backend.exception_handler(HTTPException)
@@ -34,6 +42,25 @@ async def http_exception_handler(
     request: Request, err: HTTPException
 ) -> PlainTextResponse:
     return PlainTextResponse(content=str(err.detail), status_code=err.status_code)
+
+
+@backend.exception_handler(ValueError)
+async def value_error_handler(request: Request, err: ValueError) -> PlainTextResponse:
+    return PlainTextResponse(content=str(err), status_code=400)
+
+
+@backend.exception_handler(PermissionError)
+async def permission_error_handler(
+    request: Request, err: PermissionError
+) -> PlainTextResponse:
+    return PlainTextResponse(content=str(err), status_code=403)
+
+
+@backend.exception_handler(RuntimeError)
+async def runtime_error_handler(
+    request: Request, err: RuntimeError
+) -> PlainTextResponse:
+    return PlainTextResponse(content=str(err), status_code=500)
 
 
 @backend.exception_handler(Exception)
@@ -73,8 +100,16 @@ backend.include_router(dir_node_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(groups_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(files_router, dependencies=[Depends(auth_middleware)])
 
-frontend.mount("/static/auth", StaticFiles(directory="auth/shell/skins/default/auth"), name="static-auth")
-frontend.mount("/static/file_manager", StaticFiles(directory="file_manager/shell/skins/default"), name="static-fm")
+frontend.mount(
+    "/static/auth",
+    StaticFiles(directory="auth/shell/skins/default/auth"),
+    name="static-auth",
+)
+frontend.mount(
+    "/static/file_manager",
+    StaticFiles(directory="file_manager/shell/skins/default"),
+    name="static-fm",
+)
 frontend.mount("/public/upload", StaticFiles(directory="public/upload"), name="upload")
 frontend.mount("/public/img", StaticFiles(directory="public/img"), name="img")
 

@@ -19,13 +19,12 @@ class LoginRequest:
 
 @auth_router.post("/auth/login", tags=["Auth"])
 async def login(body: LoginRequest, response: Response) -> bool:
-    member = (
-        fetch_member_by_username(body.username)
-        .map_err(lambda e: "incorrect username or password")
-        .unwrap_or_raise(BadRequest)
-    )
-    member = is_password_incorect(member, body.password).unwrap_or_raise(BadRequest)
-    ssn = generate_session_for(member.username).unwrap_or_raise(BadRequest)
+    try:
+        member = fetch_member_by_username(body.username)
+    except ValueError:
+        raise BadRequest("incorrect username or password")
+    member = is_password_incorect(member, body.password)
+    ssn = generate_session_for(member.username)
     us = save_session(ssn)
     response.set_cookie(
         key="access_token",
@@ -41,7 +40,7 @@ async def login(body: LoginRequest, response: Response) -> bool:
 @auth_router.post("/auth/logout", tags=["Auth"])
 def logout(request: Request, response: Response) -> bool:
     access_token = request.cookies.get("access_token", "")
-    ssn = fetch_session_by_id(access_token).unwrap_or_raise(BadRequest)
+    ssn = fetch_session_by_id(access_token)
     close_session(ssn)
     response.delete_cookie(key="access_token", secure=True, samesite="strict")
     return True
@@ -55,6 +54,6 @@ class RegisterRequest:
 
 @auth_router.post("/auth/register", tags=["Auth"])
 def register(body: RegisterRequest) -> bool:
-    cnd = make_candidate(body.username, body.password).unwrap_or_raise(BadRequest)
-    save_candidate(cnd).unwrap_or_raise(BadRequest)
+    cnd = make_candidate(body.username, body.password)
+    save_candidate(cnd)
     return True

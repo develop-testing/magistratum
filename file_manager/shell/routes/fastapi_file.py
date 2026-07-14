@@ -3,7 +3,6 @@ import base64
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from result import Result, Ok, Err
 from fastapi import APIRouter, Depends, Response, Request
 
 from router.response import *
@@ -67,7 +66,7 @@ async def read_files(req: Request, query: FetchFileReq = Depends()) -> ReadRet:
     group_names = [g.name for g in groups]
 
     if query.by_id:
-        fl = fetch_file_by_id(query.by_id).unwrap_or_raise(BadRequest)
+        fl = fetch_file_by_id(query.by_id)
         prms = fetch_permissions_for([fl.file_id])
         prm = next((p for p in prms if p.item_id == fl.file_id), None)
         if not prm or not has_read(prm, session.owner, group_names):
@@ -104,7 +103,7 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
 
     parent_id = ""
     if body.dir_id != "":
-        dir = fetch_dir_by_id(body.dir_id).unwrap_or_raise(BadRequest)
+        dir = fetch_dir_by_id(body.dir_id)
         parent_id = dir.dir_id
 
         groups = fetch_groups_by_user(username)
@@ -115,15 +114,11 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
         if not prm or not has_write(prm, username, group_names):
             raise Forbidden("access denied")
 
-    fl = new_file(body.filename, body.content, parent_id).unwrap_or_raise(
-        InternalServerError
-    )
+    fl = new_file(body.filename, body.content, parent_id)
 
-    p = new_permissions(fl.file_id, username, "root", "rwr-").unwrap_or_raise(
-        InternalServerError
-    )
+    p = new_permissions(fl.file_id, username, "root", "rwr-")
 
-    return save_file(fl, p).unwrap_or_raise(BadRequest)
+    return save_file(fl, p)
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,27 +133,25 @@ async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
     groups = fetch_groups_by_user(username)
     group_names = [g.name for g in groups]
 
-    fl = fetch_file_by_id(body.file_id).unwrap_or_raise(BadRequest)
+    fl = fetch_file_by_id(body.file_id)
 
     prms = fetch_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)
     if not prm or not has_read(prm, username, group_names):
         raise Forbidden("access denied")
 
-    dir = fetch_dir_by_id(body.parent_id).unwrap_or_raise(BadRequest)
+    dir = fetch_dir_by_id(body.parent_id)
 
     dir_prms = fetch_permissions_for([dir.dir_id])
     dir_prm = next((p for p in dir_prms if p.item_id == dir.dir_id), None)
     if not dir_prm or not has_write(dir_prm, username, group_names):
         raise Forbidden("access denied")
 
-    new_fl = copy_file_to(fl, body.parent_id).unwrap_or_raise(BadRequest)
+    new_fl = copy_file_to(fl, body.parent_id)
 
-    p = new_permissions(new_fl.file_id, username, "root", "rwr-").unwrap_or_raise(
-        BadRequest
-    )
+    p = new_permissions(new_fl.file_id, username, "root", "rwr-")
 
-    return save_file(new_fl, p).unwrap_or_raise(BadRequest)
+    return save_file(new_fl, p)
 
 
 @dataclass(frozen=True, slots=True)
@@ -180,40 +173,61 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    fl = fetch_file_by_id(body.file_id).unwrap_or_raise(BadRequest)
+    fl = fetch_file_by_id(body.file_id)
 
     prms = fetch_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)
     if not prm or not has_write(prm, session.owner, group_names):
         raise Forbidden("access denied")
 
-    fl = change_file_content(fl, body.new_content).unwrap_or_raise(InternalServerError)
-    fl = rename_file(fl, body.new_filename).unwrap_or_raise(InternalServerError)
-    fl = change_file_parent(fl, body.new_parent_id).unwrap_or_raise(InternalServerError)
+    fl = change_file_content(fl, body.new_content)
+    fl = rename_file(fl, body.new_filename)
+    fl = change_file_parent(fl, body.new_parent_id)
 
     if body.new_parent_id:
-        move_file(fl.file_id, body.new_parent_id).unwrap_or_raise(BadRequest)
+        move_file(fl.file_id, body.new_parent_id)
 
-    updated_fl = update_file_by_id(body.file_id, fl).unwrap_or_raise(BadRequest)
+    updated_fl = update_file_by_id(body.file_id, fl)
 
-    if body.new_group_perms or body.new_other_perms or body.new_owner or body.new_group_name:
-        group_part = _value_to_perm_code(body.new_group_perms) if body.new_group_perms else (prm.content[0:2] if prm else "--")
-        other_part = _value_to_perm_code(body.new_other_perms) if body.new_other_perms else (prm.content[2:4] if prm else "--")
+    if (
+        body.new_group_perms
+        or body.new_other_perms
+        or body.new_owner
+        or body.new_group_name
+    ):
+        group_part = (
+            _value_to_perm_code(body.new_group_perms)
+            if body.new_group_perms
+            else (prm.content[0:2] if prm else "--")
+        )
+        other_part = (
+            _value_to_perm_code(body.new_other_perms)
+            if body.new_other_perms
+            else (prm.content[2:4] if prm else "--")
+        )
         new_content = group_part + other_part
-        new_owner = body.new_owner if body.new_owner else (prm.owner_name if prm else session.owner)
-        new_grp = body.new_group_name if body.new_group_name else (prm.group_name if prm else "root")
-        updated_prm = new_permissions(body.file_id, new_owner, new_grp, new_content).unwrap_or_raise(BadRequest)
+        new_owner = (
+            body.new_owner
+            if body.new_owner
+            else (prm.owner_name if prm else session.owner)
+        )
+        new_grp = (
+            body.new_group_name
+            if body.new_group_name
+            else (prm.group_name if prm else "root")
+        )
+        updated_prm = new_permissions(body.file_id, new_owner, new_grp, new_content)
         update_permissions([updated_prm])
 
     if body.new_cover:
-        _save_image(body.file_id, body.new_cover).unwrap_or_raise(BadRequest)
+        _save_image(body.file_id, body.new_cover)
 
     return updated_fl
 
 
-def _save_image(file_id: str, data_url: str) -> Result[str, str]:
+def _save_image(file_id: str, data_url: str) -> str:
     if "," not in data_url:
-        return Err("invalid image data")
+        raise ValueError("invalid image data")
 
     header, encoded = data_url.split(",", 1)
     ext = "png"
@@ -227,7 +241,7 @@ def _save_image(file_id: str, data_url: str) -> Result[str, str]:
     try:
         raw = base64.b64decode(encoded)
     except Exception:
-        return Err("invalid base64 data")
+        raise ValueError("invalid base64 data")
 
     images_dir = Path("public/upload")
     images_dir.mkdir(parents=True, exist_ok=True)
@@ -249,7 +263,7 @@ async def delete_file(req: Request, body: DeletFileReq) -> bool:
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    fl = fetch_file_by_id(body.file_id).unwrap_or_raise(BadRequest)
+    fl = fetch_file_by_id(body.file_id)
 
     prms = fetch_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)

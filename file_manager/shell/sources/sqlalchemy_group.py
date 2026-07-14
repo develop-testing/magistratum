@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 import sqlalchemy as sa
-from result import Err, Ok, Result
 
 from database.database import engine, metadata
 
@@ -55,7 +54,7 @@ def save_group(grp: Group) -> Group:
     return grp
 
 
-def fetch_group_by_name(name: str) -> Result[Group, str]:
+def fetch_group_by_name(name: str) -> Group:
     query = sa.text("SELECT id, name, owner_name FROM groups WHERE name = :name")
 
     members_query = sa.text(
@@ -66,16 +65,16 @@ def fetch_group_by_name(name: str) -> Result[Group, str]:
         row = conn.execute(query, {"name": name}).mappings().first()
 
         if row is None:
-            return Err("group not found")
+            raise ValueError("group not found")
 
         members = [
             row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
         ]
 
-        return Ok(Group(row["name"], row["owner_name"], members))
+        return Group(row["name"], row["owner_name"], members)
 
 
-def update_group(old_name: str, group: Group) -> Result[Group, str]:
+def update_group(old_name: str, group: Group) -> Group:
     id_query = sa.text(
         "UPDATE groups SET name = :new_name, owner_name = :owner_name WHERE name = :old_name RETURNING id"
     )
@@ -95,7 +94,7 @@ def update_group(old_name: str, group: Group) -> Result[Group, str]:
         ).scalar()
 
         if group_id is None:
-            return Err("group not found")
+            raise ValueError("group not found")
 
         conn.execute(delete_members_query, {"group_id": group_id})
 
@@ -107,7 +106,7 @@ def update_group(old_name: str, group: Group) -> Result[Group, str]:
 
         conn.commit()
 
-        return Ok(group)
+        return group
 
 
 def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> None:

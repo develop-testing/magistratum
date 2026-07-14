@@ -1,5 +1,4 @@
 import sqlalchemy as sa
-from result import is_err
 
 from database.database import engine, metadata
 
@@ -52,14 +51,16 @@ def fetch_permissions_by_group(group_name: str) -> list[Permissions]:
 
         out = []
         for item in r:
-            prms = new_permissions(
-                str(item["item_id"]),
-                str(item["owner_name"]),
-                str(item["group_name"]),
-                str(item["content"]),
-            )
-            if not is_err(prms):
-                out.append(prms.unwrap())
+            try:
+                prms = new_permissions(
+                    str(item["item_id"]),
+                    str(item["owner_name"]),
+                    str(item["group_name"]),
+                    str(item["content"]),
+                )
+                out.append(prms)
+            except ValueError:
+                pass
 
     return out
 
@@ -99,14 +100,15 @@ def fetch_permissions_for(item_ids: list[str]) -> list[Permissions]:
 
         if r is not None:
             for item in r:
-                prms = new_permissions(
-                    str(item["item_id"]),
-                    str(item["owner_name"]),
-                    str(item["group_name"]),
-                    str(item["content"]),
-                )
-
-                if not is_err(prms):
-                    out.append(prms.unwrap())
+                try:
+                    prms = new_permissions(
+                        str(item["item_id"]),
+                        str(item["owner_name"]),
+                        str(item["group_name"]),
+                        str(item["content"]),
+                    )
+                    out.append(prms)
+                except ValueError:
+                    pass
 
     return out

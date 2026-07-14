@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import sqlalchemy as sa
-from result import Err, Result, is_err
 
 
 from database.database import engine, metadata
@@ -17,7 +16,7 @@ sa.Table(
 )
 
 
-def fetch_member_by_username(username: str) -> Result[Member, str]:
+def fetch_member_by_username(username: str) -> Member:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )
@@ -27,12 +26,12 @@ def fetch_member_by_username(username: str) -> Result[Member, str]:
         row = result.mappings().first()
 
         if row is None:
-            return Err("user not found")
+            raise ValueError("user not found")
 
         return new_member(row["username"], row["password"])
 
 
-def save_candidate(cnd: Candidate) -> Result[Member, str]:
+def save_candidate(cnd: Candidate) -> Member:
     try:
         with engine.connect() as conn:
             query = sa.text(
@@ -50,7 +49,7 @@ def save_candidate(cnd: Candidate) -> Result[Member, str]:
             return new_member(cnd.username, cnd.password_hash)
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
-            return Err("user is exists")
+            raise ValueError("user is exists")
         raise
 
 
@@ -62,8 +61,10 @@ def fetch_all_members() -> list[Member]:
 
         out: list[Member] = []
         for row in rows:
-            m = new_member(str(row["username"]), str(row["password"]))
-            if not is_err(m):
-                out.append(m.unwrap())
+            try:
+                m = new_member(str(row["username"]), str(row["password"]))
+                out.append(m)
+            except ValueError:
+                pass
 
         return out

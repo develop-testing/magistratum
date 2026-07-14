@@ -1,7 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import re
-from result import Err, Ok, Result
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,78 +13,78 @@ class Permissions:
 
 def new_permissions(
     item_id: str, owner_name: str, group_name: str, content: str
-) -> Result[Permissions, str]:
+) -> Permissions:
     if len(item_id) > 255:
-        return Err("wrong item id length")
+        raise ValueError("wrong item id length")
 
     if len(owner_name) > 255:
-        return Err("wrong owner id length")
+        raise ValueError("wrong owner id length")
 
     if len(group_name) > 255:
-        return Err("wrong group id length")
+        raise ValueError("wrong group id length")
 
     if not re.match(r"^[r-][w-][r-][w-]$", content) or not len(content) == 4:
-        return Err("wrong other symbols")
+        raise ValueError("wrong other symbols")
 
-    return Ok(Permissions(item_id, owner_name, group_name, content))
+    return Permissions(item_id, owner_name, group_name, content)
 
 
-def grant_for_group(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
+def grant_for_group(p: Permissions, who: str, what: str) -> Permissions:
     if p.owner_name != who:
-        return Err("only owner can change permissions")
+        raise PermissionError("only owner can change permissions")
 
     if what == "read":
         new_value = p.content[:0] + "r" + p.content[1:]
     elif what == "write":
         new_value = p.content[:1] + "w" + p.content[2:]
     else:
-        return Err(f"unknown action: {what}, expected read/write")
+        raise ValueError(f"unknown action: {what}, expected read/write")
 
     return new_permissions(p.item_id, p.owner_name, p.group_name, new_value)
 
 
-def grant_for_other(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
+def grant_for_other(p: Permissions, who: str, what: str) -> Permissions:
     if p.owner_name != who:
-        return Err("only owner can change permissions")
+        raise PermissionError("only owner can change permissions")
 
     if what == "read":
         new_value = p.content[:2] + "r" + p.content[3:]
     elif what == "write":
         new_value = p.content[:3] + "w" + p.content[4:]
     else:
-        return Err(f"unknown action: {what}, expected read/write")
+        raise ValueError(f"unknown action: {what}, expected read/write")
 
     return new_permissions(p.item_id, p.owner_name, p.group_name, new_value)
 
 
-def revoke_for_group(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
+def revoke_for_group(p: Permissions, who: str, what: str) -> Permissions:
     if p.owner_name != who:
-        return Err("only owner can change permissions")
+        raise PermissionError("only owner can change permissions")
 
     if what == "read":
         new_value = p.content[:0] + "-" + p.content[1:]
     elif what == "write":
         new_value = p.content[:1] + "-" + p.content[2:]
     else:
-        return Err(f"unknown action: {what}, expected read/write")
+        raise ValueError(f"unknown action: {what}, expected read/write")
 
     return new_permissions(p.item_id, p.owner_name, p.group_name, new_value)
 
 
-def change_group(p: Permissions, new_group_name: str) -> Result[Permissions, str]:
+def change_group(p: Permissions, new_group_name: str) -> Permissions:
     return new_permissions(p.item_id, p.owner_name, new_group_name, p.content)
 
 
-def revoke_for_other(p: Permissions, who: str, what: str) -> Result[Permissions, str]:
+def revoke_for_other(p: Permissions, who: str, what: str) -> Permissions:
     if p.owner_name != who:
-        return Err("only owner can change permissions")
+        raise PermissionError("only owner can change permissions")
 
     if what == "read":
         new_value = p.content[:2] + "-" + p.content[3:]
     elif what == "write":
         new_value = p.content[:3] + "-" + p.content[4:]
     else:
-        return Err(f"unknown action: {what}, expected read/write")
+        raise ValueError(f"unknown action: {what}, expected read/write")
 
     return new_permissions(p.item_id, p.owner_name, p.group_name, new_value)
 

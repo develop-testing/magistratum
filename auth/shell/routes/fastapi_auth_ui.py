@@ -15,12 +15,15 @@ async def login_page() -> HTMLResponse:
         scss_content = f.read()
 
     result = sass_embedded.compile_string(
-        scss_content, load_paths=[Path("auth/shell/skins/default/"), Path("skins/default")]
+        scss_content,
+        load_paths=[Path("auth/shell/skins/default/"), Path("skins/default")],
     )
 
     data = {"title": "Magistratum", "styles": result.output}
 
-    with open("auth/shell/skins/default/auth/login.mustache", "r", encoding="utf-8") as f:
+    with open(
+        "auth/shell/skins/default/auth/login.mustache", "r", encoding="utf-8"
+    ) as f:
         html_content = chevron.render(f, data)
 
     return HTMLResponse(html_content)

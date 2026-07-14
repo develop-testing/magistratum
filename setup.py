@@ -21,17 +21,17 @@ if __name__ == "__main__":
     metadata.drop_all(engine)
     metadata.create_all(engine)
 
-    candidate = make_candidate("root", "root").unwrap()
-    root = save_candidate(candidate).unwrap()
+    candidate = make_candidate("root", "root")
+    root = save_candidate(candidate)
 
-    rgroup = mk_group("root", root.username, []).unwrap()
+    rgroup = mk_group("root", root.username, [])
     rgroup = save_group(rgroup)
 
-    rhome = mk_dir("root", "").unwrap()
-    prmns = new_permissions(rhome.dir_id, root.username, "root", "r-r-").unwrap()
+    rhome = mk_dir("root", "")
+    prmns = new_permissions(rhome.dir_id, root.username, "root", "r-r-")
 
     save_directory(rhome)
     save_permissions(prmns)
 
-    home = mk_home_dir("root", rhome.dir_id, root.username).unwrap()
+    home = mk_home_dir("root", rhome.dir_id, root.username)
     save_home_dir(home)

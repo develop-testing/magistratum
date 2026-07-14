@@ -7,7 +7,6 @@ from fastapi.responses import HTMLResponse
 import sass_embedded
 import chevron  # type: ignore[import-untyped]
 
-from router.response import BadRequest
 from file_manager.shell.sources.sqlalchemy_file import fetch_file_by_id
 from file_manager.shell.sources.sqlalchemy_file import fetch_image_by_file
 from file_manager.shell.sources.sqlalchemy_permissions import fetch_permissions_for
@@ -25,18 +24,24 @@ def _perm_code_to_value(code: str) -> str:
         return "rw"
     return ""
 
+
 ui_files_router = APIRouter()
 
 
 @ui_files_router.get("/text_file/edit/{file_id}", tags=["Auth"])
 async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
-    fl = fetch_file_by_id(file_id).unwrap_or_raise(BadRequest)
+    fl = fetch_file_by_id(file_id)
 
-    with open("file_manager/shell/skins/default/detail_file/text_file.scss", "r", encoding="utf-8") as f:
+    with open(
+        "file_manager/shell/skins/default/detail_file/text_file.scss",
+        "r",
+        encoding="utf-8",
+    ) as f:
         scss_content = f.read()
 
     result = sass_embedded.compile_string(
-        scss_content, load_paths=[Path("file_manager/shell/skins/default/"), Path("skins/default")]
+        scss_content,
+        load_paths=[Path("file_manager/shell/skins/default/"), Path("skins/default")],
     )
 
     prms = fetch_permissions_for([fl.file_id])
@@ -45,6 +50,11 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
     group_perm_value = _perm_code_to_value(prm.content[0:2]) if prm else ""
     other_perm_value = _perm_code_to_value(prm.content[2:4]) if prm else ""
     perm_owner = prm.owner_name if prm else ""
+
+    try:
+        image_url = fetch_image_by_file(file_id)
+    except ValueError:
+        image_url = "/public/img/not-found.png"
 
     data = {
         "title": "Lorice Administratum",
@@ -60,7 +70,7 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
         "is_other_r": other_perm_value == "r",
         "is_other_w": other_perm_value == "w",
         "is_other_rw": other_perm_value == "rw",
-        "image_url": fetch_image_by_file(file_id).unwrap_or("/public/img/not-found.png"),
+        "image_url": image_url,
         "all_users": [
             {"name": m.username, "is_current": m.username == perm_owner}
             for m in fetch_all_members()
@@ -87,13 +97,18 @@ async def dashboar_text_file_edit(file_id: str) -> HTMLResponse:
 
 @ui_files_router.get("/text_file/{file_id}", tags=["Auth"])
 async def dashboar_text_file(file_id: str) -> HTMLResponse:
-    fl = fetch_file_by_id(file_id).unwrap_or_raise(BadRequest)
+    fl = fetch_file_by_id(file_id)
 
-    with open("file_manager/shell/skins/default/detail_file/text_file.scss", "r", encoding="utf-8") as f:
+    with open(
+        "file_manager/shell/skins/default/detail_file/text_file.scss",
+        "r",
+        encoding="utf-8",
+    ) as f:
         scss_content = f.read()
 
     result = sass_embedded.compile_string(
-        scss_content, load_paths=[Path("file_manager/shell/skins/default/"), Path("skins/default")]
+        scss_content,
+        load_paths=[Path("file_manager/shell/skins/default/"), Path("skins/default")],
     )
 
     data = {

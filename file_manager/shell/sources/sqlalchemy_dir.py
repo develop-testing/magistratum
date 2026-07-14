@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import sqlalchemy as sa
-from result import Ok, Err, Result
 
 from database.database import engine, metadata
 
@@ -49,7 +48,7 @@ def save_directory(dir: Directory) -> Directory:
         return dir
 
 
-def fetch_dir_by_id(dir_id: str) -> Result[Directory, str]:
+def fetch_dir_by_id(dir_id: str) -> Directory:
     query = sa.text(
         "SELECT dir_id, name, parent_id FROM directories WHERE dir_id = :dir_id"
     )
@@ -58,12 +57,12 @@ def fetch_dir_by_id(dir_id: str) -> Result[Directory, str]:
         row = conn.execute(query, {"dir_id": dir_id}).mappings().first()
 
         if row is None:
-            return Err("directory not found")
+            raise ValueError("directory not found")
 
-        return Ok(Directory(row["dir_id"], row["name"], row["parent_id"], []))
+        return Directory(row["dir_id"], row["name"], row["parent_id"], [])
 
 
-def fetch_dir_by_name(dirname: str) -> Result[Directory, str]:
+def fetch_dir_by_name(dirname: str) -> Directory:
     query = sa.text(
         "SELECT dir_id, name, parent_id FROM directories WHERE name = :dirname"
     )
@@ -73,12 +72,12 @@ def fetch_dir_by_name(dirname: str) -> Result[Directory, str]:
         row = result.mappings().first()
 
         if row is None:
-            return Err("directory not found")
+            raise ValueError("directory not found")
 
-        return Ok(Directory(row["dir_id"], row["name"], row["parent_id"], []))
+        return Directory(row["dir_id"], row["name"], row["parent_id"], [])
 
 
-def update_directory(d: Directory) -> Result[Directory, str]:
+def update_directory(d: Directory) -> Directory:
     query = sa.text(
         "UPDATE directories SET name = :name, parent_id = :parent_id WHERE dir_id = :dir_id"
     )
@@ -94,7 +93,7 @@ def update_directory(d: Directory) -> Result[Directory, str]:
         )
         conn.commit()
 
-        return Ok(d)
+        return d
 
 
 def delete_directory(dir_id: str) -> bool:

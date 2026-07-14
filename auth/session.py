@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from time import time
 
 import secrets
-from result import Err, Ok, Result
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,23 +12,20 @@ class Session:
     expires: int
 
 
-SessionResult = Result[Session, str]
-
-
-def session_of(session_id: str, owner_id: str, expires: int) -> SessionResult:
+def session_of(session_id: str, owner_id: str, expires: int) -> Session:
     if len(owner_id) > 250:
-        return Err("owner must be between 3 and 250 characters")
+        raise ValueError("owner must be between 3 and 250 characters")
 
     if not (len(session_id) == 64 and all(c in "0123456789abcdef" for c in session_id)):
-        return Err("id must be a 64-character hex string")
+        raise ValueError("id must be a 64-character hex string")
 
     if expires > 99999999999:
-        return Err("expires must be less than 999999999")
+        raise ValueError("expires must be less than 999999999")
 
-    return Ok(Session(session_id, owner_id, expires))
+    return Session(session_id, owner_id, expires)
 
 
-def make_session(owner: str, session_id: str) -> SessionResult:
+def make_session(owner: str, session_id: str) -> Session:
     return session_of(session_id, owner, int(time() + 86400))
 
 
@@ -37,8 +33,8 @@ def close_session(session: Session) -> Session:
     return Session(session.id, session.owner, -1)
 
 
-def generate_session_for(user_id: str) -> SessionResult:
+def generate_session_for(user_id: str) -> Session:
     if not user_id:
-        return Err("username is empty")
+        raise ValueError("username is empty")
 
     return make_session(user_id, secrets.token_hex(32))

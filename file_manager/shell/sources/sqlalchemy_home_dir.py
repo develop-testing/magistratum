@@ -1,5 +1,4 @@
 import sqlalchemy as sa
-from result import Ok, Err, Result
 
 from database.database import engine, metadata
 
@@ -14,7 +13,7 @@ sa.Table(
 )
 
 
-def fetch_home_dir_by_username(username: str) -> Result[HomeDirectory, str]:
+def fetch_home_dir_by_username(username: str) -> HomeDirectory:
     query = sa.text(
         "SELECT username AS name, dir_id, username AS user_id FROM home_dirs WHERE username = :username"
     )
@@ -23,9 +22,9 @@ def fetch_home_dir_by_username(username: str) -> Result[HomeDirectory, str]:
         row = conn.execute(query, {"username": username}).mappings().first()
 
         if row is None:
-            return Err("home directory not found")
+            raise ValueError("home directory not found")
 
-        return Ok(HomeDirectory(row["name"], row["dir_id"], row["user_id"]))
+        return HomeDirectory(row["name"], row["dir_id"], row["user_id"])
 
 
 def save_home_dir(h: HomeDirectory) -> HomeDirectory:
@@ -40,14 +39,14 @@ def save_home_dir(h: HomeDirectory) -> HomeDirectory:
     return h
 
 
-def update_home_dir(h: HomeDirectory) -> Result[HomeDirectory, str]:
+def update_home_dir(h: HomeDirectory) -> HomeDirectory:
     query = sa.text("UPDATE home_dirs SET dir_id = :dir_id WHERE username = :username")
 
     with engine.connect() as conn:
         conn.execute(query, {"dir_id": h.dir_id, "username": h.name})
         conn.commit()
 
-    return Ok(h)
+    return h
 
 
 def delete_home_dir(h: HomeDirectory) -> bool:

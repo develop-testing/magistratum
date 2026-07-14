@@ -42,7 +42,7 @@ async def create_directory(req: Request, body: CreateDirectoryRequest) -> Direct
     groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
 
-    parent_dir = fetch_dir_by_id(body.parent_id).unwrap_or_raise(BadRequest)
+    parent_dir = fetch_dir_by_id(body.parent_id)
 
     if not parent_dir:
         raise BadRequest("directories not found")
@@ -52,10 +52,8 @@ async def create_directory(req: Request, body: CreateDirectoryRequest) -> Direct
     if not prm or not has_write(prm, session_owner, group_names):
         raise Forbidden("access denied")
 
-    new_dir = mk_directory(body.name, body.parent_id).unwrap_or_raise(BadRequest)
-    new_perm = new_permissions(
-        new_dir.dir_id, session_owner, prm.group_name, "rwr-"
-    ).unwrap_or_raise(BadRequest)
+    new_dir = mk_directory(body.name, body.parent_id)
+    new_perm = new_permissions(new_dir.dir_id, session_owner, prm.group_name, "rwr-")
 
     new_dir = save_directory(new_dir)
     new_perm = save_permissions(new_perm)
@@ -76,19 +74,17 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    d = fetch_dir_by_id(body.dir_id).unwrap_or_raise(BadRequest)
+    d = fetch_dir_by_id(body.dir_id)
 
     prms = fetch_permissions_for([d.dir_id])
     prm = next((p for p in prms if p.item_id == d.dir_id), None)
     if not prm or not has_write(prm, session.owner, group_names):
         raise Forbidden("access denied")
 
-    d = rename_directory(d, body.new_name).unwrap_or_raise(InternalServerError)
-    d = change_directory_parent(d, body.new_parent_id).unwrap_or_raise(
-        InternalServerError
-    )
+    d = rename_directory(d, body.new_name)
+    d = change_directory_parent(d, body.new_parent_id)
 
-    return update_directory(d).unwrap_or_raise(BadRequest)
+    return update_directory(d)
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,7 +98,7 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    d = fetch_dir_by_id(body.dir_id).unwrap_or_raise(BadRequest)
+    d = fetch_dir_by_id(body.dir_id)
 
     prms = fetch_permissions_for([d.dir_id])
     prm = next((p for p in prms if p.item_id == d.dir_id), None)
