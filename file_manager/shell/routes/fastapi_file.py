@@ -6,17 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, Response, Request
 
 from router.response import *
-from ...files import (
-    TextFileFilter,
-    TextFile,
-    BrokenFile,
-    change_file_content,
-    change_file_parent,
-    copy_file_to,
-    rename_file,
-    new_file,
-    destroy_file,
-)
+from ...files import *
 from ..sources.sqlalchemy_dir import fetch_dir_by_id
 from ..sources.sqlalchemy_file import (
     save_file,
@@ -70,8 +60,8 @@ async def read_files(req: Request, query: FetchFileReq = Depends()) -> ReadRet:
         prms = fetch_permissions_for([fl.file_id])
         prm = next((p for p in prms if p.item_id == fl.file_id), None)
         if not prm or not has_read(prm, session.owner, group_names):
-            return [BrokenFile(name=fl.name, reason="access not allowed")]
-        return [TextFile(fl.file_id, fl.name, fl.content, fl.parent_id)]
+            return [mk_broken_file(fl.name, "access not allowed")]
+        return [mk_text_file(fl.file_id, fl.name, fl.content, fl.parent_id)]
 
     files = fetch_file_by_filter(
         TextFileFilter(query.by_name, query.by_directory, query.limit, query.offset)
@@ -82,10 +72,12 @@ async def read_files(req: Request, query: FetchFileReq = Depends()) -> ReadRet:
     result: list[TextFile | BrokenFile] = []
     for f in files:
         prm = next((p for p in prms if p.item_id == f.file_id), None)
-        if prm and has_read(prm, session.owner, group_names):
-            result.append(TextFile(f.file_id, f.name, f.content, f.parent_id))
-        else:
-            result.append(BrokenFile(name=f.name, reason="access not allowed"))
+        if not prm and not  has_read(prm, session.owner, group_names):
+            result.append(mk_broken_file(f.name, "access not allowed"))
+            continue
+            
+        result.append(mk_text_file(f.file_id, f.name, f.content, f.parent_id))
+
 
     return result
 

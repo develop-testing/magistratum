@@ -35,6 +35,10 @@ def copy_file_to(fl: TextFile, parent_id: str) -> TextFile:
     return new_file(fl.name, fl.content, parent_id)
 
 
+def mk_broken_file(name: str, reason: str) -> BrokenFile:
+    return BrokenFile(name, reason)
+
+
 def mk_text_file(id: str, name: str, content: str, parent_id: str = "") -> TextFile:
     return TextFile(id, name, content, parent_id)
 
