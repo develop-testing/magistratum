@@ -9,6 +9,7 @@ from router.response import *
 from ...files import (
     TextFileFilter,
     TextFile,
+    BrokenFile,
     change_file_content,
     change_file_parent,
     copy_file_to,

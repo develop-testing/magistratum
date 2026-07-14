@@ -35,8 +35,12 @@ def copy_file_to(fl: TextFile, parent_id: str) -> TextFile:
     return new_file(fl.name, fl.content, parent_id)
 
 
+def mk_text_file(id: str, name: str, content: str, parent_id: str = "") -> TextFile:
+    return TextFile(id, name, content, parent_id)
+
+
 def new_file(name: str, content: str, parent_id: str = "") -> TextFile:
-    return TextFile("text-file@" + str(uuid.uuid4()), name, content, parent_id)
+    return mk_text_file("text-file@" + str(uuid.uuid4()), name, content, parent_id)
 
 
 def rename_file(f: TextFile, new_name: str) -> TextFile:

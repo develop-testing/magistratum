@@ -3,7 +3,7 @@ import sqlalchemy as sa
 
 from database.database import engine, metadata
 
-from ...files import TextFile, TextFileFilter
+from ...files import TextFile, TextFileFilter, mk_text_file
 
 from ...permissions import Permissions
 
@@ -38,7 +38,7 @@ def fetch_file_by_id(file_id: str) -> TextFile:
         if row is None:
             raise ValueError("file not found")
 
-        return TextFile(
+        return mk_text_file(
             str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
         )
 
@@ -54,7 +54,7 @@ def fetch_file_by_name(name: str) -> TextFile:
         if row is None:
             raise ValueError("file not found")
 
-        return TextFile(
+        return mk_text_file(
             str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
         )
 
@@ -115,7 +115,7 @@ def fetch_file_by_filter(filter: TextFileFilter) -> list[TextFile]:
             rows = []
 
         return [
-            TextFile(
+            mk_text_file(
                 str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
             )
             for row in rows
@@ -182,7 +182,7 @@ def save_file(file: TextFile, perms: Permissions) -> TextFile:
 
             conn.commit()
 
-            return TextFile(file.file_id, file.name, file.content, file.parent_id)
+            return mk_text_file(file.file_id, file.name, file.content, file.parent_id)
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
             raise ValueError("file with this name is exists")
