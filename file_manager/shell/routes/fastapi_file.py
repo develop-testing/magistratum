@@ -58,7 +58,7 @@ async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
 
     for index, file in enumerate(files):
         prm = next((p for p in prms if p.item_id == id_of_file(file)), None)
-        if prm is None or has_read(prm, session.owner, group_names):
+        if prm is None or not has_read(prm, session.owner, group_names):
             files[index] = mk_broken_file(name_of_file(file), "access not allowed")
             continue
 
