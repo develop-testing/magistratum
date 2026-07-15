@@ -31,6 +31,21 @@ def fetch_member_by_username(username: str) -> Member:
         return new_member(row["username"], row["password"])
 
 
+def fetch_member_profile_by_username(username: str) -> Member:
+    query = sa.text(
+        "SELECT id, username, password FROM users WHERE username = :username"
+    )
+
+    with engine.connect() as conn:
+        result = conn.execute(query, {"username": username})
+        row = result.mappings().first()
+
+        if row is None:
+            raise ValueError("user not found")
+
+        return mk_member_profile(str(row["username"]))
+
+
 def save_candidate(cnd: Candidate) -> Member:
     try:
         with engine.connect() as conn:
@@ -61,10 +76,35 @@ def fetch_all_members() -> list[Member]:
 
         out: list[Member] = []
         for row in rows:
-            try:
-                m = new_member(str(row["username"]), str(row["password"]))
-                out.append(m)
-            except ValueError:
-                pass
+            m = new_member(str(row["username"]), str(row["password"]))
+            out.append(m)
 
         return out
+
+
+def fetch_all_profiles() -> list[Member]:
+    query = sa.text("SELECT username, password FROM users")
+
+    with engine.connect() as conn:
+        rows = conn.execute(query).mappings().all()
+
+        out: list[Member] = []
+        for row in rows:
+            m = mk_member_profile(str(row["username"]))
+            out.append(m)
+
+        return out
+
+
+def fetch_members_by_filter(fltr: FilterOfMember) -> list[Member]:
+    if fltr.all and not fltr.only_profiles:
+        return fetch_all_members()
+
+    if fltr.by_name and not fltr.only_profiles:
+        return [fetch_member_by_username(fltr.by_name)]
+
+    if fltr.all and fltr.only_profiles:
+        return fetch_all_profiles()
+
+    if fltr.by_name and fltr.only_profiles:
+        return [fetch_member_profile_by_username(fltr.by_name)]

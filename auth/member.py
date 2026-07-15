@@ -1,7 +1,15 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
+
 import bcrypt
+
+
+@dataclass(frozen=True, slots=True)
+class FilterOfMember:
+    all: bool = False
+    by_name: str = ""
+    only_profiles: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,3 +52,11 @@ def new_candidate(uname: str, password_hash: str) -> Candidate:
 def make_candidate(uname: str, password: str) -> Candidate:
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
     return new_candidate(uname=uname, password_hash=hashed.decode())
+
+
+@dataclass(frozen=True, slots=True)
+class MemberProfile:
+    username: str
+
+def mk_member_profile(username: str) -> MemberProfile:
+    return MemberProfile(username)

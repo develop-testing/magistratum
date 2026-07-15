@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Request, Response, Depends
 
 from router.response import *
 from ...session import *
@@ -57,3 +57,9 @@ def register(body: RegisterRequest) -> bool:
     cnd = make_candidate(body.username, body.password)
     save_candidate(cnd)
     return True
+
+
+@auth_router.get("/auth/members", tags=["Auth"])
+def fetch_members(fltr:FilterOfMember = Depends()) -> list[Member | MemberProfile]:
+    res = fetch_members_by_filter(fltr)
+    return res
