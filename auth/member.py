@@ -56,5 +56,6 @@ def make_candidate(uname: str, password: str) -> Candidate:
 class MemberProfile:
     username: str
 
+
 def mk_member_profile(username: str) -> MemberProfile:
     return MemberProfile(username)

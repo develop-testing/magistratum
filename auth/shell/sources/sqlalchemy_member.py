@@ -31,7 +31,7 @@ def fetch_member_by_username(username: str) -> Member:
         return new_member(row["username"], row["password"])
 
 
-def fetch_member_profile_by_username(username: str) -> Member:
+def fetch_member_profile_by_username(username: str) -> MemberProfile:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )
@@ -82,13 +82,13 @@ def fetch_all_members() -> list[Member]:
         return out
 
 
-def fetch_all_profiles() -> list[Member]:
+def fetch_all_profiles() -> list[MemberProfile]:
     query = sa.text("SELECT username, password FROM users")
 
     with engine.connect() as conn:
         rows = conn.execute(query).mappings().all()
 
-        out: list[Member] = []
+        out: list[MemberProfile] = []
         for row in rows:
             m = mk_member_profile(str(row["username"]))
             out.append(m)
@@ -96,7 +96,7 @@ def fetch_all_profiles() -> list[Member]:
         return out
 
 
-def fetch_members_by_filter(fltr: FilterOfMember) -> list[Member]:
+def fetch_members_by_filter(fltr: FilterOfMember) -> list[MemberProfile]:
     if fltr.by_name:
         return [fetch_member_profile_by_username(fltr.by_name)]
 
