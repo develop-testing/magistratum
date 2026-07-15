@@ -7,6 +7,15 @@ from database.database import engine, metadata
 from ...directories.directory import *
 from ...permissions import *
 
+
+@dataclass
+class DirFetchError(Exception):
+    message: str
+
+    def __post_init__(self) -> None:
+        super().__init__(self.message)
+
+
 sa.Table(
     "directories",
     metadata,
@@ -36,8 +45,13 @@ def fetch_dirs_by_parent(parent_id: str) -> list[Directory]:
 
     with engine.connect() as conn:
         rows = conn.execute(query, {"parent_id": parent_id}).mappings().all()
+
+        if not rows:
+            return []
+
         return [
-            Directory(row["dir_id"], row["name"], row["parent_id"], []) for row in rows
+            mk_directory(row["dir_id"],row["name"],row["parent_id"],[])
+            for row in rows
         ]
 
 
@@ -50,7 +64,7 @@ def fetch_dir_by_id(dir_id: str) -> Directory:
         row = conn.execute(query, {"dir_id": dir_id}).mappings().first()
 
         if row is None:
-            raise ValueError("directory not found")
+            raise DirFetchError("directory not found")
 
         return Directory(row["dir_id"], row["name"], row["parent_id"], [])
 
@@ -65,12 +79,21 @@ def fetch_dir_by_name(dirname: str) -> Directory:
         row = result.mappings().first()
 
         if row is None:
-            raise ValueError("directory not found")
+            raise DirFetchError("directory not found")
 
         return Directory(row["dir_id"], row["name"], row["parent_id"], [])
 
 
 def fetch_dirs_by_filter(fltr: DirFilter) -> list[Directory]:
+    if fltr.by_id:
+        return [fetch_dir_by_id(fltr.by_id)]
+
+    if fltr.by_name:
+        return [fetch_dir_by_name(fltr.by_name)]
+
+    if fltr.parent_id:
+        return fetch_dirs_by_parent(fltr.parent_id)
+
     return []
 
 
@@ -99,7 +122,7 @@ def save_directory(dir: Directory) -> Directory:
     )
 
     with engine.connect() as conn:
-        result = conn.execute(
+        conn.execute(
             query,
             {
                 "dir_id": dir.dir_id,
