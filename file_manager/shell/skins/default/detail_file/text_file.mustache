@@ -83,11 +83,7 @@
                         <div data-tab-content="meta" class="tabs-content">
                             <div class="def-field">
                                 <span>Текущее изображение</span>
-                                <img
-                                    class="h-24"
-                                    name="image-preview"
-                                    src="{{image_url}}"
-                                >
+                                <img class="h-24" name="image-preview" src="{{image_url}}">
                             </div>
                             <label class="def-field">
                                 <span>Изображение</span>
@@ -130,6 +126,9 @@
             files_url.searchParams.append('data_type', 'rich')
 
             const groups_url = new URL('http://127.0.0.1:8800/groups')
+            groups_url.searchParams.append('member', username)
+
+            const dirs_url = new URL('http://127.0.0.1:8800/groups')
             groups_url.searchParams.append('member', username)
 
             return Promise.all([

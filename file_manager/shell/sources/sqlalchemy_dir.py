@@ -94,7 +94,7 @@ def fetch_dirs_by_filter(fltr: DirFilter) -> list[Directory]:
     if fltr.parent_id:
         return fetch_dirs_by_parent(fltr.parent_id)
 
-    return []
+    return fetch_all_dirs()
 
 
 def update_directory(d: Directory) -> Directory:

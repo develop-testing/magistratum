@@ -6,7 +6,6 @@ import uuid
 
 @dataclass(frozen=True, slots=True)
 class DirFilter:
-    only_can_read: bool = False
     only_can_write: bool = False
     parent_id: str = ""
     by_id: str = ""

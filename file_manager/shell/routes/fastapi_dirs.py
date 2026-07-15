@@ -126,10 +126,11 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> RdDirsRslt:
 
     dirs = fetch_dirs_by_filter(fltr)
 
-    prms = fetch_permissions_for([d.dir_id for d in dirs])
+    if not dirs:
+        raise BadRequest("directories not found") 
 
-    if fltr.only_can_read:
-        prms = only_read_permitions(prms, session_owner, group_names)
+    prms = fetch_permissions_for([d.dir_id for d in dirs])
+    prms = only_read_permitions(prms, session_owner, group_names)
 
     if fltr.only_can_write:
         prms = only_write_permitions(prms, session_owner, group_names)
@@ -172,10 +173,7 @@ def filter_dirs_by_perms(dirs: list[Directory], prms: list[Permissions]) -> DrsF
     result: DrsFltrRes = []
 
     for dir in dirs:
-        if not check_dir_has_perms(dir, prms):
-            result = [*result, mk_broken_directory(dir.name, "access not allowed")]
-            continue
-
-        result = [*result, dir]
+        if check_dir_has_perms(dir, prms):
+            result = [*result, dir]
 
     return result
