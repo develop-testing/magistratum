@@ -29,10 +29,10 @@
                         <div data-tab-content="general" class="tabs-content active">
                             <label class="def-field">
                                 <span>Название</span>
-                                <input name="file-name" class="" value="{{file_name}}">
+                                <input name="file-name" value="">
                             </label>
                             <div class="editor-body">
-                                <textarea id="editor">{{{file_content}}}</textarea>
+                                <textarea id="editor"></textarea>
                             </div>
                         </div>
                         <div data-tab-content="perms" class="tabs-content">
@@ -40,7 +40,10 @@
                                 <span>Родительская директория</span>
                                 <select name="perm-parent-dir">
                                     {{#all_dirs}}
-                                    <option value="{{dir_id}}" {{#is_current}}selected{{/is_current}}>{{name}}</option>
+                                    <option
+                                        value="{{dir_id}}"
+                                        {{#is_current}}selected{{/is_current}}
+                                    > {{name}} </option>
                                     {{/all_dirs}}
                                 </select>
                             </label>
@@ -80,7 +83,11 @@
                         <div data-tab-content="meta" class="tabs-content">
                             <div class="def-field">
                                 <span>Текущее изображение</span>
-                                <img id="image-preview" src="{{image_url}}" style="max-width:300px;max-height:200px;">
+                                <img
+                                    class="h-24"
+                                    name="image-preview"
+                                    src="{{image_url}}"
+                                >
                             </div>
                             <label class="def-field">
                                 <span>Изображение</span>
@@ -94,43 +101,98 @@
 
     <script src="/static/file_manager/detail_file/tinymce/tinymce.min.js"></script>
     <script>
-        const file_id = document.body.dataset.fileId;
-        const save_btn = document.getElementById("save-btn");
-        const status_el = document.getElementById("editor-status");
+        const tabs = (btns_tags, tabs_tags) => {
+            const tabs_buttons = document.querySelectorAll(btns_tags);
+            const tabs = document.querySelectorAll(tabs_tags);
 
-        const tabs_buttons = document.querySelectorAll("[data-tab]");
-        const tabs = document.querySelectorAll("[data-tab-content]");
+            tabs_buttons.forEach(button => {
+                button.addEventListener('click', e => {
+                    const tab_name = e.target.getAttribute("data-tab")
+                    tabs.forEach(tab => {
+                        if (tab_name !== tab.getAttribute("data-tab-content")) {
+                            tab.classList.remove('active')
+                        } else {
+                            tab.classList.add('active')
+                        }
+                    })
 
-        tabs_buttons.forEach(button => {
-            button.addEventListener('click', e => {
-                const tab_name = e.target.getAttribute("data-tab")
-                tabs.forEach(tab => {
-                    if (tab_name !== tab.getAttribute("data-tab-content")) {
-                        tab.classList.remove('active')
-                    } else {
-                        tab.classList.add('active')
-                    }
                 })
-
             })
-        })
+        }
 
-        tinymce.init({
-            selector: "#editor",
-            menubar: false,
-            branding: false,
-            promotion: false,
-            height: "100%",
-            plugins: "lists link image code fullscreen preview",
-            toolbar: "bold italic | blocks | bullist numlist | link image | code fullscreen preview",
-            content_style: "body { font-family: monospace; }",
-            setup: function (editor) {
-                editor.on("init", function () {
-                    editor.setContent(document.getElementById("editor").value || "");
-                });
-            }
-        });
+        tabs("[data-tab]", "[data-tab-content]")
 
+        let page_data = {}
+
+        const fetch_file_data = (file_id, username) => {
+            const files_url = new URL('http://127.0.0.1:8800/files')
+            files_url.searchParams.append('by_id', file_id)
+            files_url.searchParams.append('data_type', 'rich')
+
+            const groups_url = new URL('http://127.0.0.1:8800/groups')
+            groups_url.searchParams.append('member', username)
+
+            return Promise.all([
+                fetch(files_url, {credentials: 'include'})
+                    .then(res => res.json())
+                    .then(item => {
+                        return {
+                            ...item[0].text_file,
+                            ...item[0].perms,
+                            image: item[0].image
+                        }
+                    }),
+                fetch(groups_url, {credentials: 'include'})
+                    .then(res => res.json())
+            ]).then(res => {
+                return {
+                    file: res[0],
+                    groups: res[1]
+                }
+            })
+        }
+
+        const init_editor = (editor_tag, value) => {
+            return tinymce.init({
+                selector: editor_tag,
+                menubar: false,
+                branding: false,
+                promotion: false,
+                height: "100%",
+                plugins: "lists link image code fullscreen preview",
+                toolbar: "bold italic | blocks | bullist numlist | link image | code fullscreen preview",
+                content_style: "body { font-family: monospace; }",
+                setup: function (editor) {
+                    editor.on("init", function () {
+                        editor.setContent(value || "")
+                    })
+                }
+            })
+        }
+
+        const init_name = (name_tag, value) => {
+            const name = document.querySelector(name_tag)
+            name.value = value
+
+            return name
+        }
+
+        const init_general = data => {
+            init_editor("#editor", data.content)
+            init_name("[name='file-name']", data.name)
+
+            return data
+        }
+
+        const init_image = () => {
+
+        }
+
+        fetch_file_data(document.body.dataset.fileId, "root")
+            .then(data => init_general(data.file))
+
+
+        /* 
         const change_file = (file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName, cover) => {
             return fetch("http://127.0.0.1:8800/file", {
                 method: "PATCH",
@@ -184,7 +246,7 @@
             } else {
                 await change_file(file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName, "");
             }
-        });
+        }); */
     </script>
     </body>
 </html>

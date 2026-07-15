@@ -16,6 +16,10 @@ $warning-color: red;
   box-sizing: border-box;
 }
 
+.h-24 {
+  height: 24rem;
+}
+
 .m-4 {
   margin-top: ($step * 4);
   margin-right: ($step * 4);
