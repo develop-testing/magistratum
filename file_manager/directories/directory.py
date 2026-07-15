@@ -6,7 +6,11 @@ import uuid
 
 @dataclass(frozen=True, slots=True)
 class DirFilter:
+    only_can_read: bool = False
+    only_can_write: bool = False
     parent_id: str = ""
+    by_id: str = ""
+    by_name: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +33,10 @@ def destroy_directory(d: Directory) -> str:
 
 def mk_directory(dir_name: str, parent_id: str) -> Directory:
     return Directory("dir@" + str(uuid.uuid4()), dir_name, parent_id, [])
+
+
+def mk_broken_directory(name: str, reason: str) -> BrokenDirectory:
+    return BrokenDirectory(name, reason)
 
 
 def rename_directory(d: Directory, new_name: str) -> Directory:

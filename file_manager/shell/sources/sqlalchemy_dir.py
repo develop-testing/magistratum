@@ -4,7 +4,8 @@ import sqlalchemy as sa
 from database.database import engine, metadata
 
 
-from ...directories.directory import Directory
+from ...directories.directory import *
+from ...permissions import *
 
 sa.Table(
     "directories",
@@ -17,6 +18,17 @@ sa.Table(
 )
 
 
+def fetch_all_dirs() -> list[Directory]:
+    query = sa.text("SELECT dir_id, name, parent_id FROM directories")
+
+    with engine.connect() as conn:
+        rows = conn.execute(query).mappings().all()
+        return [
+            Directory(str(r["dir_id"]), str(r["name"]), str(r["parent_id"]), [])
+            for r in rows
+        ]
+
+
 def fetch_dirs_by_parent(parent_id: str) -> list[Directory]:
     query = sa.text(
         "SELECT dir_id, name, parent_id FROM directories WHERE parent_id = :parent_id"
@@ -27,25 +39,6 @@ def fetch_dirs_by_parent(parent_id: str) -> list[Directory]:
         return [
             Directory(row["dir_id"], row["name"], row["parent_id"], []) for row in rows
         ]
-
-
-def save_directory(dir: Directory) -> Directory:
-    query = sa.text(
-        "INSERT INTO directories (dir_id, name, parent_id) VALUES (:dir_id, :name, :parent_id)"
-    )
-
-    with engine.connect() as conn:
-        result = conn.execute(
-            query,
-            {
-                "dir_id": dir.dir_id,
-                "name": dir.name,
-                "parent_id": dir.parent_id,
-            },
-        )
-        conn.commit()
-
-        return dir
 
 
 def fetch_dir_by_id(dir_id: str) -> Directory:
@@ -77,6 +70,10 @@ def fetch_dir_by_name(dirname: str) -> Directory:
         return Directory(row["dir_id"], row["name"], row["parent_id"], [])
 
 
+def fetch_dirs_by_filter(fltr: DirFilter) -> list[Directory]:
+    return []
+
+
 def update_directory(d: Directory) -> Directory:
     query = sa.text(
         "UPDATE directories SET name = :name, parent_id = :parent_id WHERE dir_id = :dir_id"
@@ -96,6 +93,25 @@ def update_directory(d: Directory) -> Directory:
         return d
 
 
+def save_directory(dir: Directory) -> Directory:
+    query = sa.text(
+        "INSERT INTO directories (dir_id, name, parent_id) VALUES (:dir_id, :name, :parent_id)"
+    )
+
+    with engine.connect() as conn:
+        result = conn.execute(
+            query,
+            {
+                "dir_id": dir.dir_id,
+                "name": dir.name,
+                "parent_id": dir.parent_id,
+            },
+        )
+        conn.commit()
+
+        return dir
+
+
 def delete_directory(dir_id: str) -> bool:
     query = sa.text("DELETE FROM directories WHERE dir_id = :dir_id")
 
@@ -110,14 +126,3 @@ def is_dir_exists(dirname: str) -> bool:
 
     with engine.connect() as conn:
         return bool(conn.execute(query, {"dirname": dirname}).scalar())
-
-
-def fetch_all_dirs() -> list[Directory]:
-    query = sa.text("SELECT dir_id, name, parent_id FROM directories")
-
-    with engine.connect() as conn:
-        rows = conn.execute(query).mappings().all()
-        return [
-            Directory(str(r["dir_id"]), str(r["name"]), str(r["parent_id"]), [])
-            for r in rows
-        ]

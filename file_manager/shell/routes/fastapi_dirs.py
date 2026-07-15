@@ -4,17 +4,9 @@ from fastapi import APIRouter, Depends, Request
 
 from router.response import *
 
-from ...directories.directory import (
-    BrokenDirectory,
-    DirFilter,
-    Directory,
-    change_directory_parent,
-    destroy_directory,
-    mk_directory,
-    rename_directory,
-)
+from ...directories.directory import *
 
-from ...permissions import has_read, has_write, new_permissions
+from ...permissions import has_read, has_write, new_permissions, Permissions
 from ..sources.sqlalchemy_dir import (
     delete_directory,
     fetch_dir_by_id,
@@ -25,6 +17,47 @@ from ..sources.sqlalchemy_dir import (
 )
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..sources.sqlalchemy_permissions import fetch_permissions_for, save_permissions
+
+PList = list[Permissions]
+
+
+def only_read_permitions(prms: PList, uname: str, groups: list[str]) -> PList:
+    result: PList = []
+
+    for prm in prms:
+        if has_read(prm, uname, groups):
+            result = [*result, prm]
+
+    return result
+
+
+def only_write_permitions(prms: PList, uname: str, groups: list[str]) -> PList:
+    result: PList = []
+
+    for prm in prms:
+        if has_write(prm, uname, groups):
+            result = [*result, prm]
+
+    return result
+
+
+DrsFltrRes = list[Directory | BrokenDirectory]
+
+
+def filter_dirs_by_perms(dirs: list[Directory], prms: list[Permissions]) -> DrsFltrRes:
+    result: DrsFltrRes = []
+
+    for dir in dirs:
+        prm = next((p for p in prms if p.item_id == dir.dir_id), None)
+
+        if not prm:
+            result = [*result, mk_broken_directory(dir.name, "access not allowed")]
+            continue
+
+        result = [*result, dir]
+
+    return result
+
 
 dirs_router = APIRouter()
 
@@ -109,33 +142,29 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
     return delete_directory(d.dir_id)
 
 
+RdDirsRslt = list[Directory | BrokenDirectory]
+
+
 @dirs_router.get("/directories", tags=["Directories"])
-async def read_dirs(
-    req: Request, query: DirFilter = Depends()
-) -> list[Directory | BrokenDirectory]:
+async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> RdDirsRslt:
     session_owner = req.state.session.owner
 
     groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
 
-    dirs = fetch_dirs_by_parent(query.parent_id)
+    dirs = fetch_dirs_by_parent(fltr.parent_id)
 
     if not dirs:
         return []
 
     prms = fetch_permissions_for([d.dir_id for d in dirs])
 
-    if not prms:
-        raise BadRequest("invalid directorises")
+    if fltr.only_can_read:
+        prms = only_read_permitions(prms, session_owner, group_names)
 
-    result: list[Directory | BrokenDirectory] = []
-    for d in dirs:
-        prm = next((p for p in prms if p.item_id == d.dir_id), None)
+    if fltr.only_can_write:
+        prms = only_write_permitions(prms, session_owner, group_names)
 
-        if not prm or not has_read(prm, session_owner, group_names):
-            result.append(BrokenDirectory(name=d.name, reason="access not allowed"))
-            continue
-
-        result.append(d)
+    result = filter_dirs_by_perms(dirs, prms)
 
     return result
