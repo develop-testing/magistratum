@@ -7,9 +7,7 @@ import bcrypt
 
 @dataclass(frozen=True, slots=True)
 class FilterOfMember:
-    all: bool = False
     by_name: str = ""
-    only_profiles: bool = False
 
 
 @dataclass(frozen=True, slots=True)

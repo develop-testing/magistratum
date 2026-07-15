@@ -97,14 +97,7 @@ def fetch_all_profiles() -> list[Member]:
 
 
 def fetch_members_by_filter(fltr: FilterOfMember) -> list[Member]:
-    if fltr.all and not fltr.only_profiles:
-        return fetch_all_members()
-
-    if fltr.by_name and not fltr.only_profiles:
-        return [fetch_member_by_username(fltr.by_name)]
-
-    if fltr.all and fltr.only_profiles:
-        return fetch_all_profiles()
-
-    if fltr.by_name and fltr.only_profiles:
+    if fltr.by_name:
         return [fetch_member_profile_by_username(fltr.by_name)]
+
+    return fetch_all_profiles()
