@@ -29,14 +29,12 @@
 
                 return fetch(file_url, { credentials: "include" })
                     .then(res => res.json())
-                    .then(data => {
-                        return {
-                            title: data[0].name,
-                            content: data[0].content,
-                            back_url: "/dashboard/directory/" + data[0].parent_id,
-                            edit_url: "/text_file/edit/" + data[0].file_id,
-                        }
-                    })
+                    .then(data => ({
+                        title: data[0].name,
+                        content: data[0].content,
+                        back_url: "/dashboard/directory/" + data[0].parent_id,
+                        edit_url: "/text_file/edit/" + data[0].file_id,
+                    }))
             }
 
             const render_file = file => {
