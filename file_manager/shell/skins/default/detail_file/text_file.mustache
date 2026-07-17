@@ -4,7 +4,10 @@
         <meta charset="utf-8">
         <title>{{title}}</title>
         <style>{{{styles}}}</style>
-        <link rel="stylesheet" href="/static/file_manager/detail_file/tinymce/skins/ui/oxide/skin.min.css">
+        <link
+            rel="stylesheet"
+            href="/static/file_manager/detail_file/tinymce/skins/ui/oxide/skin.min.css"
+        >
     </head>
     <body>
         <header class="header">
@@ -15,7 +18,7 @@
                 <div class="editor-header">
                     <div class="editor-header-content">
                         <span class="editor-title">Редактировать статью</span>
-                        <a href="/text_file/{{file_id}}" class="editor-btn">Читать</a>
+                        <a id="editor-btn" href="" class="editor-btn">Читать</a>
                         <button id="save-btn" class="editor-btn">Сохранить</button>
                     </div>
                 </div>
@@ -28,7 +31,7 @@
                     <div class="tabs-body">
                         <div data-tab-content="general" class="tabs-content active">
                             <input type="hidden" name="file-id" value="{{file_id}}">
-                            <input type="hidden" name="editor" value="root">
+                            <input type="hidden" name="editor" value="{{editor}}">
                             <label class="def-field">
                                 <span>Название</span>
                                 <input name="file-name" value="">
@@ -77,6 +80,8 @@
     <script src="/static/file_manager/detail_file/tinymce/tinymce.min.js"></script>
     <script src="/static/file_manager/detail_file/edit_text_file.js"></script>
     <script>
+        /* Чтение из тини мце */
+
         const tabs = (btns_tags, tabs_tags) => {
             const tabs_buttons = document.querySelectorAll(btns_tags);
             const tabs = document.querySelectorAll(tabs_tags);
@@ -101,8 +106,10 @@
 
         const save_btn = document.querySelector("#save-btn")
         const edit_card = document.querySelector("#editor-card")
-        const file_id = document.querySelector('[name="file-id"]').value
+        const file_id = window.location.pathname.split('/').pop()
         let file_edit_form = mk_file_edit_form({})
+
+        render_read_btn(file_id)
 
         fetch_file_edit_form(file_id, "root").then(form => 
             file_edit_form = render_file_edit_form(form)
@@ -131,6 +138,14 @@
                 file_edit_form = render_file_image(
                     change_file_edit_form(file_edit_form, "image", target.files)
                 )
+        })
+
+        document.addEventListener("file_content_changed", e => {
+            file_edit_form = change_file_edit_form(
+                file_edit_form,
+                "content",
+                e.detail.value
+            )
         })
 
         save_btn.addEventListener('click', e => {

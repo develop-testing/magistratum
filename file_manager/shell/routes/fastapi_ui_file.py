@@ -32,7 +32,7 @@ async def dashboar_text_file_edit(req: Request, file_id: str) -> HTMLResponse:
             scss_content, load_paths=scss_loads
         ).output
 
-    data = {"styles": styles, "file_id": file_id, "editor": session_owner}
+    data = {"styles": styles, "editor": session_owner}
 
     with open(template, "r", encoding="utf-8") as f:
         html_content = chevron.render(f, data)

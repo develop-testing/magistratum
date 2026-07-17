@@ -55,6 +55,8 @@ const mk_file_edit_form = data => {
 const change_file_edit_form = (form, field, value) => {
   if (field === "title") return { ...form, title: value }
 
+  if (field === "content") return { ...form, content: value }
+
   if (field === "parent")
     return { ...form, dirs: { ...form.dirs, active: value } }
 
@@ -121,6 +123,13 @@ const fetch_file_edit_form = (file_id, username) => {
     .then(data => mk_file_edit_form(data))
 }
 
+const render_read_btn = file_id => {
+  const read_btn = document.querySelector("#editor-btn")
+  read_btn.href = "/text_file/" + file_id
+
+  return read_btn
+}
+
 const render_file_image = form => {
   const image = document.querySelector('[name="image-preview"]')
   image.src = form.image.url
@@ -171,8 +180,15 @@ const render_file_edit_form = form => {
     toolbar:
       "bold italic | blocks | bullist numlist | link image | code fullscreen preview",
     content_style: "body { font-family: monospace; }",
-    setup: editor =>
-      editor.on("init", () => editor.setContent(form.content || "")),
+    setup: editor => {
+      editor.on("init", () => editor.setContent(form.content || ""))
+      editor.on("input change undo redo NodeChange", () => {
+        const event = new CustomEvent("file_content_changed", {
+          detail: { value: editor.getContent() },
+        })
+        document.dispatchEvent(event)
+      })
+    },
   })
   return form
 }
