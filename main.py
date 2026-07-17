@@ -15,8 +15,8 @@ from file_manager.shell.routes.fastapi_file import files_router
 from file_manager.shell.routes.fastapi_dirs import dirs_router
 from file_manager.shell.routes.fastapi_dir_node import dir_node_router
 from file_manager.shell.routes.fastapi_groups import groups_router
-from file_manager.shell.routes.fastapi_dashboard import ui_dashboard_router
-from file_manager.shell.routes.fastapi_files_routes import ui_files_router
+from file_manager.shell.routes.fastapi_ui_dashboard import ui_dashboard_router
+from file_manager.shell.routes.fastapi_ui_file import ui_files_router
 from auth.shell.routes.fastapi_auth_ui import ui_auth_router
 
 backend = FastAPI(docs_url=None, redoc_url=None)

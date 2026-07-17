@@ -44,12 +44,12 @@ def render_dashboard(dir_id: str) -> HTMLResponse:
     return HTMLResponse(html_content)
 
 
-@ui_dashboard_router.get("/dashboar/directory/{dir_id}", tags=["Auth"])
+@ui_dashboard_router.get("/dashboard/directory/{dir_id}", tags=["Auth"])
 async def dashboar(dir_id: str) -> HTMLResponse:
     return render_dashboard(dir_id)
 
 
-@ui_dashboard_router.get("/dashboar/home", tags=["Auth"])
+@ui_dashboard_router.get("/dashboard/home", tags=["Auth"])
 async def dashboar_home(req: Request) -> HTMLResponse:
     session_owner = req.state.session.owner
     home = fetch_home_dir_by_username(session_owner)

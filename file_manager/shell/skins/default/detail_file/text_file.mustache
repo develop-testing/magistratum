@@ -6,7 +6,7 @@
         <style>{{{styles}}}</style>
         <link rel="stylesheet" href="/static/file_manager/detail_file/tinymce/skins/ui/oxide/skin.min.css">
     </head>
-    <body data-file-id="{{file_id}}" data-parent-id="{{parent_id}}">
+    <body>
         <header class="header">
             <div class="header-content">{{title}}</div>
         </header>
@@ -19,7 +19,7 @@
                         <button id="save-btn" class="editor-btn">Сохранить</button>
                     </div>
                 </div>
-                <div class="editor-card tabs">
+                <div id="editor-card" class="editor-card tabs">
                     <div class="tabs-header">
                         <button data-tab="general" class="tabs-button def-button">Общее</button>
                         <button data-tab="perms" class="tabs-button def-button">Доступ</button>
@@ -27,6 +27,8 @@
                     </div>
                     <div class="tabs-body">
                         <div data-tab-content="general" class="tabs-content active">
+                            <input type="hidden" name="file-id" value="{{file_id}}">
+                            <input type="hidden" name="editor" value="root">
                             <label class="def-field">
                                 <span>Название</span>
                                 <input name="file-name" value="">
@@ -38,52 +40,29 @@
                         <div data-tab-content="perms" class="tabs-content">
                             <label class="def-field">
                                 <span>Родительская директория</span>
-                                <select name="perm-parent-dir">
-                                    {{#all_dirs}}
-                                    <option
-                                        value="{{dir_id}}"
-                                        {{#is_current}}selected{{/is_current}}
-                                    > {{name}} </option>
-                                    {{/all_dirs}}
-                                </select>
+                                <select name="perm-parent-dir"></select>
                             </label>
                             <label class="def-field">
                                 <span>Владелец</span>
-                                <select name="perm-owner">
-                                    {{#all_users}}
-                                    <option value="{{name}}" {{#is_current}}selected{{/is_current}}>{{name}}</option>
-                                    {{/all_users}}
-                                </select>
+                                <select name="perm-owner"></select>
                             </label>
                             <label class="def-field">
                                 <span>Группа</span>
-                                <select name="perm-group-name">
-                                    {{#all_groups}}
-                                    <option value="{{name}}" {{#is_current}}selected{{/is_current}}>{{name}}</option>
-                                    {{/all_groups}}
-                                </select>
+                                <select name="perm-group-name"></select>
                             </label>
                             <label class="def-field">
                                 <span>Права Группы</span>
-                                <select name="perm-group-perms">
-                                    <option value="r" {{#is_group_r}}selected{{/is_group_r}}>Чтение</option>
-                                    <option value="w" {{#is_group_w}}selected{{/is_group_w}}>Запись</option>
-                                    <option value="rw" {{#is_group_rw}}selected{{/is_group_rw}}>Чтение и запись</option>
-                                </select>
+                                <select name="perm-group-perms"></select>
                             </label>
                             <label class="def-field">
                                 <span>Права Остальных</span>
-                                <select name="perm-other-perms">
-                                    <option value="r" {{#is_other_r}}selected{{/is_other_r}}>Чтение</option>
-                                    <option value="w" {{#is_other_w}}selected{{/is_other_w}}>Запись</option>
-                                    <option value="rw" {{#is_other_rw}}selected{{/is_other_rw}}>Чтение и запись</option>
-                                </select>
+                                <select name="perm-other-perms"></select>
                             </label>
                         </div>
                         <div data-tab-content="meta" class="tabs-content">
                             <div class="def-field">
                                 <span>Текущее изображение</span>
-                                <img class="h-24" name="image-preview" src="{{image_url}}">
+                                <img class="h-24" name="image-preview" src="">
                             </div>
                             <label class="def-field">
                                 <span>Изображение</span>
@@ -96,6 +75,7 @@
         </main>
 
     <script src="/static/file_manager/detail_file/tinymce/tinymce.min.js"></script>
+    <script src="/static/file_manager/detail_file/edit_text_file.js"></script>
     <script>
         const tabs = (btns_tags, tabs_tags) => {
             const tabs_buttons = document.querySelectorAll(btns_tags);
@@ -118,134 +98,52 @@
 
         tabs("[data-tab]", "[data-tab-content]")
 
-        let page_data = {}
 
-        const fetch_file_data = (file_id, username) => {
-            const files_url = new URL('http://127.0.0.1:8800/files')
-            files_url.searchParams.append('by_id', file_id)
-            files_url.searchParams.append('data_type', 'rich')
+        const save_btn = document.querySelector("#save-btn")
+        const edit_card = document.querySelector("#editor-card")
+        const file_id = document.querySelector('[name="file-id"]').value
+        let file_edit_form = mk_file_edit_form({})
 
-            const groups_url = new URL('http://127.0.0.1:8800/groups')
-            groups_url.searchParams.append('member', username)
+        fetch_file_edit_form(file_id, "root").then(form => 
+            file_edit_form = render_file_edit_form(form)
+        )
 
-            const dirs_url = new URL('http://127.0.0.1:8800/groups')
-            groups_url.searchParams.append('member', username)
+        edit_card.addEventListener('change', e => {
+            const target = e.target
+            const name = target.name
 
-            return Promise.all([
-                fetch(files_url, {credentials: 'include'})
-                    .then(res => res.json())
-                    .then(item => {
-                        return {
-                            ...item[0].text_file,
-                            ...item[0].perms,
-                            image: item[0].image
-                        }
-                    }),
-                fetch(groups_url, {credentials: 'include'})
-                    .then(res => res.json())
-            ]).then(res => {
-                return {
-                    file: res[0],
-                    groups: res[1]
-                }
+            if (name === "file-name")
+                file_edit_form = change_file_edit_form(file_edit_form, "title", target.value)
+            
+            if (name === "perm-parent-dir")
+                file_edit_form = change_file_edit_form(file_edit_form, "parent", target.value)
+            
+            if (name === "perm-owner")
+                file_edit_form = change_file_edit_form(file_edit_form, "owner", target.value)
+            
+            if (name === "perm-group-perms")
+                file_edit_form = change_file_edit_form(file_edit_form, "group-perms", target.value)
+            
+            if (name === "perm-other-perms")
+                file_edit_form = change_file_edit_form(file_edit_form, "other-perms", target.value)
+
+            if (name === "image")
+                file_edit_form = render_file_image(
+                    change_file_edit_form(file_edit_form, "image", target.files)
+                )
+        })
+
+        save_btn.addEventListener('click', e => {
+            save_file_edit_form(file_edit_form, file_id).then(res => {
+                if (res.ok) {
+                    alert("Сохранено успешно")
+                    return true
+                } 
+
+                alert("Ошибка при сохранении")
+                return false
             })
-        }
-
-        const init_editor = (editor_tag, value) => {
-            return tinymce.init({
-                selector: editor_tag,
-                menubar: false,
-                branding: false,
-                promotion: false,
-                height: "100%",
-                plugins: "lists link image code fullscreen preview",
-                toolbar: "bold italic | blocks | bullist numlist | link image | code fullscreen preview",
-                content_style: "body { font-family: monospace; }",
-                setup: function (editor) {
-                    editor.on("init", function () {
-                        editor.setContent(value || "")
-                    })
-                }
-            })
-        }
-
-        const init_name = (name_tag, value) => {
-            const name = document.querySelector(name_tag)
-            name.value = value
-
-            return name
-        }
-
-        const init_general = data => {
-            init_editor("#editor", data.content)
-            init_name("[name='file-name']", data.name)
-
-            return data
-        }
-
-        const init_image = () => {
-
-        }
-
-        fetch_file_data(document.body.dataset.fileId, "root")
-            .then(data => init_general(data.file))
-
-
-        /* 
-        const change_file = (file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName, cover) => {
-            return fetch("http://127.0.0.1:8800/file", {
-                method: "PATCH",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    file_id: file_id,
-                    new_filename: filename,
-                    new_content: content,
-                    new_group_perms: groupPerms,
-                    new_other_perms: otherPerms,
-                    new_parent_id: parentDir,
-                    new_owner: owner,
-                    new_group_name: groupName,
-                    new_cover: cover,
-                }),
-            }).then(res => res.json())
-        }
-
-        const imageInput = document.querySelector('[name="image"]');
-        const imagePreview = document.getElementById("image-preview");
-
-        imageInput.addEventListener("change", () => {
-            const file = imageInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    imagePreview.src = reader.result;
-                    imagePreview.style.display = "block";
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        save_btn.addEventListener("click", async () => {
-            const filename = document.querySelector('[name="file-name"]').value;
-            const content = tinymce.get("editor").getContent();
-            const groupPerms = document.querySelector('[name="perm-group-perms"]').value;
-            const otherPerms = document.querySelector('[name="perm-other-perms"]').value;
-            const parentDir = document.querySelector('[name="perm-parent-dir"]').value;
-            const owner = document.querySelector('[name="perm-owner"]').value;
-            const groupName = document.querySelector('[name="perm-group-name"]').value;
-            const imageInput = document.querySelector('[name="image"]');
-            const file = imageInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = async () => {
-                    await change_file(file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName, reader.result);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                await change_file(file_id, filename, content, groupPerms, otherPerms, parentDir, owner, groupName, "");
-            }
-        }); */
+        })
     </script>
     </body>
 </html>

@@ -41,7 +41,7 @@ export const make_item_html = (item) => {
   };
 
   const type_links = {
-    dir: "/dashboar/directory/",
+    dir: "/dashboard/directory/",
     text_file: "/text_file/",
     broken: "type-broken",
   };
