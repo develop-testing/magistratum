@@ -11,7 +11,6 @@ from ..sources.sqlalchemy_dir import *
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..sources.sqlalchemy_permissions import fetch_permissions_for, save_permissions
 
-
 dirs_router = APIRouter()
 
 
@@ -24,7 +23,7 @@ class CreateDirectoryReq:
 @dirs_router.post("/directory", tags=["Directories"])
 async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
     try:
-        
+
         session_owner = req.state.session.owner
 
         groups = fetch_groups_by_user(session_owner)
@@ -40,17 +39,17 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
             raise Forbidden("access denied")
 
         new_dir = new_directory(body.name, body.parent_id)
-        new_perm = new_permissions(new_dir.dir_id, session_owner, prm[0].group_name, "rwr-")
+        new_perm = new_permissions(
+            new_dir.dir_id, session_owner, prm[0].group_name, "rwr-"
+        )
 
         new_dir = save_directory(new_dir)
         new_perm = save_permissions(new_perm)
 
         return new_dir
-    
+
     except DirFetchError as e:
         raise BadRequest(str(e))
-
-    
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,7 +80,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
         dir = change_directory_parent(dir, body.new_parent_id)
 
         return update_directory(dir)
-    
+
     except DirFetchError as e:
         raise BadRequest(str(e))
 
@@ -90,17 +89,18 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
 class DeleteDirectoryReq:
     dir_id: str
 
-#TODO добавить каскадное удаление файлов и картинок и другое
+
+# TODO добавить каскадное удаление файлов и картинок и другое
 @dirs_router.delete("/directory", tags=["Directories"])
 async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
     try:
-        
+
         session_owner = req.state.session.owner
         groups = fetch_groups_by_user(session_owner)
         group_names = [g.name for g in groups]
 
         dir = fetch_dir_by_id(body.dir_id)
-        
+
         prms = fetch_permissions_for([dir.dir_id])
         prms = only_write_permitions(prms, session_owner, group_names)
         access_granted = check_dir_has_perms(dir, prms)
@@ -127,7 +127,7 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> RdDirsRslt:
     dirs = fetch_dirs_by_filter(fltr)
 
     if not dirs:
-        raise BadRequest("directories not found") 
+        raise BadRequest("directories not found")
 
     prms = fetch_permissions_for([d.dir_id for d in dirs])
     prms = only_read_permitions(prms, session_owner, group_names)
@@ -141,6 +141,7 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> RdDirsRslt:
 
 
 PList = list[Permissions]
+
 
 def only_read_permitions(prms: PList, uname: str, groups: list[str]) -> PList:
     result: PList = []
@@ -168,6 +169,7 @@ def check_dir_has_perms(dir: Directory, prms: list[Permissions]) -> bool:
 
 
 DrsFltrRes = list[Directory | BrokenDirectory]
+
 
 def filter_dirs_by_perms(dirs: list[Directory], prms: list[Permissions]) -> DrsFltrRes:
     result: DrsFltrRes = []

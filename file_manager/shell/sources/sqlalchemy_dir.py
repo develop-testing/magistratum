@@ -50,7 +50,7 @@ def fetch_dirs_by_parent(parent_id: str) -> list[Directory]:
             return []
 
         return [
-            mk_directory(row["dir_id"],row["name"],row["parent_id"],[])
+            mk_directory(row["dir_id"], row["name"], row["parent_id"], [])
             for row in rows
         ]
 
