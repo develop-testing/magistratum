@@ -7,22 +7,57 @@
     </head>
     <body>
         <header class="header">
-            <div class="header-content">
-                {{title}} — {{file_name}}
-            </div>
+            <div class="header-content">{{title}}</div>
         </header>
         <main class="main">
             <div class="main-content">
                 <div class="editor-header">
                     <div class="editor-header-content">
-                        <a href="/dashboard/directory/{{parent_id}}" class="editor-btn">Назад</a>
-                        <a href="/text_file/edit/{{file_id}}" class="editor-btn">Редактировать</a>
+                        <a id="back_link" href="" class="editor-btn" >Назад</a>
+                        <a id="edit_link" href="" class="editor-btn">Редактировать</a>
                     </div>
                 </div>
-                <div class="article-card">
-                    {{{file_content}}}
-                </div>
+                <div id="article-card-content" class="article-card"></div>
             </div>
         </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', e => {
+            const fetch_file = file_id => {
+                const file_url = new URL("http://127.0.0.1:8800/files")
+                file_url.searchParams.append("by_id", decodeURIComponent(file_id))
+
+                return fetch(file_url, { credentials: "include" })
+                    .then(res => res.json())
+                    .then(data => {
+                        return {
+                            title: data[0].name,
+                            content: data[0].content,
+                            back_url: "/dashboard/directory/" + data[0].parent_id,
+                            edit_url: "/text_file/edit/" + data[0].file_id,
+                        }
+                    })
+            }
+
+            const render_file = file => {
+                const back_link = document.querySelector("#back_link")
+                const edit_link = document.querySelector("#edit_link")
+                const file_content = document.querySelector("#article-card-content")
+
+                back_link.href = file.back_url
+                edit_link.href = file.edit_url
+                file_content.innerHTML = file.content
+            }
+
+            
+            const file_id = window.location.pathname.split('/').pop()
+
+            fetch_file(file_id).then(file => {
+                console.log(file)
+                render_file(file)
+            })
+        })
+    </script>
+
     </body>
 </html>

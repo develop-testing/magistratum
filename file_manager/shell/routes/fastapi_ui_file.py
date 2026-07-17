@@ -42,8 +42,6 @@ async def dashboar_text_file_edit(req: Request, file_id: str) -> HTMLResponse:
 
 @ui_files_router.get("/text_file/{file_id}", tags=["Auth"])
 async def dashboar_text_file(file_id: str) -> HTMLResponse:
-    fl = fetch_file_by_id(file_id)
-
     scss_file = "file_manager/shell/skins/default/detail_file/text_file.scss"
     scss_loads = [Path("file_manager/shell/skins/default/"), Path("skins/default")]
     template = "file_manager/shell/skins/default/detail_file/text_file_read.mustache"
@@ -55,20 +53,9 @@ async def dashboar_text_file(file_id: str) -> HTMLResponse:
             scss_content, load_paths=scss_loads
         ).output
 
-    data = {
-        "title": "Lorice Administratum",
-        "styles": styles,
-        "file_id": file_id,
-        "file_name": fl.name,
-        "file_content": fl.content,
-        "parent_id": fl.parent_id,
-    }
+    data = {"title": "Lorice Administratum", "styles": styles}
 
-    with open(
-        template,
-        "r",
-        encoding="utf-8",
-    ) as f:
+    with open(template, "r", encoding="utf-8",) as f:
         html_content = chevron.render(f, data)
 
     return HTMLResponse(html_content)
