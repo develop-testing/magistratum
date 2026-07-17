@@ -1,35 +1,35 @@
-const form = document.getElementById("auth-form");
-const errorEl = document.getElementById("auth-error");
-const script = document.currentScript;
-const action = script?.getAttribute("data-action") ?? "login";
+const form = document.getElementById("auth-form")
+const errorEl = document.getElementById("auth-error")
+const script = document.currentScript
+const action = script?.getAttribute("data-action") ?? "login"
 
-form?.addEventListener("submit", async (e) => {
-  e.preventDefault();
+form?.addEventListener("submit", async e => {
+  e.preventDefault()
 
-  errorEl?.classList.remove("-show");
-  errorEl.textContent = "";
+  errorEl?.classList.remove("-show")
+  errorEl.textContent = ""
 
-  const data = Object.fromEntries(new FormData(form));
+  const data = Object.fromEntries(new FormData(form))
 
   const res = await fetch(`http://127.0.0.1:8800/auth/${action}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
     credentials: "include",
-  });
+  })
 
   if (res.ok) {
     if (action === "register") {
-      window.location = "/login";
+      window.location = "/login"
     } else {
-      window.location = "/dashboar/home";
+      window.location = "/dashboard/home"
     }
-    return;
+    return
   }
 
-  const text = await res.text();
+  const text = await res.text()
   if (errorEl) {
-    errorEl.textContent = text || "Ошибка";
-    errorEl.classList.add("-show");
+    errorEl.textContent = text || "Ошибка"
+    errorEl.classList.add("-show")
   }
-});
+})
