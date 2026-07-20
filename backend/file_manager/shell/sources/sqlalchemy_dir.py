@@ -6,6 +6,7 @@ from backend.database.database import engine, metadata
 
 from ...directories.directory import *
 from ...permissions import *
+from ..sources.sqlalchemy_permissions import fetch_permissions_for
 
 
 @dataclass
@@ -24,6 +25,14 @@ sa.Table(
     sa.Column("parent_id", sa.String(255), nullable=False, unique=False),
     sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
     sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+)
+
+sa.Table(
+    "dirs_to_image",
+    metadata,
+    sa.Column("dir_id", sa.String(255), nullable=False, unique=True, primary_key=True),
+    sa.Column("image_path", sa.String(500), nullable=False),
+    sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
 )
 
 
@@ -97,6 +106,36 @@ def fetch_dirs_by_filter(fltr: DirFilter) -> list[Directory]:
     return fetch_all_dirs()
 
 
+def fetch_rich_dirs_by_filter(fltr: DirFilter) -> list[RichDirectory]:
+    dirs = fetch_dirs_by_filter(fltr)
+    prms = fetch_permissions_for([d.dir_id for d in dirs])
+
+    out: list[RichDirectory] = []
+
+    for d in dirs:
+        prm = next((p for p in prms if p.item_id == d.dir_id), None)
+
+        if prm is None:
+            continue
+
+        image = fetch_image_by_dir(d.dir_id)
+
+        out.append(
+            mk_rich_directory(
+                d,
+                DirPerms.create(
+                    prm.owner_name,
+                    prm.group_name,
+                    group_access(prm),
+                    other_access(prm),
+                ),
+                image,
+            )
+        )
+
+    return out
+
+
 def update_directory(d: Directory) -> Directory:
     query = sa.text(
         "UPDATE directories SET name = :name, parent_id = :parent_id WHERE dir_id = :dir_id"
@@ -149,3 +188,30 @@ def is_dir_exists(dirname: str) -> bool:
 
     with engine.connect() as conn:
         return bool(conn.execute(query, {"dirname": dirname}).scalar())
+
+
+def fetch_image_by_dir(dir_id: str) -> str:
+    query = sa.text("SELECT image_path FROM dirs_to_image WHERE dir_id = :dir_id")
+
+    with engine.connect() as conn:
+        row = conn.execute(query, {"dir_id": dir_id}).mappings().first()
+
+        if row is None:
+            return "/public/img/not-found.png"
+
+        return str(row["image_path"])
+
+
+def add_image_to_dir(dir_id: str, image_path: str) -> str:
+    query = sa.text(
+        "INSERT INTO dirs_to_image (dir_id, image_path) VALUES (:dir_id, :image_path)"
+        " ON DUPLICATE KEY UPDATE image_path = :image_path"
+    )
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(query, {"dir_id": dir_id, "image_path": image_path})
+            conn.commit()
+            return image_path
+    except sa.exc.IntegrityError:
+        raise RuntimeError("failed to save image")

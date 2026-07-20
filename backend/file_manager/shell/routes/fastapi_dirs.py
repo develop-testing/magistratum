@@ -8,6 +8,7 @@ from ...directories.directory import *
 
 from ...permissions import has_read, has_write, new_permissions, Permissions
 from ..sources.sqlalchemy_dir import *
+from ..sources.sqlalchemy_dir import fetch_image_by_dir, fetch_rich_dirs_by_filter
 from ..sources.sqlalchemy_group import fetch_groups_by_user
 from ..sources.sqlalchemy_permissions import fetch_permissions_for, save_permissions
 
@@ -114,43 +115,44 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
         raise BadRequest(str(e))
 
 
-RdDirsRslt = list[Directory | BrokenDirectory]
+DirRdResult = list[Directory | RichDirectory | BrokenDirectory]
 
 
 @dirs_router.get("/directories", tags=["Directories"])
-async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> RdDirsRslt:
+async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
     session_owner = req.state.session.owner
 
     groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
 
-    dirs = fetch_dirs_by_filter(fltr)
+    dirs: list[Directory | RichDirectory]
+    match (fltr.data_type):
+        case "rich":
+            dirs = [*fetch_rich_dirs_by_filter(fltr)]
+        case _:
+            dirs = [*fetch_dirs_by_filter(fltr)]
 
     if not dirs:
         raise BadRequest("directories not found")
 
-    prms = fetch_permissions_for([d.dir_id for d in dirs])
-    prms = only_read_permitions(prms, session_owner, group_names)
+    prms = fetch_permissions_for(
+        [d.dir_id if isinstance(d, Directory) else d.directory.dir_id for d in dirs]
+    )
 
-    if fltr.only_can_write:
-        prms = only_write_permitions(prms, session_owner, group_names)
-
-    result = filter_dirs_by_perms(dirs, prms)
+    result: DirRdResult = []
+    for d in dirs:
+        d_id = d.dir_id if isinstance(d, Directory) else d.directory.dir_id
+        prm = next((p for p in prms if p.item_id == d_id), None)
+        if not prm or not has_read(prm, session_owner, group_names):
+            name = d.name if isinstance(d, Directory) else d.directory.name
+            result.append(BrokenDirectory(name=name, reason="access not allowed"))
+            continue
+        result.append(d)
 
     return result
 
 
 PList = list[Permissions]
-
-
-def only_read_permitions(prms: PList, uname: str, groups: list[str]) -> PList:
-    result: PList = []
-
-    for prm in prms:
-        if has_read(prm, uname, groups):
-            result = [*result, prm]
-
-    return result
 
 
 def only_write_permitions(prms: PList, uname: str, groups: list[str]) -> PList:
@@ -159,23 +161,5 @@ def only_write_permitions(prms: PList, uname: str, groups: list[str]) -> PList:
     for prm in prms:
         if has_write(prm, uname, groups):
             result = [*result, prm]
-
-    return result
-
-
-def check_dir_has_perms(dir: Directory, prms: list[Permissions]) -> bool:
-    result = next((p for p in prms if p.item_id == dir.dir_id), None)
-    return True if result else False
-
-
-DrsFltrRes = list[Directory | BrokenDirectory]
-
-
-def filter_dirs_by_perms(dirs: list[Directory], prms: list[Permissions]) -> DrsFltrRes:
-    result: DrsFltrRes = []
-
-    for dir in dirs:
-        if check_dir_has_perms(dir, prms):
-            result = [*result, dir]
 
     return result

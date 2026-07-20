@@ -10,6 +10,7 @@ class DirFilter:
     parent_id: str = ""
     by_id: str = ""
     by_name: str = ""
+    data_type: str = "min"
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +25,31 @@ class Directory:
     name: str
     parent_id: str
     files: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class DirPerms:
+    owner: str
+    group: str
+    group_perms: str
+    other_perms: str
+
+    @staticmethod
+    def create(
+        owner: str, grp: str, grp_prms: str, other_prms: str
+    ) -> DirPerms:
+        return DirPerms(owner, grp, grp_prms, other_prms)
+
+
+@dataclass(frozen=True, slots=True)
+class RichDirectory:
+    directory: Directory
+    perms: DirPerms
+    image: str
+
+
+def mk_rich_directory(d: Directory, perms: DirPerms, image: str) -> RichDirectory:
+    return RichDirectory(d, perms, image)
 
 
 def new_directory(dir_name: str, parent_id: str) -> Directory:
