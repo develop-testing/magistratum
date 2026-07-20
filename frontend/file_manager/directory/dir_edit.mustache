@@ -75,8 +75,60 @@
         </main>
 
         <script src="/public/default/common.js"></script>
+    <script src="/static/file_manager/directory/edit_dir.js"></script>
     <script>
         tabs("[data-tab]", "[data-tab-content]")
+
+        const save_btn = document.querySelector("#save-btn")
+        const edit_card = document.querySelector("#editor-card")
+        const dir_id = window.location.pathname.split('/').pop()
+        let dir_edit_form = mk_dir_edit_form({})
+
+        fetch_directory(dir_id)
+            .then(data => mk_dir_edit_form(data))
+            .then(form => {
+                dir_edit_form = render_dir_edit_form(form)
+            })
+
+        edit_card.addEventListener('change', e => {
+            const target = e.target
+            const name = target.name
+
+            if (name === "file-name")
+                dir_edit_form = change_dir_edit_form(dir_edit_form, "title", target.value)
+
+            if (name === "perm-parent-dir")
+                dir_edit_form = change_dir_edit_form(dir_edit_form, "parent", target.value)
+
+            if (name === "perm-owner")
+                dir_edit_form = change_dir_edit_form(dir_edit_form, "owner", target.value)
+
+            if (name === "perm-group-name")
+                dir_edit_form = change_dir_edit_form(dir_edit_form, "group", target.value)
+
+            if (name === "perm-group-perms")
+                dir_edit_form = change_dir_edit_form(dir_edit_form, "group-perms", target.value)
+
+            if (name === "perm-other-perms")
+                dir_edit_form = change_dir_edit_form(dir_edit_form, "other-perms", target.value)
+
+            if (name === "image")
+                dir_edit_form = render_dir_image(
+                    change_dir_edit_form(dir_edit_form, "image", target.files)
+                )
+        })
+
+        save_btn.addEventListener('click', e => {
+            save_dir_edit_form(dir_edit_form, dir_id).then(res => {
+                if (res.ok) {
+                    alert("Сохранено успешно")
+                    return true
+                }
+
+                alert("Ошибка при сохранении")
+                return false
+            })
+        })
     </script>
     </body>
 </html>
