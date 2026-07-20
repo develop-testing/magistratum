@@ -26,7 +26,7 @@ setup:
 	docker compose exec backend python setup.py
 
 init-alembic:
-	docker compose exec backend alembic init database/alembic
+	docker compose exec backend alembic init backend/database/alembic
 
 create-migrations:
 	docker compose exec backend alembic revision --autogenerate -m "init"
