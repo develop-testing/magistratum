@@ -92,15 +92,10 @@
 
   &-type {
     @extend .mb-4;
-    /* &.type-dir {
-      color: #181895;
+
+    a {
+      color: $font-color;
     }
-    &.type-file {
-      color: #000;
-    }
-    &.type-broken {
-      color: #000;
-    } */
   }
 }
 
