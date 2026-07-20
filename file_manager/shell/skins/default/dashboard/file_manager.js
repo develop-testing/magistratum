@@ -47,7 +47,7 @@ export const make_item_html = item => {
   }
 
   const edit_links = {
-    dir: "/text_file/edit/",
+    dir: "/dir/edit/",
     text_file: "/text_file/edit/",
   }
 

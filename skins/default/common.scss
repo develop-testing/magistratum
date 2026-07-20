@@ -270,3 +270,60 @@ body {
     }
   }
 }
+
+.editor {
+  &-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: $second-color;
+    @extend .p-2;
+    @extend .mb-4;
+
+    &-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+  }
+
+  &-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: $font-color;
+    flex: 1 0 0;
+  }
+
+  &-card {
+    width: 100%;
+    height: 100%;
+  }
+
+  &-body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .tox-tinymce {
+      flex: 1;
+    }
+  }
+
+  &-btn {
+    @extend .def-button;
+    height: 2rem;
+  }
+
+  & .tabs-body,
+  & .tabs-content {
+    height: 100%;
+  }
+}
+
+.editor-status {
+  margin-top: ($step * 2);
+  font-size: 0.8rem;
+  text-align: center;
+  color: $gold;
+}
