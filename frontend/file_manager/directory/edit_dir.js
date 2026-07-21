@@ -157,6 +157,10 @@ const save_dir_edit_form = (form, dir_id) => {
         dir_id: dir_id,
         new_name: form.title,
         new_parent_id: form.dirs.active,
+        new_owner: form.owner.active,
+        new_group_name: form.group.active,
+        new_group_perms: form.group_perms.active,
+        new_other_perms: form.other_perms.active,
         new_cover: cover_data,
       }),
     }).then(res => res)

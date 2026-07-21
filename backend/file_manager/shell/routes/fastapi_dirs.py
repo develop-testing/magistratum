@@ -1,5 +1,8 @@
 from __future__ import annotations
+import base64
+import uuid
 from dataclasses import dataclass
+from pathlib import Path
 from fastapi import APIRouter, Depends, Request
 
 from backend.router.response import *
@@ -8,11 +11,29 @@ from ...directories.directory import *
 
 from ...permissions import has_read, has_write, new_permissions, Permissions
 from ..sources.sqlalchemy_dir import *
-from ..sources.sqlalchemy_dir import fetch_image_by_dir, fetch_rich_dirs_by_filter
+from ..sources.sqlalchemy_dir import (
+    add_image_to_dir,
+    fetch_image_by_dir,
+    fetch_rich_dirs_by_filter,
+)
 from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ..sources.sqlalchemy_permissions import fetch_permissions_for, save_permissions
+from ..sources.sqlalchemy_permissions import (
+    fetch_permissions_for,
+    save_permissions,
+    update_permissions,
+)
 
 dirs_router = APIRouter()
+
+
+def _value_to_perm_code(value: str) -> str:
+    if value == "r":
+        return "r-"
+    if value == "w":
+        return "-w"
+    if value == "rw":
+        return "rw"
+    return "--"
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,8 +77,13 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
 @dataclass(frozen=True, slots=True)
 class EditDirectoryReq:
     dir_id: str
-    new_name: str
-    new_parent_id: str
+    new_name: str = ""
+    new_parent_id: str = ""
+    new_owner: str = ""
+    new_group_name: str = ""
+    new_group_perms: str = ""
+    new_other_perms: str = ""
+    new_cover: str = ""
 
 
 @dirs_router.patch("/directory", tags=["Directories"])
@@ -71,19 +97,79 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
         dir = fetch_dir_by_id(body.dir_id)
 
         prms = fetch_permissions_for([dir.dir_id])
-        prms = only_write_permitions(prms, session_owner, group_names)
-        access_granted = check_dir_has_perms(dir, prms)
-
-        if not access_granted:
+        prm = next((p for p in prms if p.item_id == dir.dir_id), None)
+        if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
 
         dir = rename_directory(dir, body.new_name)
         dir = change_directory_parent(dir, body.new_parent_id)
 
-        return update_directory(dir)
+        updated_dir = update_directory(dir)
+
+        if (
+            body.new_group_perms
+            or body.new_other_perms
+            or body.new_owner
+            or body.new_group_name
+        ):
+            group_part = (
+                _value_to_perm_code(body.new_group_perms)
+                if body.new_group_perms
+                else (prm.content[0:2] if prm else "--")
+            )
+            other_part = (
+                _value_to_perm_code(body.new_other_perms)
+                if body.new_other_perms
+                else (prm.content[2:4] if prm else "--")
+            )
+            new_content = group_part + other_part
+            new_owner = (
+                body.new_owner
+                if body.new_owner
+                else (prm.owner_name if prm else session_owner)
+            )
+            new_grp = (
+                body.new_group_name
+                if body.new_group_name
+                else (prm.group_name if prm else "root")
+            )
+            updated_prm = new_permissions(body.dir_id, new_owner, new_grp, new_content)
+            update_permissions([updated_prm])
+
+        if body.new_cover:
+            _save_image(body.dir_id, body.new_cover)
+
+        return updated_dir
 
     except DirFetchError as e:
         raise BadRequest(str(e))
+
+
+def _save_image(dir_id: str, data_url: str) -> str:
+    if "," not in data_url:
+        raise ValueError("invalid image data")
+
+    header, encoded = data_url.split(",", 1)
+    ext = "png"
+    if "jpeg" in header or "jpg" in header:
+        ext = "jpg"
+    elif "gif" in header:
+        ext = "gif"
+    elif "webp" in header:
+        ext = "webp"
+
+    try:
+        raw = base64.b64decode(encoded)
+    except Exception:
+        raise ValueError("invalid base64 data")
+
+    images_dir = Path("frontend/public/upload")
+    images_dir.mkdir(parents=True, exist_ok=True)
+
+    file_path = images_dir / f"{uuid.uuid4().hex}.{ext}"
+    file_path.write_bytes(raw)
+
+    return add_image_to_dir(dir_id, f"/public/upload/{file_path.name}")
 
 
 @dataclass(frozen=True, slots=True)

@@ -218,7 +218,7 @@ def _save_image(file_id: str, data_url: str) -> str:
     except Exception:
         raise ValueError("invalid base64 data")
 
-    images_dir = Path("public/upload")
+    images_dir = Path("frontend/public/upload")
     images_dir.mkdir(parents=True, exist_ok=True)
 
     file_path = images_dir / f"{uuid.uuid4().hex}.{ext}"
