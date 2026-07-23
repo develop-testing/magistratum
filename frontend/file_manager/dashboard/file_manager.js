@@ -56,17 +56,17 @@ export const make_item_html = item => {
   const link = type_links[item.type] + item.id
   const edit_link = edit_links[item.type] + item.id
 
-  return `<div data-type="${item.type}" data-id="${item.id}" class="file-item">
-		<div class="file-item-img">
+  return `<div data-type="${item.type}" data-id="${item.id}" class="file-item manager-grid-item">
+		<div class="file-item-img mb-4">
 				<img src="${item.img}">
 		</div>
-		<div class="file-item-content">
+		<div class="file-item-content px-4 pb-4">
         <div data-node-remove class="file-item-close">&#128473;</div>
-				<div class="file-item-type ${current_class}">
+				<div class="file-item-type mb-4 ${current_class}">
           <span>${current_name}</span> |
           <a href="${edit_link}">Редактировать</>
-        </div>    
-				<a href="${link}" class="file-item-title">${item.name}</a>
+        </div>
+				<a href="${link}" class="file-item-title mb-4">${item.name}</a>
 				<div class="file-item-owner">Владелец: ${item.owner}</div>
 				<div class="file-item-group">Группа: ${item.group}</div>
 		</div>

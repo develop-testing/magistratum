@@ -1,0 +1,105 @@
+.main-content {
+  height: 100%;
+}
+
+.article-card {
+  line-height: 1.6;
+  color: var(--font-color);
+}
+
+.article-card img {
+  max-width: 100%;
+}
+
+.article-card p,
+.article-card dd {
+  margin-bottom: 1rem;
+}
+
+.article-card h1,
+.article-card h2,
+.article-card h3,
+.article-card h4,
+.article-card h5,
+.article-card h6 {
+  font-weight: bold;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.article-card h1 {
+  font-size: 1.8rem;
+}
+
+.article-card h2 {
+  font-size: 1.5rem;
+}
+
+.article-card h3 {
+  font-size: 1.25rem;
+}
+
+.article-card ul,
+.article-card ol {
+  margin-left: calc(var(--step) * 4);
+  margin-bottom: 1rem;
+}
+
+.article-card li {
+  margin-bottom: 0.5rem;
+}
+
+.article-card a {
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+.article-card blockquote {
+  border-left: 3px solid var(--gold);
+  padding-left: calc(var(--step) * 2);
+  margin: calc(var(--step) * 2) 0;
+  opacity: 0.85;
+}
+
+.article-card table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem;
+}
+
+.article-card th,
+.article-card td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: calc(var(--step) * 1) calc(var(--step) * 2);
+  text-align: left;
+}
+
+.article-card th {
+  font-weight: bold;
+}
+
+.article-card pre {
+  background: rgba(255, 255, 255, 0.05);
+  padding: calc(var(--step) * 2);
+  overflow-x: auto;
+  margin: calc(var(--step) * 2) 0;
+}
+
+.article-card code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0 calc(var(--step) * 1);
+}
+
+.article-card hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin: calc(var(--step) * 3) 0;
+}
+
+.tox-tinymce {
+  border: 1px solid var(--second-color) !important;
+}
+
+.tox .tox-menubar + .tox-toolbar-overlord {
+  background-color: var(--second-color) !important;
+}

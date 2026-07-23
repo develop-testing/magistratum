@@ -97,7 +97,7 @@ const fetch_file_edit_form = (file_id, username) => {
     }),
     send_get("/groups", { member: username, only_can_write: true }),
     send_get("/directories"),
-    send_get("/auth/members"),
+    send_get("/members"),
   ])
     .then(res => ({
       file: res[0],

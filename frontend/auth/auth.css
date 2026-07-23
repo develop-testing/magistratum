@@ -1,0 +1,36 @@
+.auth-card {
+  max-width: 400px;
+  width: 90%;
+  border: 2px solid var(--main-color);
+}
+
+.auth-card-header {
+  font-weight: 800;
+  border-bottom: 2px solid var(--main-color);
+}
+
+.auth-card-body {
+}
+
+.auth-error {
+  display: none;
+  padding: calc(var(--step) * 2);
+  margin-bottom: calc(var(--step) * 4);
+  border: 2px solid var(--main-color);
+  color: #c00;
+}
+
+.auth-error.-show {
+  display: block;
+}
+
+.auth-link {
+  display: block;
+  text-align: center;
+  margin-top: calc(var(--step) * 4);
+  color: var(--font-color);
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}

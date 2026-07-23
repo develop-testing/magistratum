@@ -1,0 +1,89 @@
+.manager-grid-header {
+  display: flex;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--second-color);
+}
+
+.manager-grid-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  margin: 0 -1rem;
+}
+
+.manager-grid-item {
+  flex: 0 0 calc(33.33333333% - 2rem);
+  max-width: calc(33.33333333% - 2rem);
+  margin: 1rem;
+  border: 1px solid #000;
+}
+
+.file-item {
+  position: relative;
+  overflow: hidden;
+  transition: 0.4s;
+}
+
+.file-item-img {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.file-item-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-position: center;
+  object-fit: cover;
+  transition: 0.4s;
+}
+
+.file-item-img img:hover {
+  transform: scale(1.05);
+}
+
+.file-item-content {
+}
+
+.file-item-title {
+  display: block;
+  height: calc(var(--step) * 12);
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  transition: 0.4s;
+}
+
+.file-item-title:hover {
+  color: var(--gold);
+}
+
+.file-item-owner {
+  margin-bottom: calc(var(--step) * 2);
+}
+
+.file-item-group {
+}
+
+.file-item-close {
+  position: absolute;
+  font-size: calc(var(--step) * 6);
+  width: calc(var(--step) * 6);
+  height: calc(var(--step) * 6);
+  top: calc(var(--step) * 3);
+  right: calc(var(--step) * 3);
+  color: var(--warning-color);
+  cursor: pointer;
+}
+
+.file-item-type a {
+  color: var(--font-color);
+}
+
+.manager-button {
+  height: 2rem;
+}

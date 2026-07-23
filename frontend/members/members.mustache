@@ -1,42 +1,42 @@
-<div class="control-table">
-    <div class="control-table-header">
+<div class="control-table mb-4">
+    <div class="control-table-header p-4 mb-4 bck-second">
         <h1>Пользователи</h1>
         <div class="control-table-buttons">
             <button
                 data-modal-open="add-user-modal"
                 title="добавить пользователя"
-                class="control-table-button"
+                class="control-table-button def-button flex-basic px-2"
             >🗿</button>
         </div>
     </div>
     <table id="users-table">
         <thead>
             <tr>
-                <th>Логин</th>
-                <th>Управление</th>
+                <th class="p-4">Логин</th>
+                <th class="p-4">Управление</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
 </div>
-<div class="control-table">               
-    <div class="control-table-header">
+<div class="control-table mb-4">
+    <div class="control-table-header p-4 mb-4 bck-second">
         <h1>Группы</h1>
         <div class="control-table-buttons">
             <button
                 data-modal-open="add-group-modal"
                 title="добавить группу"
-                class="control-table-button"
+                class="control-table-button def-button flex-basic px-2"
             >🧑‍🤝‍🧑</button>
         </div>
     </div>
     <table id="groups-table">
         <thead>
             <tr>
-                <th>Название</th>
-                <th>Владелец</th>
-                <th>Пользователи</th>
-                <th>Управление</th>
+                <th class="p-4">Название</th>
+                <th class="p-4">Владелец</th>
+                <th class="p-4">Пользователи</th>
+                <th class="p-4">Управление</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -45,31 +45,32 @@
 
 <div data-modal="add-user-modal" class="modal">
     <div class="modal-content">
-        <div class="modal-header">Создать пользователя</div>
-        <form id="add-user-form" class="modal-body form">
-            <label>
-                <input type="text" name="username" placeholder="логин" value="">
+        <div class="modal-header p-2 mb-4">Создать пользователя</div>
+        <form id="add-user-form" class="modal-body p-2 form">
+            <label class="mb-4">
+                <input class="p-2" type="text" name="username" placeholder="логин" value="">
             </label>
-            <label>
-                <input type="text" name="password" placeholder="пароль" value="">
+            <label class="mb-4">
+                <input class="p-2" type="text" name="password" placeholder="пароль" value="">
             </label>
-            <button type="submit">Создать</button>
-        </form>
-    </div> 
-</div>
-
-<div data-modal="add-group-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">Создать группу</div>
-        <form id="add-group-form" class="modal-body form">
-            <label>
-                <input type="text" name="groupname" placeholder="название" value="">
-            </label>
-            <button type="submit">Создать</button>
+            <button type="submit" class="p-2">Создать</button>
         </form>
     </div>
 </div>
 
+<div data-modal="add-group-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header p-2 mb-4">Создать группу</div>
+        <form id="add-group-form" class="modal-body p-2 form">
+            <label class="mb-4">
+                <input class="p-2" type="text" name="groupname" placeholder="название" value="">
+            </label>
+            <button type="submit" class="p-2">Создать</button>
+        </form>
+    </div>
+</div>
+
+<link rel="stylesheet" href="/static/members/members.css">
 <script src="/public/default/common.js"></script>
 <script src="/static/members/members.js"></script>
 
@@ -141,7 +142,7 @@
 
             const group_name = e.target.getAttribute('data-group-save')
             const owner = parent.querySelector('[data-owner-input]:checked').value
-            
+
             if (members.length > 0) {
                 members.forEach(item => new_members.push(item.value))
             }

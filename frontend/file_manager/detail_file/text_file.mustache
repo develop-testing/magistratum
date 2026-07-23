@@ -1,63 +1,64 @@
-<div class="editor-header">
+<div class="editor-header p-2 mb-4">
     <div class="editor-header-content">
         <span class="editor-title">Редактировать статью</span>
-        <a id="editor-btn" href="" class="editor-btn">Читать</a>
-        <button id="save-btn" class="editor-btn">Сохранить</button>
+        <a id="editor-btn" href="" class="editor-btn def-button flex-basic px-2">Читать</a>
+        <button id="save-btn" class="editor-btn def-button flex-basic px-2">Сохранить</button>
     </div>
 </div>
 <div id="editor-card" class="editor-card tabs">
-    <div class="tabs-header">
-        <button data-tab="general" class="tabs-button def-button">Общее</button>
-        <button data-tab="perms" class="tabs-button def-button">Доступ</button>
-        <button data-tab="meta" class="tabs-button def-button">Мета</button>
+    <div class="tabs-header mb-4 flex-basic">
+        <button data-tab="general" class="tabs-button def-button flex-basic px-2">Общее</button>
+        <button data-tab="perms" class="tabs-button def-button flex-basic px-2">Доступ</button>
+        <button data-tab="meta" class="tabs-button def-button flex-basic px-2">Мета</button>
     </div>
     <div class="tabs-body">
         <div data-tab-content="general" class="tabs-content active">
             <input type="hidden" name="file-id" value="{{file_id}}">
             <input type="hidden" name="editor" value="{{editor}}">
-            <label class="def-field">
-                <span>Название</span>
-                <input name="file-name" value="">
+            <label class="def-field mb-4">
+                <span class="mb-2">Название</span>
+                <input class="p-1" name="file-name" value="">
             </label>
             <div class="editor-body">
                 <textarea id="editor"></textarea>
             </div>
         </div>
         <div data-tab-content="perms" class="tabs-content">
-            <label class="def-field">
-                <span>Родительская директория</span>
-                <select name="perm-parent-dir"></select>
+            <label class="def-field mb-4">
+                <span class="mb-2">Родительская директория</span>
+                <select class="p-1" name="perm-parent-dir"></select>
             </label>
-            <label class="def-field">
-                <span>Владелец</span>
-                <select name="perm-owner"></select>
+            <label class="def-field mb-4">
+                <span class="mb-2">Владелец</span>
+                <select class="p-1" name="perm-owner"></select>
             </label>
-            <label class="def-field">
-                <span>Группа</span>
-                <select name="perm-group-name"></select>
+            <label class="def-field mb-4">
+                <span class="mb-2">Группа</span>
+                <select class="p-1" name="perm-group-name"></select>
             </label>
-            <label class="def-field">
-                <span>Права Группы</span>
-                <select name="perm-group-perms"></select>
+            <label class="def-field mb-4">
+                <span class="mb-2">Права Группы</span>
+                <select class="p-1" name="perm-group-perms"></select>
             </label>
-            <label class="def-field">
-                <span>Права Остальных</span>
-                <select name="perm-other-perms"></select>
+            <label class="def-field mb-4">
+                <span class="mb-2">Права Остальных</span>
+                <select class="p-1" name="perm-other-perms"></select>
             </label>
         </div>
         <div data-tab-content="meta" class="tabs-content">
-            <div class="def-field">
-                <span>Текущее изображение</span>
+            <div class="def-field mb-4">
+                <span class="mb-2">Текущее изображение</span>
                 <img class="h-24" name="image-preview" src="">
             </div>
-            <label class="def-field">
-                <span>Изображение</span>
-                <input type="file" name="image" accept="image/*">
+            <label class="def-field mb-4">
+                <span class="mb-2">Изображение</span>
+                <input class="p-1" type="file" name="image" accept="image/*">
             </label>
         </div>
     </div>
 </div>
 
+<link rel="stylesheet" href="/static/file_manager/detail_file/text_file.css">
 <script src="/public/default/common.js"></script>
 <script src="/static/file_manager/detail_file/tinymce/tinymce.min.js"></script>
 <script src="/static/file_manager/detail_file/edit_text_file.js"></script>

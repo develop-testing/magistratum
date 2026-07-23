@@ -29,10 +29,10 @@ const delete_user = username => {
 const create_user_table_row = user => {
   return `
     <tr>
-        <td data-username>${user.username}</td>
-        <td>
+        <td class="p-4" data-username>${user.username}</td>
+        <td class="p-4">
             <div class="table-buttons">
-                <button data-user-remove="${user.username}">Удалить</button>
+                <button class="def-button flex-basic px-2" data-user-remove="${user.username}">Удалить</button>
             </div>
         </td>
     </tr>
@@ -83,15 +83,15 @@ const create_group_table_row = (group, users) => {
 
   return `
     <tr>
-        <td>${group.name}</td>
-        <td>${ownerHtml}</td>
-        <td>
+        <td class="p-4">${group.name}</td>
+        <td class="p-4">${ownerHtml}</td>
+        <td class="p-4">
             <div class="checkbox-list">${usersHtml}</div>
         </td>
-        <td>
+        <td class="p-4">
             <div class="table-buttons">
-                <button data-group-remove="${group.name}">Удалить</button>
-                <button data-group-save="${group.name}">Сохранить</button>
+                <button class="def-button flex-basic px-2" data-group-remove="${group.name}">Удалить</button>
+                <button class="def-button flex-basic px-2" data-group-save="${group.name}">Сохранить</button>
             </div>
         </td>
     </tr>

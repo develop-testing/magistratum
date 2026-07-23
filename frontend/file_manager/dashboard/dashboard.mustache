@@ -1,18 +1,18 @@
 <div class="manager-grid" data-dir-id="{{dir_id}}">
-    <div class="manager-grid-header">
+    <div class="manager-grid-header p-2">
         {{#parent_id}}
-        <a href="/dashboard/directory/{{parent_id}}" class="manager-button">
+        <a href="/dashboard/directory/{{parent_id}}" class="manager-button def-button flex-basic px-2">
             Назад
         </a>
         {{/parent_id}}
         <button
             title="добавить директорию"
-            class="manager-button"
+            class="manager-button def-button flex-basic px-2"
             data-modal-open="add-dir-modal"
         >📁</button>
         <button
             title="добавить файл"
-            class="manager-button"
+            class="manager-button def-button flex-basic px-2"
             data-modal-open="add-file-modal"
         >📄</button>
     </div>
@@ -21,13 +21,14 @@
 
 <div data-modal="add-dir-modal" class="modal">
     <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header p-2 mb-4">
             Добавить директорию
         </div>
-        <form id="add-dir-form" class="modal-body form">
+        <form id="add-dir-form" class="modal-body p-2 form">
             <input type="hidden" name="parent_id" value="{{dir_id}}">
-            <label>
+            <label class="mb-4">
                 <input
+                    class="p-2"
                     type="text"
                     name="name"
                     placeholder="имя директории"
@@ -35,20 +36,21 @@
                     autocomplete="off"
                 >
             </label>
-            <button type="submit">Создать</button>
+            <button type="submit" class="p-2">Создать</button>
         </form>
     </div>
 </div>
 
 <div data-modal="add-file-modal" class="modal">
     <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header p-2 mb-4">
             Добавить файл
         </div>
-        <form id="add-file-form" class="modal-body form">
+        <form id="add-file-form" class="modal-body p-2 form">
             <input type="hidden" name="dir_id" value="{{dir_id}}">
-            <label>
+            <label class="mb-4">
                 <input
+                    class="p-2"
                     type="text"
                     name="filename"
                     placeholder="имя файла"
@@ -56,11 +58,12 @@
                     autocomplete="off"
                 >
             </label>
-            <button type="submit">Создать</button>
+            <button type="submit" class="p-2">Создать</button>
         </form>
     </div>
 </div>
 
+<link rel="stylesheet" href="/static/file_manager/dashboard/dashboard.css">
 <script src="/public/default/common.js"></script>
 <script type="module">
     import {

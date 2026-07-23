@@ -155,7 +155,11 @@ const render_dir_edit_form = form => {
   const owner_select = document.querySelector('[name="perm-owner"]')
   const group_perms_select = document.querySelector('[name="perm-group-perms"]')
   const other_perms_select = document.querySelector('[name="perm-other-perms"]')
+  const back_btn = document.querySelector("#back-btn")
 
+  console.log(form)
+
+  back_btn.href = back_btn.href + form.dirs.active
   render_dir_image(form)
 
   name_input.value = form.title
