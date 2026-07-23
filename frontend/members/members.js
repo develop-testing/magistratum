@@ -10,6 +10,10 @@ const create_group = (group_name, owner) => {
   return send_post("/group", { name: group_name, owner, members: [] })
 }
 
+const update_group = (name, new_name, new_owner, new_members) => {
+  return send_patch("/group", { name, new_name, new_owner, new_members })
+}
+
 const delete_group = group_name => {
   return send_delete("/group", { name: group_name })
 }
@@ -40,15 +44,22 @@ const create_group_table_row = (group, users) => {
   let ownerHtml = ""
 
   users.forEach(user => {
-    const is_owner = group.owner === user
     const is_member = group.members.includes(user.username)
-    const owner_checked = is_owner ? "checked" : ""
     const user_in_group = is_member ? "checked" : ""
+
+    const is_owner = group.owner === user.username
+    const owner_checked = is_owner ? "checked" : ""
 
     usersHtml += `
       <div class="checkbox">
           <label>
-              <input ${user_in_group} name="members[]" type="checkbox" value="${user.username}">
+              <input
+                data-member-input
+                ${user_in_group}
+                name="members[]"
+                type="checkbox"
+                value="${user.username}"
+              >
               <span>${user.username}</span>
           </label>
       </div>
@@ -58,7 +69,8 @@ const create_group_table_row = (group, users) => {
       <div class="checkbox">
           <label>
               <input
-                ${user_in_group}
+                data-owner-input
+                ${owner_checked}
                 name="owner-${group.name}-"
                 type="radio"
                 value="${user.username}"
@@ -79,7 +91,7 @@ const create_group_table_row = (group, users) => {
         <td>
             <div class="table-buttons">
                 <button data-group-remove="${group.name}">Удалить</button>
-                <button data-save="${group.name}">Сохранить</button>
+                <button data-group-save="${group.name}">Сохранить</button>
             </div>
         </td>
     </tr>

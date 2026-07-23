@@ -27,23 +27,24 @@ sa.Table(
 
 def save_group(grp: Group) -> Group:
     create_query = sa.text("""
-        INSERT INTO groups (name, owner_name) 
+        INSERT INTO groups (name, owner_name)
         VALUES (:name, :owner_name)
-        RETURNING id
     """)
 
+    select_id_query = sa.text("SELECT id FROM groups WHERE name = :name")
+
     members_query = sa.text("""
-        INSERT INTO users_to_groups (username, group_id) 
+        INSERT INTO users_to_groups (username, group_id)
         VALUES (:username, :group_id)
     """)
 
     with engine.connect() as conn:
-        result = conn.execute(create_query, {"name": grp.name, "owner_name": grp.owner})
+        conn.execute(create_query, {"name": grp.name, "owner_name": grp.owner})
 
-        id = result.scalar()
+        group_id = conn.execute(select_id_query, {"name": grp.name}).scalar()
 
         members_data = [
-            {"username": username, "group_id": id} for username in grp.members
+            {"username": username, "group_id": group_id} for username in grp.members
         ]
 
         if members_data:
@@ -75,8 +76,10 @@ def fetch_group_by_name(name: str) -> Group:
 
 
 def update_group(old_name: str, group: Group) -> Group:
-    id_query = sa.text(
-        "UPDATE groups SET name = :new_name, owner_name = :owner_name WHERE name = :old_name RETURNING id"
+    select_id_query = sa.text("SELECT id FROM groups WHERE name = :name")
+
+    update_query = sa.text(
+        "UPDATE groups SET name = :new_name, owner_name = :owner_name WHERE name = :old_name"
     )
 
     delete_members_query = sa.text(
@@ -89,12 +92,16 @@ def update_group(old_name: str, group: Group) -> Group:
 
     with engine.connect() as conn:
         group_id = conn.execute(
-            id_query,
-            {"new_name": group.name, "owner_name": group.owner, "old_name": old_name},
+            select_id_query, {"name": old_name}
         ).scalar()
 
         if group_id is None:
             raise ValueError("group not found")
+
+        conn.execute(
+            update_query,
+            {"new_name": group.name, "owner_name": group.owner, "old_name": old_name},
+        )
 
         conn.execute(delete_members_query, {"group_id": group_id})
 

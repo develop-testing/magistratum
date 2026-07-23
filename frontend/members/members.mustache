@@ -141,11 +141,28 @@
 
 
                 if (e.target.hasAttribute('data-group-remove')) {
-                    delete_group(
-                        e.target.getAttribute('data-group-remove')
-                    ).then(res => {
+                    const group_name = e.target.getAttribute('data-group-remove')
+
+                    delete_group(group_name).then(res => {
                         if (res === true)
                             window.location.reload()
+                    })
+                }
+
+                if (e.target.hasAttribute('data-group-save')) {
+                    const parent = e.target.closest('tr')
+                    const members = parent.querySelectorAll('[data-member-input]:checked')
+                    const new_members = []
+
+                    const group_name = e.target.getAttribute('data-group-save')
+                    const owner = parent.querySelector('[data-owner-input]:checked').value
+                    
+                    if (members.length > 0) {
+                        members.forEach(item => new_members.push(item.value))
+                    }
+
+                    update_group(group_name, "", owner, new_members).then(res => {
+                        if (res.name === group_name) window.location.reload()
                     })
                 }
             })
