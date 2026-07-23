@@ -22,7 +22,7 @@ class RemoveMemberReq:
 
 
 @member_router.delete("/members/", tags=["Members"])
-def fetch_members(req: Request, body: RemoveMemberReq) -> bool:
+def remove_member(req: Request, body: RemoveMemberReq) -> bool:
     try:
         session_owner = req.state.session.owner
         
