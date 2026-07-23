@@ -156,6 +156,8 @@ def update_directory(d: Directory) -> Directory:
 
 
 def save_directory(dir: Directory) -> Directory:
+    print(dir)
+
     query = sa.text(
         "INSERT INTO directories (dir_id, name, parent_id) VALUES (:dir_id, :name, :parent_id)"
     )

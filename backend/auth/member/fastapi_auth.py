@@ -7,6 +7,14 @@ from ..session.session import *
 from .member import *
 from .sqlalchemy_member import *
 from ..session.redis_sessions import *
+from ...file_manager.groups.groups import mk_group
+from ...file_manager.groups.sqlalchemy_group import save_group
+from ...file_manager.directories.directory import new_directory
+from ...file_manager.directories.sqlalchemy_dir import save_directory
+from ...file_manager.permissions.permissions import new_permissions
+from ...file_manager.permissions.sqlalchemy_permissions import save_permissions
+from ...file_manager.directories.home_directory import mk_directory as mk_home_dir
+from ...file_manager.directory_node.sqlalchemy_home_dir import save_home_dir
 
 auth_router = APIRouter()
 
@@ -55,5 +63,15 @@ class RegisterRequest:
 @auth_router.post("/auth/register", tags=["Auth"])
 def register(body: RegisterRequest) -> bool:
     cnd = make_candidate(body.username, body.password)
+    group = mk_group(cnd.username, cnd.username, [body.username])
+    user_dir = new_directory(cnd.username, "")
+    prmns = new_permissions(user_dir.dir_id, cnd.username, "root", "r-r-")
+    home_dir = mk_home_dir(cnd.username, user_dir.dir_id, cnd.username)
+
     save_candidate(cnd)
+    save_group(group)
+    save_permissions(prmns)
+    save_directory(user_dir)
+    save_home_dir(home_dir)
+    
     return True
