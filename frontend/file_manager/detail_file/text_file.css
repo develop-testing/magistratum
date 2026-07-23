@@ -97,9 +97,9 @@
 }
 
 .tox-tinymce {
-  border: 1px solid var(--second-color) !important;
+  border: 1px solid var(--mark-color) !important;
 }
 
 .tox .tox-menubar + .tox-toolbar-overlord {
-  background-color: var(--second-color) !important;
+  background-color: var(--mark-color) !important;
 }

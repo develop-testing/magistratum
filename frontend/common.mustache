@@ -8,7 +8,19 @@
     </head>
     <body>
         <header class="header">
-            <div class="header-content container py-4">{{title}}</div>
+            <div class="header-content container py-4">
+                <a class="header-title" href="/dashboard/home">{{title}}</a>
+                <nav class="header-nav">
+                    <ul>
+                        <li>
+                            <a href="/dashboard/home">Менеджер</a>
+                        </li>
+                        <li>
+                            <a href="/members">Группы и участники</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
         </header>
         <main class="main">
             <div class="main-content container">

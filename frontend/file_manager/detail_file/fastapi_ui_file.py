@@ -24,7 +24,7 @@ async def dashboar_text_file_edit(req: Request, file_id: str) -> HTMLResponse:
 
     with open(layout, "r", encoding="utf-8") as f:
         html_content = chevron.render(f, {
-            "title": "Lorice Administratum",
+            "title": "Magistratum",
             "content": tmpl_content,
             "extra_head": tiny_mce_head,
         })
@@ -41,7 +41,7 @@ async def dashboar_text_file(file_id: str) -> HTMLResponse:
 
     with open(layout, "r", encoding="utf-8") as f:
         html_content = chevron.render(f, {
-            "title": "Lorice Administratum",
+            "title": "Magistratum",
             "content": tmpl_content,
         })
 

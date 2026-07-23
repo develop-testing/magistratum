@@ -8,7 +8,7 @@
 
 .control-table table th,
 .control-table table td {
-  border: 2px solid var(--second-color);
+  border: 2px solid var(--mark-color);
   width: 33.333333333%;
 }
 
