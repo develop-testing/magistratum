@@ -22,6 +22,30 @@ const fetch_groups = (owner, member) => {
   return fetch(groups_url, { credentials: "include" }).then(res => res.json())
 }
 
+const create_group = (group_name, owner) => {
+  const create_group_url = new URL("http://127.0.0.1:8800/group")
+
+  return fetch(create_group_url, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: group_name,
+      owner: owner,
+      members: [],
+    }),
+  }).then(res => {
+    if (res.ok) return res.json()
+    return res.text()
+  })
+}
+
+const delete_group = group_name => {
+  return send_delete("/group", { name: group_name })
+}
+
 const create_user = (username, password) => {
   const create_user_url = "http://127.0.0.1:8800/auth/register"
 
@@ -64,15 +88,32 @@ const create_user_table_row = user => {
 
 const create_group_table_row = (group, users) => {
   let usersHtml = ""
+  let ownerHtml = ""
 
   users.forEach(user => {
-    const isMember = group.members.includes(user.username)
-    const checkedAttr = isMember ? "checked" : ""
+    const is_owner = group.owner === user
+    const is_member = group.members.includes(user.username)
+    const owner_checked = is_owner ? "checked" : ""
+    const user_in_group = is_member ? "checked" : ""
 
     usersHtml += `
       <div class="checkbox">
           <label>
-              <input ${checkedAttr} type="checkbox" value="${user.username}">
+              <input ${user_in_group} name="members[]" type="checkbox" value="${user.username}">
+              <span>${user.username}</span>
+          </label>
+      </div>
+    `
+
+    ownerHtml += `
+      <div class="checkbox">
+          <label>
+              <input
+                ${user_in_group}
+                name="owner-${group.name}-"
+                type="radio"
+                value="${user.username}"
+              >
               <span>${user.username}</span>
           </label>
       </div>
@@ -82,13 +123,13 @@ const create_group_table_row = (group, users) => {
   return `
     <tr>
         <td>${group.name}</td>
-        <td>${group.owner}</td>
+        <td>${ownerHtml}</td>
         <td>
             <div class="checkbox-list">${usersHtml}</div>
         </td>
         <td>
             <div class="table-buttons">
-                <button data-user-remove="${group.name}">Удалить</button>
+                <button data-group-remove="${group.name}">Удалить</button>
                 <button data-save="${group.name}">Сохранить</button>
             </div>
         </td>

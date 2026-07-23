@@ -39,3 +39,12 @@ const modals = () => {
     })
   })
 }
+
+const send_delete = (url, data) => {
+  return fetch(`http://127.0.0.1:8800${url}`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then(res => res.json())
+}

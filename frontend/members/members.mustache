@@ -78,7 +78,7 @@
                 <div class="modal-header">Создать группу</div>
                 <form id="add-group-form" class="modal-body form">
                     <label>
-                        <input type="text" name="username" placeholder="название" value="">
+                        <input type="text" name="groupname" placeholder="название" value="">
                     </label>
                     <button type="submit">Создать</button>
                 </form>
@@ -117,10 +117,33 @@
                     })
             })
 
+            document.querySelector("#add-group-form").addEventListener('submit', e => {
+                e.preventDefault()
+
+                const form = e.target
+                const group_name = form.querySelector("[name='groupname']").value
+
+                create_group(group_name, "root")
+                    .then(res => {
+                        if (res) window.location.reload()
+                        alert(res)
+                    })
+            })
+
             document.addEventListener('click', e => {
                 if (e.target.hasAttribute('data-user-remove')) {
                     const user_name = e.target.getAttribute('data-user-remove')
                     delete_user(user_name).then(res => {
+                        if (res === true)
+                            window.location.reload()
+                    })
+                }
+
+
+                if (e.target.hasAttribute('data-group-remove')) {
+                    delete_group(
+                        e.target.getAttribute('data-group-remove')
+                    ).then(res => {
                         if (res === true)
                             window.location.reload()
                     })

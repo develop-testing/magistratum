@@ -68,12 +68,15 @@ async def read_groups(req: Request, filter: FetchGroupReq = Depends()) -> list[G
 
     return fetch_groups_by_filter(filter)
 
+@dataclass(frozen=True, slots=True)
+class RemoveGroupReq:
+    name: str
 
 @groups_router.delete("/group", tags=["Groups"])
-async def delete_group(req: Request, group_name: str) -> RemovedGroup:
+async def delete_group(req: Request, body: RemoveGroupReq) -> bool:
     session_owner: str = req.state.session.owner
 
-    g = fetch_group_by_name(group_name)
+    g = fetch_group_by_name(body.name)
 
     if session_owner != "root" and session_owner != g.owner:
         raise Forbidden("only root or group owner can delete groups")
@@ -84,4 +87,4 @@ async def delete_group(req: Request, group_name: str) -> RemovedGroup:
     removed = destroy_group(g)
     delete_group_by_name(removed, updated)
 
-    return removed
+    return True

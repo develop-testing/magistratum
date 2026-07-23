@@ -58,7 +58,7 @@ def fetch_group_by_name(name: str) -> Group:
     query = sa.text("SELECT id, name, owner_name FROM groups WHERE name = :name")
 
     members_query = sa.text(
-        "SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)"
+        "SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS CHAR)"
     )
 
     with engine.connect() as conn:
@@ -119,7 +119,7 @@ def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> Non
     """)
 
     delete_members_query = sa.text(
-        "DELETE FROM users_to_groups WHERE group_id = CAST(:group_id AS VARCHAR)"
+        "DELETE FROM users_to_groups WHERE group_id = CAST(:group_id AS CHAR)"
     )
 
     delete_group_query = sa.text("DELETE FROM groups WHERE name = :name")
