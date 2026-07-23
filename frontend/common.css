@@ -175,6 +175,10 @@ body {
   text-decoration: none;
 }
 
+.header-nav ul li span {
+  cursor: pointer;
+}
+
 .main {
   flex: 1 0 0;
   margin-top: calc(var(--step) * 4);

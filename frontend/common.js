@@ -52,7 +52,10 @@ const send_get = (url, params) => {
   }
 
   return fetch(full_url, { credentials: "include" }).then(res => {
-    if (!res.ok) return res.text().then(text => { throw text })
+    if (!res.ok)
+      return res.text().then(text => {
+        throw text
+      })
     return res.json()
   })
 }
@@ -64,7 +67,10 @@ const send_post = (url, data) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   }).then(res => {
-    if (!res.ok) return res.text().then(text => { throw text })
+    if (!res.ok)
+      return res.text().then(text => {
+        throw text
+      })
     return res.json()
   })
 }
@@ -76,7 +82,10 @@ const send_patch = (url, data) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   }).then(res => {
-    if (!res.ok) return res.text().then(text => { throw text })
+    if (!res.ok)
+      return res.text().then(text => {
+        throw text
+      })
     return res.json()
   })
 }
@@ -88,7 +97,16 @@ const send_delete = (url, data) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   }).then(res => {
-    if (!res.ok) return res.text().then(text => { throw text })
+    if (!res.ok)
+      return res.text().then(text => {
+        throw text
+      })
     return res.json()
   })
 }
+
+document.querySelector("[data-logout]").addEventListener("click", e => {
+  send_post("/auth/logout")
+    .then(e => window.location.reload())
+    .catch(e => alert("Произошла ошибка"))
+})
