@@ -125,7 +125,7 @@ frontend.mount(
 )
 frontend.mount("/public/upload", StaticFiles(directory="frontend/public/upload"), name="upload")
 frontend.mount("/public/img", StaticFiles(directory="frontend/public/img"), name="img")
-frontend.mount("/public/default", StaticFiles(directory="frontend/skins/default"))
+frontend.mount("/public/default", StaticFiles(directory="frontend"))
 frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_directory_router, dependencies=[Depends(auth_middleware)])

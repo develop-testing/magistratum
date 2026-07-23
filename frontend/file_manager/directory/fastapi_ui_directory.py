@@ -19,7 +19,7 @@ async def dashboar(dir_id: str) -> HTMLResponse:
 
         result = sass_embedded.compile_string(
             scss_content,
-            load_paths=[Path("frontend/file_manager/directory/"), Path("frontend/skins/default/")],
+            load_paths=[Path("frontend/file_manager/directory/"), Path("frontend/")],
         )
 
     data = {

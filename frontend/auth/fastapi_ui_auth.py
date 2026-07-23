@@ -16,7 +16,7 @@ async def login_page() -> HTMLResponse:
 
     result = sass_embedded.compile_string(
         scss_content,
-        load_paths=[Path("frontend/auth/"), Path("frontend/skins/default/")],
+        load_paths=[Path("frontend/auth/"), Path("frontend/")],
     )
 
     data = {"title": "Magistratum", "styles": result.output}

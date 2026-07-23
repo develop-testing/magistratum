@@ -37,7 +37,8 @@ app/
 │   │   ├── detail_file/ # File editor/viewer (incl. TinyMCE)
 │   │   └── directory/   # Directory edit page
 │   ├── public/          # Static assets (swagger, uploads, images)
-│   └── skins/default/   # Common SCSS/JS
+│   ├── common.js          # Shared JS (send_get, send_post, send_delete, send_patch)
+│   └── common.scss        # Shared SCSS
 └── configs...
 ```
 

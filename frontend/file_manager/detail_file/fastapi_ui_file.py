@@ -21,7 +21,7 @@ ui_files_router = APIRouter()
 @ui_files_router.get("/text_file/edit/{file_id}", tags=["Auth"])
 async def dashboar_text_file_edit(req: Request, file_id: str) -> HTMLResponse:
     session_owner = req.state.session.owner
-    scss_loads = [Path("frontend/file_manager/detail_file/"), Path("frontend/skins/default/")]
+    scss_loads = [Path("frontend/file_manager/detail_file/"), Path("frontend/")]
     scss_file = "frontend/file_manager/detail_file/text_file.scss"
     template = "frontend/file_manager/detail_file/text_file.mustache"
     styles: str | None = ""
@@ -43,7 +43,7 @@ async def dashboar_text_file_edit(req: Request, file_id: str) -> HTMLResponse:
 @ui_files_router.get("/text_file/{file_id}", tags=["Auth"])
 async def dashboar_text_file(file_id: str) -> HTMLResponse:
     scss_file = "frontend/file_manager/detail_file/text_file.scss"
-    scss_loads = [Path("frontend/file_manager/detail_file/"), Path("frontend/skins/default/")]
+    scss_loads = [Path("frontend/file_manager/detail_file/"), Path("frontend/")]
     template = "frontend/file_manager/detail_file/text_file_read.mustache"
     styles: str | None = ""
 

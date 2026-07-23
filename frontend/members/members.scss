@@ -28,7 +28,8 @@
 }
 
 .control-table .control-table-header h1 {
-  font-size: 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .control-table .control-table-header {
@@ -38,6 +39,7 @@
 
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
 .control-table .control-table-buttons {

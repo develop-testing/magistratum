@@ -24,7 +24,7 @@ def render_dashboard(dir_id: str) -> HTMLResponse:
 
     result = sass_embedded.compile_string(
         scss_content,
-        load_paths=[Path("frontend/file_manager/dashboard/"), Path("frontend/skins/default/")],
+        load_paths=[Path("frontend/file_manager/dashboard/"), Path("frontend/")],
     )
 
     data = {
