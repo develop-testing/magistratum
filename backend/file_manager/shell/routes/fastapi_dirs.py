@@ -9,7 +9,7 @@ from backend.router.response import *
 
 from ...directories.directory import *
 
-from ...permissions import has_read, has_write, new_permissions, Permissions
+from ...permissions import has_read, has_write, new_permissions
 from ..sources.sqlalchemy_dir import *
 from ..sources.sqlalchemy_dir import (
     add_image_to_dir,
@@ -53,16 +53,14 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
 
         parent_dir = fetch_dir_by_id(body.parent_id)
 
-        prm = fetch_permissions_for([parent_dir.dir_id])
-        prm = only_write_permitions(prm, session_owner, group_names)
-        access_granted = check_dir_has_perms(parent_dir, prm)
-
-        if not access_granted:
+        prms = fetch_permissions_for([parent_dir.dir_id])
+        prm = next((p for p in prms if p.item_id == parent_dir.dir_id), None)
+        if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
 
         new_dir = new_directory(body.name, body.parent_id)
         new_perm = new_permissions(
-            new_dir.dir_id, session_owner, prm[0].group_name, "rwr-"
+            new_dir.dir_id, session_owner, prm.group_name, "rwr-"
         )
 
         new_dir = save_directory(new_dir)
@@ -189,10 +187,8 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
         dir = fetch_dir_by_id(body.dir_id)
 
         prms = fetch_permissions_for([dir.dir_id])
-        prms = only_write_permitions(prms, session_owner, group_names)
-        access_granted = check_dir_has_perms(dir, prms)
-
-        if not access_granted:
+        prm = next((p for p in prms if p.item_id == dir.dir_id), None)
+        if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
 
         return delete_directory(dir.dir_id)
@@ -237,15 +233,3 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
 
     return result
 
-
-PList = list[Permissions]
-
-
-def only_write_permitions(prms: PList, uname: str, groups: list[str]) -> PList:
-    result: PList = []
-
-    for prm in prms:
-        if has_write(prm, uname, groups):
-            result = [*result, prm]
-
-    return result
