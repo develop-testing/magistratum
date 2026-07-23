@@ -23,23 +23,7 @@ const fetch_groups = (owner, member) => {
 }
 
 const create_group = (group_name, owner) => {
-  const create_group_url = new URL("http://127.0.0.1:8800/group")
-
-  return fetch(create_group_url, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: group_name,
-      owner: owner,
-      members: [],
-    }),
-  }).then(res => {
-    if (res.ok) return res.json()
-    return res.text()
-  })
+  return send_post("/group", { name: group_name, owner, members: [] })
 }
 
 const delete_group = group_name => {
@@ -47,30 +31,11 @@ const delete_group = group_name => {
 }
 
 const create_user = (username, password) => {
-  const create_user_url = "http://127.0.0.1:8800/auth/register"
-
-  return fetch(create_user_url, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, password }),
-  }).then(res => {
-    if (res.ok) return res.json()
-    return res.text()
-  })
+  return send_post("/auth/register", { username, password })
 }
 
 const delete_user = username => {
-  const remove_user_url = new URL("http://127.0.0.1:8800/members/")
-
-  return fetch(remove_user_url, {
-    method: "DELETE",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
-  }).then(res => res.json())
+  return send_delete("/members/", { username })
 }
 
 const create_user_table_row = user => {
