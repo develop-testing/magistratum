@@ -25,6 +25,7 @@ from frontend.file_manager.directory.fastapi_ui_directory import (
     ui_directory_router,
 )
 from frontend.members.fastapi_ui_members import ui_members_router
+from frontend.not_found.fastapi_ui_not_found import render_not_found
 
 backend = FastAPI(docs_url=None, redoc_url=None)
 frontend = FastAPI()
@@ -123,6 +124,11 @@ frontend.mount(
     StaticFiles(directory="frontend/members"),
     name="static-fm",
 )
+frontend.mount(
+    "/static/not_found",
+    StaticFiles(directory="frontend/not_found"),
+    name="static-nf",
+)
 frontend.mount("/public/upload", StaticFiles(directory="frontend/public/upload"), name="upload")
 frontend.mount("/public/img", StaticFiles(directory="frontend/public/img"), name="img")
 frontend.mount("/public/default", StaticFiles(directory="frontend"))
@@ -131,3 +137,8 @@ frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)]
 frontend.include_router(ui_directory_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_members_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_auth_router)
+
+
+@frontend.exception_handler(404)
+async def not_found_handler(request: Request, exc: Exception) -> HTMLResponse:
+    return render_not_found()
