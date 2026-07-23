@@ -86,40 +86,25 @@ const change_file_edit_form = (form, field, value) => {
 }
 
 const fetch_file_edit_form = (file_id, username) => {
-  const files_url = new URL("http://127.0.0.1:8800/files")
-  files_url.searchParams.append("by_id", file_id)
-  files_url.searchParams.append("data_type", "rich")
-
-  const groups_url = new URL("http://127.0.0.1:8800/groups")
-  groups_url.searchParams.append("member", username)
-
-  const dirs_url = new URL("http://127.0.0.1:8800/directories")
-  groups_url.searchParams.append("only_can_write", true)
-
-  const users_url = new URL("http://127.0.0.1:8800/auth/members")
-
   return Promise.all([
-    fetch(files_url, { credentials: "include" })
-      .then(res => res.json())
-      .then(item => {
-        return {
-          ...item[0].text_file,
-          ...item[0].perms,
-          image: item[0].image,
-        }
-      }),
-    fetch(groups_url, { credentials: "include" }).then(res => res.json()),
-    fetch(dirs_url, { credentials: "include" }).then(res => res.json()),
-    fetch(users_url, { credentials: "include" }).then(res => res.json()),
-  ])
-    .then(res => {
+    send_get("/files", { by_id: file_id, data_type: "rich" }).then(items => {
+      const item = items[0] || {}
       return {
-        file: res[0],
-        groups: res[1],
-        dirs: res[2],
-        users: res[3],
+        ...(item.text_file || {}),
+        ...(item.perms || {}),
+        image: item.image,
       }
-    })
+    }),
+    send_get("/groups", { member: username, only_can_write: true }),
+    send_get("/directories"),
+    send_get("/auth/members"),
+  ])
+    .then(res => ({
+      file: res[0],
+      groups: res[1],
+      dirs: res[2],
+      users: res[3],
+    }))
     .then(data => mk_file_edit_form(data))
 }
 
@@ -206,23 +191,16 @@ const save_file_edit_form = (form, file_id) => {
   })
 
   return get_cover.then(cover_data => {
-    return fetch("http://127.0.0.1:8800/file", {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        file_id: file_id,
-        new_filename: form.title,
-        new_content: form.content,
-        new_parent_id: form.dirs.active,
-        new_owner: form.owner.active,
-        new_group_name: form.group.active,
-        new_group_perms: form.group_perms.active,
-        new_other_perms: form.other_perms.active,
-        new_cover: cover_data,
-      }),
-    }).then(res => res)
+    return send_patch("/file", {
+      file_id: file_id,
+      new_filename: form.title,
+      new_content: form.content,
+      new_parent_id: form.dirs.active,
+      new_owner: form.owner.active,
+      new_group_name: form.group.active,
+      new_group_perms: form.group_perms.active,
+      new_other_perms: form.other_perms.active,
+      new_cover: cover_data,
+    })
   })
 }

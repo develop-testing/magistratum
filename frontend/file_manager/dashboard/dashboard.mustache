@@ -75,50 +75,29 @@
         const add_file_form = document.querySelector("#add-file-form")
 
         const remove_directory = (id) => {
-            return fetch(`http://127.0.0.1:8800/directory`, {
-            credentials: "include",
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ dir_id: id }),
-            })
-            .then((res) => res.json())
-            .then((res) => {
-                return res;
-            });
+            return send_delete("/directory", { dir_id: id })
         };
 
         const remove_text_file = (id) => {
-            return fetch(`http://127.0.0.1:8800/file`, {
-            credentials: "include",
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ file_id: id }),
-            })
-            .then((res) => res.json())
-            .then((res) => {
-                return res;
-            });
+            return send_delete("/file", { file_id: id })
         };
 
         const fetch_directory_content = () => {
-            return fetch(`http://127.0.0.1:8800/directory/content?dir_id=${dir_id}`, {
-            credentials: "include",
-            })
-            .then((res) => res.json())
-            .then(res => {
-                return mk_file_manager([
-                ...res.map((item) =>
-                    mk_manager_item(
-                    item.node.node_id,
-                    item.node.type,
-                    item.meta.img,
-                    item.meta.name,
-                    item.perms.owner_name,
-                    item.perms.group_name,
+            return send_get("/directory/content", { dir_id: dir_id })
+                .then(res => {
+                    return mk_file_manager([
+                    ...res.map((item) =>
+                        mk_manager_item(
+                        item.node.node_id,
+                        item.node.type,
+                        item.meta.img,
+                        item.meta.name,
+                        item.perms.owner_name,
+                        item.perms.group_name,
+                        ),
                     ),
-                ),
-                ]);
-            });
+                    ]);
+                });
         };
 
         const show_file_manager = (html) => {
@@ -146,24 +125,6 @@
             });
         };
 
-        const create_directory = (data) => {
-            return fetch("http://127.0.0.1:8800/directory", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-            credentials: "include",
-            }).then((response) => response.json());
-        };
-
-        const create_file = (data) => {
-            return fetch("http://127.0.0.1:8800/file", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-            credentials: "include",
-            }).then((response) => response.json());
-        };
-
         const dir_id = document.querySelector('.manager-grid').dataset.dirId;
 
         let file_manager = fetch_directory_content().then((fm) => {
@@ -177,12 +138,11 @@
             const form_data = new FormData(e.target)
             const json_object = Object.fromEntries(form_data.entries())
 
-            create_directory(json_object).then((_) => {
-            file_manager = fetch_directory_content().then((fm) => {
-                show_file_manager(fm.items.map(make_item_html).join(""))
-                return fm;
-            })
-            add_directory_modal.classList.toggle("-show");
+            send_post("/directory", json_object).then((_) => {
+                file_manager = fetch_directory_content().then((fm) => {
+                    show_file_manager(fm.items.map(make_item_html).join(""))
+                    return fm;
+                })
             })
         })
 
@@ -193,12 +153,11 @@
             const json_object = Object.fromEntries(form_data.entries())
             json_object.content = ""
 
-            create_file(json_object).then(() => {
+            send_post("/file", json_object).then(() => {
                 file_manager = fetch_directory_content().then((fm) => {
                     show_file_manager(fm.items.map(make_item_html).join(""))
                     return fm
                 })
-                add_file_modal.classList.toggle("-show")
             })
         })
     })

@@ -51,7 +51,10 @@ const send_get = (url, params) => {
     })
   }
 
-  return fetch(full_url, { credentials: "include" }).then(res => res.json())
+  return fetch(full_url, { credentials: "include" }).then(res => {
+    if (!res.ok) return res.text().then(text => { throw text })
+    return res.json()
+  })
 }
 
 const send_post = (url, data) => {
@@ -60,7 +63,10 @@ const send_post = (url, data) => {
     credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
-  }).then(res => res.json())
+  }).then(res => {
+    if (!res.ok) return res.text().then(text => { throw text })
+    return res.json()
+  })
 }
 
 const send_patch = (url, data) => {
@@ -69,7 +75,10 @@ const send_patch = (url, data) => {
     credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
-  }).then(res => res.json())
+  }).then(res => {
+    if (!res.ok) return res.text().then(text => { throw text })
+    return res.json()
+  })
 }
 
 const send_delete = (url, data) => {
@@ -78,5 +87,8 @@ const send_delete = (url, data) => {
     credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
-  }).then(res => res.json())
+  }).then(res => {
+    if (!res.ok) return res.text().then(text => { throw text })
+    return res.json()
+  })
 }

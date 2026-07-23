@@ -109,14 +109,8 @@
     })
 
     save_btn.addEventListener('click', e => {
-        save_file_edit_form(file_edit_form, file_id).then(res => {
-            if (res.ok) {
-                alert("Сохранено успешно")
-                return true
-            }
-
-            alert("Ошибка при сохранении")
-            return false
-        })
+        save_file_edit_form(file_edit_form, file_id)
+            .then(() => alert("Сохранено успешно"))
+            .catch(() => alert("Ошибка при сохранении"))
     })
 </script>

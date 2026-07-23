@@ -2,8 +2,7 @@ const mapPerms = permString => {
   if (!permString) return ""
   if (permString.length === 4) {
     const g =
-      (permString[0] === "r" ? "r" : "") +
-      (permString[1] === "w" ? "w" : "")
+      (permString[0] === "r" ? "r" : "") + (permString[1] === "w" ? "w" : "")
     return g || ""
   }
   const lower = permString.toLowerCase()
@@ -14,31 +13,20 @@ const mapPerms = permString => {
 }
 
 const fetch_directory = dir_id => {
-  const dirs_url = new URL("http://127.0.0.1:8800/directories")
-  dirs_url.searchParams.append("by_id", dir_id)
-  dirs_url.searchParams.append("data_type", "rich")
-
-  const all_dirs_url = new URL("http://127.0.0.1:8800/directories")
-  all_dirs_url.searchParams.append("only_can_write", true)
-
-  const users_url = new URL("http://127.0.0.1:8800/auth/members")
-
-  const groups_url = new URL("http://127.0.0.1:8800/groups")
-
   return Promise.all([
-    fetch(dirs_url, { credentials: "include" })
-      .then(res => res.json())
-      .then(items => {
+    send_get("/directories", { by_id: dir_id, data_type: "rich" }).then(
+      items => {
         const item = items[0] || {}
         return {
           ...(item.directory || {}),
           ...(item.perms || {}),
           image: item.image || "",
         }
-      }),
-    fetch(all_dirs_url, { credentials: "include" }).then(res => res.json()),
-    fetch(users_url, { credentials: "include" }).then(res => res.json()),
-    fetch(groups_url, { credentials: "include" }).then(res => res.json()),
+      },
+    ),
+    send_get("/directories", { only_can_write: true }),
+    send_get("/members"),
+    send_get("/groups"),
   ]).then(res => ({
     dir: res[0],
     dirs: res[1],
@@ -147,23 +135,16 @@ const save_dir_edit_form = (form, dir_id) => {
   })
 
   return get_cover.then(cover_data => {
-    return fetch("http://127.0.0.1:8800/directory", {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        dir_id: dir_id,
-        new_name: form.title,
-        new_parent_id: form.dirs.active,
-        new_owner: form.owner.active,
-        new_group_name: form.group.active,
-        new_group_perms: form.group_perms.active,
-        new_other_perms: form.other_perms.active,
-        new_cover: cover_data,
-      }),
-    }).then(res => res)
+    return send_patch("/directory", {
+      dir_id: dir_id,
+      new_name: form.title,
+      new_parent_id: form.dirs.active,
+      new_owner: form.owner.active,
+      new_group_name: form.group.active,
+      new_group_perms: form.group_perms.active,
+      new_other_perms: form.other_perms.active,
+      new_cover: cover_data,
+    })
   })
 }
 
@@ -172,12 +153,8 @@ const render_dir_edit_form = form => {
   const dir_select = document.querySelector('[name="perm-parent-dir"]')
   const groups_select = document.querySelector('[name="perm-group-name"]')
   const owner_select = document.querySelector('[name="perm-owner"]')
-  const group_perms_select = document.querySelector(
-    '[name="perm-group-perms"]',
-  )
-  const other_perms_select = document.querySelector(
-    '[name="perm-other-perms"]',
-  )
+  const group_perms_select = document.querySelector('[name="perm-group-perms"]')
+  const other_perms_select = document.querySelector('[name="perm-other-perms"]')
 
   render_dir_image(form)
 

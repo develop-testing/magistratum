@@ -9,11 +9,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', e => {
         const fetch_file = file_id => {
-            const file_url = new URL("http://127.0.0.1:8800/files")
-            file_url.searchParams.append("by_id", decodeURIComponent(file_id))
-
-            return fetch(file_url, { credentials: "include" })
-                .then(res => res.json())
+            return send_get("/files", { by_id: decodeURIComponent(file_id) })
                 .then(data => ({
                     title: data[0].name,
                     content: data[0].content,
@@ -32,9 +28,6 @@
 
         const file_id = window.location.pathname.split('/').pop()
 
-        fetch_file(file_id).then(file => {
-            console.log(file)
-            render_file(file)
-        })
+        fetch_file(file_id).then(file => render_file(file))
     })
 </script>
