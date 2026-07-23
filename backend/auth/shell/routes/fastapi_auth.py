@@ -57,9 +57,3 @@ def register(body: RegisterRequest) -> bool:
     cnd = make_candidate(body.username, body.password)
     save_candidate(cnd)
     return True
-
-
-@auth_router.get("/auth/members", tags=["Auth"])
-def fetch_members(fltr: FilterOfMember = Depends()) -> list[MemberProfile]:
-    res = fetch_members_by_filter(fltr)
-    return res

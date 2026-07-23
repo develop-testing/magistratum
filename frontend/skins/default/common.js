@@ -15,3 +15,27 @@ const tabs = (btns_tags, tabs_tags) => {
     })
   })
 }
+
+const modals = () => {
+  const modals = document.querySelectorAll("[data-modal]")
+  const buttons = document.querySelectorAll("[data-modal-open]")
+
+  buttons.forEach(button => {
+    button.addEventListener("click", e => {
+      const target_modal_name = e.target.getAttribute("data-modal-open")
+
+      modals.forEach(modal => {
+        const modal_name = modal.getAttribute("data-modal")
+        if (target_modal_name === modal_name) modal.classList.toggle("-show")
+      })
+    })
+  })
+
+  document.querySelectorAll(".modal").forEach(item => {
+    item.addEventListener("click", e => {
+      if (e.target.classList.contains("modal")) {
+        item.classList.remove("-show")
+      }
+    })
+  })
+}

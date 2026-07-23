@@ -1,0 +1,63 @@
+@use "common" as *;
+
+.control-table {
+  @extend .mb-4;
+}
+
+.control-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.control-table table th,
+.control-table table td {
+  @extend .p-4;
+  border: 2px solid $second-color;
+  width: 33.333333333%;
+}
+
+.control-table table td button {
+  @extend .def-button;
+}
+
+.control-table .table-buttons {
+  width: 100%;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: end;
+}
+
+.control-table .control-table-header h1 {
+  font-size: 1.5rem;
+}
+
+.control-table .control-table-header {
+  @extend .p-4;
+  @extend .mb-4;
+  @extend .bck-second;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.control-table .control-table-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control-table table select {
+  width: 100%;
+}
+
+.control-table-button {
+  @extend .def-button;
+}
+
+.checkbox-list {
+  height: 80px;
+  overflow-y: scroll;
+}
+
+.checkbox label {
+  display: block;
+}

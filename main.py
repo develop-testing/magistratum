@@ -15,12 +15,16 @@ from backend.file_manager.shell.routes.fastapi_file import files_router
 from backend.file_manager.shell.routes.fastapi_dirs import dirs_router
 from backend.file_manager.shell.routes.fastapi_dir_node import dir_node_router
 from backend.file_manager.shell.routes.fastapi_groups import groups_router
+from backend.auth.shell.routes.fastapi_members import member_router
+
+
 from frontend.file_manager.dashboard.fastapi_ui_dashboard import ui_dashboard_router
 from frontend.file_manager.detail_file.fastapi_ui_file import ui_files_router
 from frontend.auth.fastapi_ui_auth import ui_auth_router
 from frontend.file_manager.directory.fastapi_ui_directory import (
     ui_directory_router,
 )
+from frontend.members.fastapi_ui_members import ui_members_router
 
 backend = FastAPI(docs_url=None, redoc_url=None)
 frontend = FastAPI()
@@ -98,6 +102,7 @@ backend.add_middleware(
 )
 
 backend.include_router(auth_router)
+backend.include_router(member_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(dirs_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(dir_node_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(groups_router, dependencies=[Depends(auth_middleware)])
@@ -113,10 +118,16 @@ frontend.mount(
     StaticFiles(directory="frontend/file_manager"),
     name="static-fm",
 )
+frontend.mount(
+    "/static/members",
+    StaticFiles(directory="frontend/members"),
+    name="static-fm",
+)
 frontend.mount("/public/upload", StaticFiles(directory="frontend/public/upload"), name="upload")
 frontend.mount("/public/img", StaticFiles(directory="frontend/public/img"), name="img")
 frontend.mount("/public/default", StaticFiles(directory="frontend/skins/default"))
 frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_directory_router, dependencies=[Depends(auth_middleware)])
+frontend.include_router(ui_members_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_auth_router)

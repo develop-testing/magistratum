@@ -16,6 +16,11 @@ sa.Table(
 )
 
 
+class DeleteError(Exception):
+   def __init__(self, message: str):
+        super().__init__(message)
+
+
 def fetch_member_by_username(username: str) -> Member:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
@@ -101,3 +106,16 @@ def fetch_members_by_filter(fltr: FilterOfMember) -> list[MemberProfile]:
         return [fetch_member_profile_by_username(fltr.by_name)]
 
     return fetch_all_profiles()
+
+def delete_member_by_username(username: str) -> bool:
+    query = sa.text("DELETE FROM users WHERE username = :username")
+
+    with engine.connect() as conn:
+        result = conn.execute(query, {"username": username})
+
+        if result.rowcount == 0:
+            raise DeleteError("user not found")
+
+        conn.commit() 
+
+    return True

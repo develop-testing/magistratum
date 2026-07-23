@@ -1,8 +1,8 @@
 $step: 0.25 * 1rem;
 $main-color: #78184a;
 $gold: #a67c43;
-$second-color: #000;
-$font-color: #fff;
+$second-color: #a3a3a3;
+$font-color: #000;
 $warning-color: red;
 
 .container {
@@ -81,6 +81,10 @@ $warning-color: red;
   padding-bottom: ($step * 4);
 }
 
+.bck-second {
+  background-color: $second-color;
+}
+
 .flex-basic {
   display: flex;
   align-items: center;
@@ -136,8 +140,6 @@ body {
   letter-spacing: 0.04rem;
   color: $font-color;
   overflow: scroll;
-
-  background-color: #35356a;
 }
 
 body {
@@ -147,7 +149,7 @@ body {
 
 .header {
   backdrop-filter: blur(4px);
-  box-shadow: 0px 0px 4px 3px rgba(0, 0, 0, 0.75);
+  border-bottom: 2px solid $second-color;
 
   &-content {
     @extend .container;

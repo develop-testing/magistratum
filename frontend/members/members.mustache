@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>{{title}}</title>
+        <style>{{{styles}}}</style>
+    </head>
+    <body>
+        <header class="header">
+            <div class="header-content">{{title}}</div>
+        </header>
+        <main class="main">
+            <div class="main-content">
+                <div class="control-table">
+                    <div class="control-table-header">
+                        <h1>Пользователи</h1>
+                        <div class="control-table-buttons">
+                            <button
+                                data-modal-open="add-user-modal"
+                                title="добавить пользователя"
+                                class="control-table-button"
+                            >🗿</button>
+                        </div>
+                    </div>
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Логин</th>
+                                <th>Управление</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="control-table">               
+                    <div class="control-table-header">
+                        <h1>Группы</h1>
+                        <div class="control-table-buttons">
+                            <button
+                                data-modal-open="add-group-modal"
+                                title="добавить группу"
+                                class="control-table-button"
+                            >🧑‍🤝‍🧑</button>
+                        </div>
+                    </div>
+                    <table id="groups-table">
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Владелец</th>
+                                <th>Пользователи</th>
+                                <th>Управление</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <div data-modal="add-user-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">Создать пользователя</div>
+                <form id="add-user-form" class="modal-body form">
+                    <label>
+                        <input type="text" name="username" placeholder="логин" value="">
+                    </label>
+                    <label>
+                        <input type="text" name="password" placeholder="пароль" value="">
+                    </label>
+                    <button type="submit">Создать</button>
+                </form>
+            </div> 
+        </div>
+
+        <div data-modal="add-group-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">Создать группу</div>
+                <form id="add-group-form" class="modal-body form">
+                    <label>
+                        <input type="text" name="username" placeholder="название" value="">
+                    </label>
+                    <button type="submit">Создать</button>
+                </form>
+            </div>
+        </div>
+
+        <script src="/public/default/common.js"></script>
+        <script src="/static/members/members.js"></script>
+
+        <script>
+            let users = []
+            let groups = []
+
+            Promise.all([fetch_users(''), fetch_groups('','')]).then(values => {
+                users = values[0]
+                groups = values[1]
+
+                render_users(users, "#users-table tbody")
+                render_groups(groups, users, "#groups-table tbody")
+            })
+
+            document.querySelector("#add-user-form").addEventListener('submit', e => {
+                e.preventDefault()
+
+                const form = e.target
+
+                const name = form.querySelector("[name='username']").value
+                const password = form.querySelector("[name='password']").value
+
+                create_user(name, password)
+                    .then(res => {
+                        if (res === true)
+                            window.location.reload()
+
+                        alert(res)
+                    })
+            })
+
+            document.addEventListener('click', e => {
+                if (e.target.hasAttribute('data-user-remove')) {
+                    const user_name = e.target.getAttribute('data-user-remove')
+                    delete_user(user_name).then(res => {
+                        if (res === true)
+                            window.location.reload()
+                    })
+                }
+            })
+
+            modals()
+        </script>
+    </body>
+</html>
