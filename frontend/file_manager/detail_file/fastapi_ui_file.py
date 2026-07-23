@@ -23,11 +23,14 @@ async def dashboar_text_file_edit(req: Request, file_id: str) -> HTMLResponse:
         tmpl_content = chevron.render(tmpl, {"editor": session_owner})
 
     with open(layout, "r", encoding="utf-8") as f:
-        html_content = chevron.render(f, {
-            "title": "Magistratum",
-            "content": tmpl_content,
-            "extra_head": tiny_mce_head,
-        })
+        html_content = chevron.render(
+            f,
+            {
+                "title": "Magistratum",
+                "content": tmpl_content,
+                "extra_head": tiny_mce_head,
+            },
+        )
 
     return HTMLResponse(html_content)
 
@@ -40,9 +43,12 @@ async def dashboar_text_file(file_id: str) -> HTMLResponse:
         tmpl_content = chevron.render(tmpl)
 
     with open(layout, "r", encoding="utf-8") as f:
-        html_content = chevron.render(f, {
-            "title": "Magistratum",
-            "content": tmpl_content,
-        })
+        html_content = chevron.render(
+            f,
+            {
+                "title": "Magistratum",
+                "content": tmpl_content,
+            },
+        )
 
     return HTMLResponse(html_content)

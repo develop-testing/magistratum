@@ -3,7 +3,7 @@ import sqlalchemy as sa
 
 
 from backend.database.database import engine, metadata
-from ...member import *
+from .member import *
 
 sa.Table(
     "users",
@@ -17,7 +17,7 @@ sa.Table(
 
 
 class DeleteError(Exception):
-   def __init__(self, message: str):
+    def __init__(self, message: str):
         super().__init__(message)
 
 
@@ -107,6 +107,7 @@ def fetch_members_by_filter(fltr: FilterOfMember) -> list[MemberProfile]:
 
     return fetch_all_profiles()
 
+
 def delete_member_by_username(username: str) -> bool:
     query = sa.text("DELETE FROM users WHERE username = :username")
 
@@ -116,6 +117,6 @@ def delete_member_by_username(username: str) -> bool:
         if result.rowcount == 0:
             raise DeleteError("user not found")
 
-        conn.commit() 
+        conn.commit()
 
     return True

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 from backend.database.redis import client
-from ...session import *
+from .session import *
 
 
 def fetch_session_by_id(session_id: str) -> Session:

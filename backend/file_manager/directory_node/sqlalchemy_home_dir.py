@@ -2,7 +2,7 @@ import sqlalchemy as sa
 
 from backend.database.database import engine, metadata
 
-from ...directories.home_directory import HomeDirectory
+from ..directories.home_directory import HomeDirectory
 
 sa.Table(
     "home_dirs",

@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, Request
 
 from backend.router.response import *
 
-from ...groups import *
-from ...permissions import change_group
-from ..sources.sqlalchemy_group import *
-from ..sources.sqlalchemy_permissions import fetch_permissions_by_group
+from .groups import *
+from ..permissions.permissions import change_group
+from .sqlalchemy_group import *
+from ..permissions.sqlalchemy_permissions import fetch_permissions_by_group
 
 groups_router = APIRouter()
 
@@ -68,9 +68,11 @@ async def read_groups(req: Request, filter: FetchGroupReq = Depends()) -> list[G
 
     return fetch_groups_by_filter(filter)
 
+
 @dataclass(frozen=True, slots=True)
 class RemoveGroupReq:
     name: str
+
 
 @groups_router.delete("/group", tags=["Groups"])
 async def delete_group(req: Request, body: RemoveGroupReq) -> bool:

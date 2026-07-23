@@ -4,9 +4,9 @@ import sqlalchemy as sa
 from backend.database.database import engine, metadata
 
 
-from ...directories.directory import *
-from ...permissions import *
-from ..sources.sqlalchemy_permissions import fetch_permissions_for
+from .directory import *
+from ..permissions.permissions import *
+from ..permissions.sqlalchemy_permissions import fetch_permissions_for
 
 
 @dataclass

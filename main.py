@@ -8,14 +8,14 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.auth.shell.routes.auth_middleware import *
+from backend.auth.member.auth_middleware import *
 
-from backend.auth.shell.routes.fastapi_auth import auth_router
-from backend.file_manager.shell.routes.fastapi_file import files_router
-from backend.file_manager.shell.routes.fastapi_dirs import dirs_router
-from backend.file_manager.shell.routes.fastapi_dir_node import dir_node_router
-from backend.file_manager.shell.routes.fastapi_groups import groups_router
-from backend.auth.shell.routes.fastapi_members import member_router
+from backend.auth.member.fastapi_auth import auth_router
+from backend.file_manager.files.fastapi_file import files_router
+from backend.file_manager.directories.fastapi_dirs import dirs_router
+from backend.file_manager.directory_node.fastapi_dir_node import dir_node_router
+from backend.file_manager.groups.fastapi_groups import groups_router
+from backend.auth.member.fastapi_members import member_router
 
 
 from frontend.file_manager.dashboard.fastapi_ui_dashboard import ui_dashboard_router
@@ -30,7 +30,9 @@ from frontend.not_found.fastapi_ui_not_found import render_not_found
 backend = FastAPI(docs_url=None, redoc_url=None)
 frontend = FastAPI()
 
-backend.mount("/public/upload", StaticFiles(directory="frontend/public/upload"), name="upload")
+backend.mount(
+    "/public/upload", StaticFiles(directory="frontend/public/upload"), name="upload"
+)
 backend.mount("/public/img", StaticFiles(directory="frontend/public/img"), name="img")
 backend.mount("/public", StaticFiles(directory="frontend/public/admin"), name="static")
 backend.mount(
@@ -129,7 +131,9 @@ frontend.mount(
     StaticFiles(directory="frontend/not_found"),
     name="static-nf",
 )
-frontend.mount("/public/upload", StaticFiles(directory="frontend/public/upload"), name="upload")
+frontend.mount(
+    "/public/upload", StaticFiles(directory="frontend/public/upload"), name="upload"
+)
 frontend.mount("/public/img", StaticFiles(directory="frontend/public/img"), name="img")
 frontend.mount("/public/default", StaticFiles(directory="frontend"))
 frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])

@@ -14,10 +14,13 @@ def render_auth(template_file: str, title: str) -> HTMLResponse:
         tmpl_content = chevron.render(tmpl)
 
     with open(layout, "r", encoding="utf-8") as f:
-        html_content = chevron.render(f, {
-            "title": title,
-            "content": tmpl_content,
-        })
+        html_content = chevron.render(
+            f,
+            {
+                "title": title,
+                "content": tmpl_content,
+            },
+        )
 
     return HTMLResponse(html_content)
 

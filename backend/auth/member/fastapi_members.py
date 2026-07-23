@@ -3,9 +3,8 @@ from dataclasses import dataclass
 from fastapi import APIRouter, Request, Depends
 
 from backend.router.response import *
-from ...member import *
-from ..sources.sqlalchemy_member import *
-
+from .member import *
+from .sqlalchemy_member import *
 
 member_router = APIRouter()
 
@@ -25,7 +24,7 @@ class RemoveMemberReq:
 def remove_member(req: Request, body: RemoveMemberReq) -> bool:
     try:
         session_owner = req.state.session.owner
-        
+
         if session_owner != "root" and session_owner != body.username:
             raise Forbidden("access not allowed")
 
@@ -34,5 +33,3 @@ def remove_member(req: Request, body: RemoveMemberReq) -> bool:
         return True
     except DeleteError as err:
         raise BadRequest(str(err))
-
-    

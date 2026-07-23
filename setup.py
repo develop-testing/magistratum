@@ -1,21 +1,21 @@
 from backend.database.database import metadata, engine
 
-from backend.auth.member import make_candidate
-from backend.auth.shell.sources.sqlalchemy_member import save_candidate
+from backend.auth.member.member import make_candidate
+from backend.auth.member.sqlalchemy_member import save_candidate
 
 from backend.file_manager.directories.directory import new_directory
-from backend.file_manager.shell.sources.sqlalchemy_dir import save_directory
+from backend.file_manager.directories.sqlalchemy_dir import save_directory
 
 from backend.file_manager.directories.home_directory import mk_directory as mk_home_dir
-from backend.file_manager.shell.sources.sqlalchemy_home_dir import save_home_dir
+from backend.file_manager.directory_node.sqlalchemy_home_dir import save_home_dir
 
-from backend.file_manager.permissions import new_permissions
-from backend.file_manager.shell.sources.sqlalchemy_permissions import save_permissions
+from backend.file_manager.permissions.permissions import new_permissions
+from backend.file_manager.permissions.sqlalchemy_permissions import save_permissions
 
-from backend.file_manager.groups import mk_group
-from backend.file_manager.shell.sources.sqlalchemy_group import save_group
+from backend.file_manager.groups.groups import mk_group
+from backend.file_manager.groups.sqlalchemy_group import save_group
 
-import backend.file_manager.shell.sources.sqlalchemy_file
+import backend.file_manager.files.sqlalchemy_file
 
 if __name__ == "__main__":
     metadata.drop_all(engine)

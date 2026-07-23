@@ -35,9 +35,7 @@ class DirPerms:
     other_perms: str
 
     @staticmethod
-    def create(
-        owner: str, grp: str, grp_prms: str, other_prms: str
-    ) -> DirPerms:
+    def create(owner: str, grp: str, grp_prms: str, other_prms: str) -> DirPerms:
         return DirPerms(owner, grp, grp_prms, other_prms)
 
 

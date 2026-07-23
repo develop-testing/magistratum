@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fastapi import Request, HTTPException
 
-from backend.auth.shell.sources.redis_sessions import *
+from backend.auth.session.redis_sessions import *
 from backend.router.response import *
 
 

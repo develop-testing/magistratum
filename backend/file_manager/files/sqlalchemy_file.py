@@ -3,7 +3,7 @@ import sqlalchemy as sa
 
 from backend.database.database import engine, metadata
 
-from ...files import (
+from .files import (
     TextFile,
     RichTextFile,
     TextFileFilter,
@@ -11,10 +11,10 @@ from ...files import (
     mk_text_file,
     mk_rich_text_file,
 )
-from ...permissions import Permissions, group_access, other_access
+from ..permissions.permissions import Permissions, group_access, other_access
 
 
-from .sqlalchemy_permissions import fetch_permissions_for
+from ..permissions.sqlalchemy_permissions import fetch_permissions_for
 
 sa.Table(
     "files",

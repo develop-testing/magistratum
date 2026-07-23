@@ -4,8 +4,10 @@ from fastapi.responses import HTMLResponse
 
 import chevron  # type: ignore[import-untyped]
 
-from backend.file_manager.shell.sources.sqlalchemy_home_dir import fetch_home_dir_by_username
-from backend.file_manager.shell.sources.sqlalchemy_dir import fetch_dir_by_id
+from backend.file_manager.directory_node.sqlalchemy_home_dir import (
+    fetch_home_dir_by_username,
+)
+from backend.file_manager.directories.sqlalchemy_dir import fetch_dir_by_id
 
 ui_dashboard_router = APIRouter()
 
@@ -18,16 +20,22 @@ def render_dashboard(dir_id: str) -> HTMLResponse:
     template = "frontend/file_manager/dashboard/dashboard.mustache"
 
     with open(template, "r", encoding="utf-8") as tmpl:
-        tmpl_content = chevron.render(tmpl, {
-            "dir_id": dir_id,
-            "parent_id": dr.parent_id,
-        })
+        tmpl_content = chevron.render(
+            tmpl,
+            {
+                "dir_id": dir_id,
+                "parent_id": dr.parent_id,
+            },
+        )
 
     with open(layout, "r", encoding="utf-8") as f:
-        html_content = chevron.render(f, {
-            "title": "Magistratum",
-            "content": tmpl_content,
-        })
+        html_content = chevron.render(
+            f,
+            {
+                "title": "Magistratum",
+                "content": tmpl_content,
+            },
+        )
 
     return HTMLResponse(html_content)
 

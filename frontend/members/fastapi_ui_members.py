@@ -16,9 +16,12 @@ async def members_page() -> HTMLResponse:
         tmpl_content = chevron.render(tmpl)
 
     with open(layout, "r", encoding="utf-8") as f:
-        html_content = chevron.render(f, {
-            "title": "Members",
-            "content": tmpl_content,
-        })
+        html_content = chevron.render(
+            f,
+            {
+                "title": "Members",
+                "content": tmpl_content,
+            },
+        )
 
     return HTMLResponse(html_content)

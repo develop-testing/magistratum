@@ -3,8 +3,8 @@ from fastapi import APIRouter, Request
 
 from backend.router.response import *
 
-from ...directories.directory import Directory
-from ...directory_node import (
+from ..directories.directory import Directory
+from .directory_node import (
     BrokeNode,
     RichNode,
     mk_rich_node,
@@ -12,13 +12,13 @@ from ...directory_node import (
     mk_node_perms,
     mk_node_meta,
 )
-from ...files import TextFile, TextFileFilter
-from ...permissions import Permissions, has_read
-from ..sources.sqlalchemy_dir import fetch_dirs_by_parent, fetch_image_by_dir
-from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ..sources.sqlalchemy_permissions import fetch_permissions_for as fetch_perms
-from ..sources.sqlalchemy_file import fetch_files_by_filter, fetch_image_by_file
-from ..sources.sqlalchemy_home_dir import fetch_home_dir_by_username
+from ..files.files import TextFile, TextFileFilter
+from ..permissions.permissions import Permissions, has_read
+from ..directories.sqlalchemy_dir import fetch_dirs_by_parent, fetch_image_by_dir
+from ..groups.sqlalchemy_group import fetch_groups_by_user
+from ..permissions.sqlalchemy_permissions import fetch_permissions_for as fetch_perms
+from ..files.sqlalchemy_file import fetch_files_by_filter, fetch_image_by_file
+from .sqlalchemy_home_dir import fetch_home_dir_by_username
 
 dir_node_router = APIRouter()
 

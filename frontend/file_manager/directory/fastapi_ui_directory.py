@@ -17,9 +17,12 @@ async def dashboar(dir_id: str) -> HTMLResponse:
         tmpl_content = chevron.render(tmpl)
 
     with open(layout, "r", encoding="utf-8") as f:
-        html_content = chevron.render(f, {
-            "title": "Magistratum",
-            "content": tmpl_content,
-        })
+        html_content = chevron.render(
+            f,
+            {
+                "title": "Magistratum",
+                "content": tmpl_content,
+            },
+        )
 
     return HTMLResponse(html_content)

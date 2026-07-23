@@ -3,8 +3,8 @@ import sqlalchemy as sa
 
 from backend.database.database import engine, metadata
 
-from ...groups import FetchGroupReq, Group, RemovedGroup
-from ...permissions import Permissions
+from .groups import FetchGroupReq, Group, RemovedGroup
+from ..permissions.permissions import Permissions
 
 sa.Table(
     "groups",
@@ -91,9 +91,7 @@ def update_group(old_name: str, group: Group) -> Group:
     )
 
     with engine.connect() as conn:
-        group_id = conn.execute(
-            select_id_query, {"name": old_name}
-        ).scalar()
+        group_id = conn.execute(select_id_query, {"name": old_name}).scalar()
 
         if group_id is None:
             raise ValueError("group not found")

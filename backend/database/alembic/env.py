@@ -10,11 +10,11 @@ import sys
 
 from backend.database.database import metadata
 
-import backend.auth.shell.sources.sqlalchemy_member
-import backend.file_manager.shell.sources.sqlalchemy_file
-import backend.file_manager.shell.sources.sqlalchemy_dir
-import backend.file_manager.shell.sources.sqlalchemy_permissions
-import backend.file_manager.shell.sources.sqlalchemy_group
+import backend.auth.member.sqlalchemy_member
+import backend.file_manager.files.sqlalchemy_file
+import backend.file_manager.directories.sqlalchemy_dir
+import backend.file_manager.permissions.sqlalchemy_permissions
+import backend.file_manager.groups.sqlalchemy_group
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

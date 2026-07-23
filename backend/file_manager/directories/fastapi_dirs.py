@@ -7,17 +7,17 @@ from fastapi import APIRouter, Depends, Request
 
 from backend.router.response import *
 
-from ...directories.directory import *
+from .directory import *
 
-from ...permissions import has_read, has_write, new_permissions
-from ..sources.sqlalchemy_dir import *
-from ..sources.sqlalchemy_dir import (
+from ..permissions.permissions import has_read, has_write, new_permissions
+from .sqlalchemy_dir import *
+from .sqlalchemy_dir import (
     add_image_to_dir,
     fetch_image_by_dir,
     fetch_rich_dirs_by_filter,
 )
-from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ..sources.sqlalchemy_permissions import (
+from ..groups.sqlalchemy_group import fetch_groups_by_user
+from ..permissions.sqlalchemy_permissions import (
     fetch_permissions_for,
     save_permissions,
     update_permissions,
@@ -232,4 +232,3 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
         result.append(d)
 
     return result
-

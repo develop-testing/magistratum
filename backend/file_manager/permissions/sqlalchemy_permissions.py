@@ -2,7 +2,7 @@ import sqlalchemy as sa
 
 from backend.database.database import engine, metadata
 
-from ...permissions import Permissions, new_permissions
+from .permissions import Permissions, new_permissions
 
 sa.Table(
     "permissions",

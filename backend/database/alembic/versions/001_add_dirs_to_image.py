@@ -5,6 +5,7 @@ Revises:
 Create Date: 2026-07-20
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -21,9 +22,7 @@ def upgrade() -> None:
         "dirs_to_image",
         sa.Column("dir_id", sa.String(255), nullable=False, unique=True),
         sa.Column("image_path", sa.String(500), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime, server_default=sa.func.now()
-        ),
+        sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("dir_id"),
     )
 

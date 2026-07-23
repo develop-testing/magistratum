@@ -6,9 +6,9 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, Response, Request
 
 from backend.router.response import *
-from ...files import *
-from ..sources.sqlalchemy_dir import fetch_dir_by_id
-from ..sources.sqlalchemy_file import (
+from .files import *
+from ..directories.sqlalchemy_dir import fetch_dir_by_id
+from .sqlalchemy_file import (
     save_file,
     fetch_files_by_filter,
     fetch_rich_files_by_filter,
@@ -18,10 +18,13 @@ from ..sources.sqlalchemy_file import (
     update_file_by_id,
     add_image_to_file,
 )
-from ..sources.sqlalchemy_group import fetch_groups_by_user
-from ...permissions import Permissions, new_permissions, has_read, has_write
+from ..groups.sqlalchemy_group import fetch_groups_by_user
+from ..permissions.permissions import Permissions, new_permissions, has_read, has_write
 
-from ..sources.sqlalchemy_permissions import fetch_permissions_for, update_permissions
+from ..permissions.sqlalchemy_permissions import (
+    fetch_permissions_for,
+    update_permissions,
+)
 
 files_router = APIRouter()
 
