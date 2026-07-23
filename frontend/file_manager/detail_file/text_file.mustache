@@ -1,144 +1,122 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>{{title}}</title>
-        <style>{{{styles}}}</style>
-        <link
-            rel="stylesheet"
-            href="/static/file_manager/detail_file/tinymce/skins/ui/oxide/skin.min.css"
-        >
-    </head>
-    <body>
-        <header class="header">
-            <div class="header-content">{{title}}</div>
-        </header>
-        <main class="main">
-            <div class="main-content editor">
-                <div class="editor-header">
-                    <div class="editor-header-content">
-                        <span class="editor-title">Редактировать статью</span>
-                        <a id="editor-btn" href="" class="editor-btn">Читать</a>
-                        <button id="save-btn" class="editor-btn">Сохранить</button>
-                    </div>
-                </div>
-                <div id="editor-card" class="editor-card tabs">
-                    <div class="tabs-header">
-                        <button data-tab="general" class="tabs-button def-button">Общее</button>
-                        <button data-tab="perms" class="tabs-button def-button">Доступ</button>
-                        <button data-tab="meta" class="tabs-button def-button">Мета</button>
-                    </div>
-                    <div class="tabs-body">
-                        <div data-tab-content="general" class="tabs-content active">
-                            <input type="hidden" name="file-id" value="{{file_id}}">
-                            <input type="hidden" name="editor" value="{{editor}}">
-                            <label class="def-field">
-                                <span>Название</span>
-                                <input name="file-name" value="">
-                            </label>
-                            <div class="editor-body">
-                                <textarea id="editor"></textarea>
-                            </div>
-                        </div>
-                        <div data-tab-content="perms" class="tabs-content">
-                            <label class="def-field">
-                                <span>Родительская директория</span>
-                                <select name="perm-parent-dir"></select>
-                            </label>
-                            <label class="def-field">
-                                <span>Владелец</span>
-                                <select name="perm-owner"></select>
-                            </label>
-                            <label class="def-field">
-                                <span>Группа</span>
-                                <select name="perm-group-name"></select>
-                            </label>
-                            <label class="def-field">
-                                <span>Права Группы</span>
-                                <select name="perm-group-perms"></select>
-                            </label>
-                            <label class="def-field">
-                                <span>Права Остальных</span>
-                                <select name="perm-other-perms"></select>
-                            </label>
-                        </div>
-                        <div data-tab-content="meta" class="tabs-content">
-                            <div class="def-field">
-                                <span>Текущее изображение</span>
-                                <img class="h-24" name="image-preview" src="">
-                            </div>
-                            <label class="def-field">
-                                <span>Изображение</span>
-                                <input type="file" name="image" accept="image/*">
-                            </label>
-                        </div>
-                    </div>
-                </div>
+<div class="editor-header">
+    <div class="editor-header-content">
+        <span class="editor-title">Редактировать статью</span>
+        <a id="editor-btn" href="" class="editor-btn">Читать</a>
+        <button id="save-btn" class="editor-btn">Сохранить</button>
+    </div>
+</div>
+<div id="editor-card" class="editor-card tabs">
+    <div class="tabs-header">
+        <button data-tab="general" class="tabs-button def-button">Общее</button>
+        <button data-tab="perms" class="tabs-button def-button">Доступ</button>
+        <button data-tab="meta" class="tabs-button def-button">Мета</button>
+    </div>
+    <div class="tabs-body">
+        <div data-tab-content="general" class="tabs-content active">
+            <input type="hidden" name="file-id" value="{{file_id}}">
+            <input type="hidden" name="editor" value="{{editor}}">
+            <label class="def-field">
+                <span>Название</span>
+                <input name="file-name" value="">
+            </label>
+            <div class="editor-body">
+                <textarea id="editor"></textarea>
             </div>
-        </main>
+        </div>
+        <div data-tab-content="perms" class="tabs-content">
+            <label class="def-field">
+                <span>Родительская директория</span>
+                <select name="perm-parent-dir"></select>
+            </label>
+            <label class="def-field">
+                <span>Владелец</span>
+                <select name="perm-owner"></select>
+            </label>
+            <label class="def-field">
+                <span>Группа</span>
+                <select name="perm-group-name"></select>
+            </label>
+            <label class="def-field">
+                <span>Права Группы</span>
+                <select name="perm-group-perms"></select>
+            </label>
+            <label class="def-field">
+                <span>Права Остальных</span>
+                <select name="perm-other-perms"></select>
+            </label>
+        </div>
+        <div data-tab-content="meta" class="tabs-content">
+            <div class="def-field">
+                <span>Текущее изображение</span>
+                <img class="h-24" name="image-preview" src="">
+            </div>
+            <label class="def-field">
+                <span>Изображение</span>
+                <input type="file" name="image" accept="image/*">
+            </label>
+        </div>
+    </div>
+</div>
 
-    <script src="/static/file_manager/detail_file/tinymce/tinymce.min.js"></script>
-    <script src="/static/file_manager/detail_file/edit_text_file.js"></script>
-    <script src="/public/default/common.js"></script>
-    <script>
-        tabs("[data-tab]", "[data-tab-content]")
+<script src="/public/default/common.js"></script>
+<script src="/static/file_manager/detail_file/tinymce/tinymce.min.js"></script>
+<script src="/static/file_manager/detail_file/edit_text_file.js"></script>
+<script>
+    tabs("[data-tab]", "[data-tab-content]")
 
+    const save_btn = document.querySelector("#save-btn")
+    const edit_card = document.querySelector("#editor-card")
+    const file_id = window.location.pathname.split('/').pop()
+    let file_edit_form = mk_file_edit_form({})
 
-        const save_btn = document.querySelector("#save-btn")
-        const edit_card = document.querySelector("#editor-card")
-        const file_id = window.location.pathname.split('/').pop()
-        let file_edit_form = mk_file_edit_form({})
+    render_read_btn(file_id)
 
-        render_read_btn(file_id)
+    fetch_file_edit_form(file_id, "root").then(form =>
+        file_edit_form = render_file_edit_form(form)
+    )
 
-        fetch_file_edit_form(file_id, "root").then(form => 
-            file_edit_form = render_file_edit_form(form)
-        )
+    edit_card.addEventListener('change', e => {
+        const target = e.target
+        const name = target.name
 
-        edit_card.addEventListener('change', e => {
-            const target = e.target
-            const name = target.name
+        if (name === "file-name")
+            file_edit_form = change_file_edit_form(file_edit_form, "title", target.value)
 
-            if (name === "file-name")
-                file_edit_form = change_file_edit_form(file_edit_form, "title", target.value)
-            
-            if (name === "perm-parent-dir")
-                file_edit_form = change_file_edit_form(file_edit_form, "parent", target.value)
-            
-            if (name === "perm-owner")
-                file_edit_form = change_file_edit_form(file_edit_form, "owner", target.value)
-            
-            if (name === "perm-group-perms")
-                file_edit_form = change_file_edit_form(file_edit_form, "group-perms", target.value)
-            
-            if (name === "perm-other-perms")
-                file_edit_form = change_file_edit_form(file_edit_form, "other-perms", target.value)
+        if (name === "perm-parent-dir")
+            file_edit_form = change_file_edit_form(file_edit_form, "parent", target.value)
 
-            if (name === "image")
-                file_edit_form = render_file_image(
-                    change_file_edit_form(file_edit_form, "image", target.files)
-                )
-        })
+        if (name === "perm-owner")
+            file_edit_form = change_file_edit_form(file_edit_form, "owner", target.value)
 
-        document.addEventListener("file_content_changed", e => {
-            file_edit_form = change_file_edit_form(
-                file_edit_form,
-                "content",
-                e.detail.value
+        if (name === "perm-group-perms")
+            file_edit_form = change_file_edit_form(file_edit_form, "group-perms", target.value)
+
+        if (name === "perm-other-perms")
+            file_edit_form = change_file_edit_form(file_edit_form, "other-perms", target.value)
+
+        if (name === "image")
+            file_edit_form = render_file_image(
+                change_file_edit_form(file_edit_form, "image", target.files)
             )
-        })
+    })
 
-        save_btn.addEventListener('click', e => {
-            save_file_edit_form(file_edit_form, file_id).then(res => {
-                if (res.ok) {
-                    alert("Сохранено успешно")
-                    return true
-                } 
+    document.addEventListener("file_content_changed", e => {
+        file_edit_form = change_file_edit_form(
+            file_edit_form,
+            "content",
+            e.detail.value
+        )
+    })
 
-                alert("Ошибка при сохранении")
-                return false
-            })
+    save_btn.addEventListener('click', e => {
+        save_file_edit_form(file_edit_form, file_id).then(res => {
+            if (res.ok) {
+                alert("Сохранено успешно")
+                return true
+            }
+
+            alert("Ошибка при сохранении")
+            return false
         })
-    </script>
-    </body>
-</html>
+    })
+</script>

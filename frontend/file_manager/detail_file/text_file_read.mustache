@@ -1,57 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>{{title}}</title>
-        <style>{{{styles}}}</style>
-    </head>
-    <body>
-        <header class="header">
-            <div class="header-content">{{title}}</div>
-        </header>
-        <main class="main">
-            <div class="main-content">
-                <div class="editor-header">
-                    <div class="editor-header-content">
-                        <a id="back_link" href="" class="editor-btn" >Назад</a>
-                    </div>
-                </div>
-                <div id="article-card-content" class="article-card"></div>
-            </div>
-        </main>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', e => {
-            const fetch_file = file_id => {
-                const file_url = new URL("http://127.0.0.1:8800/files")
-                file_url.searchParams.append("by_id", decodeURIComponent(file_id))
+<div class="editor-header">
+    <div class="editor-header-content">
+        <a id="back_link" href="" class="editor-btn" >Назад</a>
+    </div>
+</div>
+<div id="article-card-content" class="article-card"></div>
 
-                return fetch(file_url, { credentials: "include" })
-                    .then(res => res.json())
-                    .then(data => ({
-                        title: data[0].name,
-                        content: data[0].content,
-                        back_url: "/dashboard/directory/" + data[0].parent_id,
-                        edit_url: "/text_file/edit/" + data[0].file_id,
-                    }))
-            }
+<script src="/public/default/common.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', e => {
+        const fetch_file = file_id => {
+            const file_url = new URL("http://127.0.0.1:8800/files")
+            file_url.searchParams.append("by_id", decodeURIComponent(file_id))
 
-            const render_file = file => {
-                const back_link = document.querySelector("#back_link")
-                const file_content = document.querySelector("#article-card-content")
+            return fetch(file_url, { credentials: "include" })
+                .then(res => res.json())
+                .then(data => ({
+                    title: data[0].name,
+                    content: data[0].content,
+                    back_url: "/dashboard/directory/" + data[0].parent_id,
+                    edit_url: "/text_file/edit/" + data[0].file_id,
+                }))
+        }
 
-                back_link.href = file.back_url
-                file_content.innerHTML = file.content
-            }
+        const render_file = file => {
+            const back_link = document.querySelector("#back_link")
+            const file_content = document.querySelector("#article-card-content")
 
-            const file_id = window.location.pathname.split('/').pop()
+            back_link.href = file.back_url
+            file_content.innerHTML = file.content
+        }
 
-            fetch_file(file_id).then(file => {
-                console.log(file)
-                render_file(file)
-            })
+        const file_id = window.location.pathname.split('/').pop()
+
+        fetch_file(file_id).then(file => {
+            console.log(file)
+            render_file(file)
         })
-    </script>
-
-    </body>
-</html>
+    })
+</script>
