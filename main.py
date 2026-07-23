@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import HTTPException, Request, Response, FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import PlainTextResponse, HTMLResponse
+from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.auth.shell.routes.auth_middleware import *
@@ -142,3 +142,10 @@ frontend.include_router(ui_auth_router)
 @frontend.exception_handler(404)
 async def not_found_handler(request: Request, exc: Exception) -> HTMLResponse:
     return render_not_found()
+
+
+@frontend.exception_handler(UnauthorizedException)
+async def unauthorized_handler(
+    request: Request, exc: UnauthorizedException
+) -> RedirectResponse:
+    return RedirectResponse("/login", status_code=302)

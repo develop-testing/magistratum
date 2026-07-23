@@ -180,6 +180,10 @@ body {
   margin-top: calc(var(--step) * 4);
 }
 
+.main-content {
+  height: 100%;
+}
+
 .form label,
 .form input {
   display: block;

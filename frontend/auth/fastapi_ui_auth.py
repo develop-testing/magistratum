@@ -25,8 +25,3 @@ def render_auth(template_file: str, title: str) -> HTMLResponse:
 @ui_auth_router.get("/login", tags=["Auth UI"])
 async def login_page() -> HTMLResponse:
     return render_auth("frontend/auth/login.mustache", "Magistratum")
-
-
-@ui_auth_router.get("/register", tags=["Auth UI"])
-async def register_page() -> HTMLResponse:
-    return render_auth("frontend/auth/register.mustache", "Magistratum")

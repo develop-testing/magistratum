@@ -1,8 +1,8 @@
 <div class="auth-card">
-    <div class="auth-card-header p-2">
-        Вход
-    </div>
     <div class="auth-card-body p-4">
+        <div class="auth-card-header p-2">
+            Вход
+        </div>
         <div id="auth-error" class="auth-error"></div>
         <form id="auth-form" class="form">
             <label class="mb-4">
@@ -23,9 +23,8 @@
                     autocomplete="current-password"
                 >
             </label>
-            <button type="submit" class="p-2">Войти</button>
+            <button class="def-button" type="submit" class="p-2">Войти</button>
         </form>
-        <a href="/register" class="auth-link">Зарегистрироваться</a>
     </div>
 </div>
 <link rel="stylesheet" href="/static/auth/auth.css">
