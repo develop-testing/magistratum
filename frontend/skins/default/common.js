@@ -40,6 +40,20 @@ const modals = () => {
   })
 }
 
+const send_get = (url, params) => {
+  const full_url = new URL(`http://127.0.0.1:8800${url}`)
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== "" && value !== null && value !== undefined) {
+        full_url.searchParams.append(key, value)
+      }
+    })
+  }
+
+  return fetch(full_url, { credentials: "include" }).then(res => res.json())
+}
+
 const send_post = (url, data) => {
   return fetch(`http://127.0.0.1:8800${url}`, {
     method: "POST",

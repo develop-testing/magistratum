@@ -1,25 +1,9 @@
 const fetch_users = by_name => {
-  const users_url = new URL("http://127.0.0.1:8800/members")
-
-  if (by_name !== "") {
-    users_url.searchParams.append("by_name", by_name)
-  }
-
-  return fetch(users_url, { credentials: "include" }).then(res => res.json())
+  return send_get("/members", { by_name })
 }
 
 const fetch_groups = (owner, member) => {
-  const groups_url = new URL("http://127.0.0.1:8800/groups")
-
-  if (owner !== "") {
-    groups_url.searchParams.append("owner", owner)
-  }
-
-  if (member !== "") {
-    groups_url.searchParams.append("member", member)
-  }
-
-  return fetch(groups_url, { credentials: "include" }).then(res => res.json())
+  return send_get("/groups", { owner, member })
 }
 
 const create_group = (group_name, owner) => {
