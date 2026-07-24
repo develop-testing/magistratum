@@ -9,7 +9,12 @@
     <body>
         <header class="header">
             <div class="header-content container py-4">
-                <a class="header-title" href="/dashboard/home">{{title}}</a>
+                <div>
+                    <a class="header-title" href="/dashboard/home">
+                        {{title}}
+                    </a>
+                    <span data-username></span>
+                </div>
                 <nav class="header-nav">
                     <ul>
                         <li>
@@ -30,5 +35,26 @@
                 {{{content}}}
             </div>
         </main>
+        <script>
+        const get_cookie = (name) => {
+            const cookieString = document.cookie.replace(/;\s*/g, '&')
+            return new URLSearchParams(cookieString).get(name)
+        }
+        
+        const fetch_user_data = _ => {
+            const raw_b64 = get_cookie('user_data')
+            const clean_b64 = raw_b64 ? raw_b64.replace(/^"|"$/g, '') : null
+
+            return clean_b64 ? JSON.parse(atob(clean_b64)) : {}
+        }
+
+        const render_username = username => {
+            const username_block = document.querySelector("[data-username]")
+            username_block.innerHTML = username
+        }
+        
+        render_username(fetch_user_data().username)
+        
+        </script>
     </body>
 </html>

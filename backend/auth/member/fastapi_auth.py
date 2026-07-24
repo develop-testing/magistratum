@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from fastapi import APIRouter, Request, Response, Depends
+import json
+import base64
 
 from backend.router.response import *
 from ..session.session import *
@@ -29,20 +31,34 @@ class LoginRequest:
 async def login(body: LoginRequest, response: Response) -> bool:
     try:
         member = fetch_member_by_username(body.username)
+        member = is_password_incorect(member, body.password)
+        ssn = generate_session_for(member.username)
+
+        user_session = save_session(ssn)
+
+        user_data = json.dumps({"username": member.username})
+        user_data = base64.b64encode(user_data.encode('utf-8')).decode('utf-8')
+
+        response.set_cookie(
+            key="access_token",
+            value=user_session.id,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            expires=user_session.expires,
+        )
+
+        response.set_cookie(
+            key="user_data",
+            value=user_data,
+            secure=True,
+            samesite="strict",
+            expires=user_session.expires,
+        )
+
+        return True
     except ValueError:
-        raise BadRequest("incorrect username or password")
-    member = is_password_incorect(member, body.password)
-    ssn = generate_session_for(member.username)
-    us = save_session(ssn)
-    response.set_cookie(
-        key="access_token",
-        value=us.id,
-        httponly=True,
-        secure=True,
-        samesite="strict",
-        expires=us.expires,
-    )
-    return True
+        raise BadRequest("incorrect username or password") 
 
 
 @auth_router.post("/auth/logout", tags=["Auth"])
@@ -51,6 +67,7 @@ def logout(request: Request, response: Response) -> bool:
     ssn = fetch_session_by_id(access_token)
     close_session(ssn)
     response.delete_cookie(key="access_token", secure=True, samesite="strict")
+    response.delete_cookie(key="user_data", samesite="strict")
     return True
 
 
