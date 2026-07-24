@@ -36,7 +36,11 @@ async def login(body: LoginRequest, response: Response) -> bool:
 
         user_session = save_session(ssn)
 
-        user_data = json.dumps({"username": member.username})
+        user_data = {}
+        user_data["username"] = member.username
+        user_data["is_root"] = True if member.username == "root" else False
+
+        user_data = json.dumps(user_data)
         user_data = base64.b64encode(user_data.encode('utf-8')).decode('utf-8')
 
         response.set_cookie(
