@@ -1,10 +1,10 @@
 <div class="manager-grid" data-dir-id="{{dir_id}}">
     <div class="manager-grid-header p-2">
-        {{#parent_id}}
-        <a href="/dashboard/directory/{{parent_id}}" class="manager-button def-button flex-basic px-2">
+        {{#dir_id}}
+        <a href="{{#parent_id}}/dashboard/directory/{{parent_id}}{{/parent_id}}{{^parent_id}}/dashboard/root{{/parent_id}}" class="manager-button def-button flex-basic px-2" id="back-btn">
             Назад
         </a>
-        {{/parent_id}}
+        {{/dir_id}}
         <button
             title="добавить директорию"
             class="manager-button def-button flex-basic px-2"
@@ -76,6 +76,7 @@
     document.addEventListener("DOMContentLoaded", (e) => {
         const add_directory_form = document.querySelector("#add-dir-form")
         const add_file_form = document.querySelector("#add-file-form")
+        const dir_id = document.querySelector('.manager-grid').dataset.dirId;
 
         const remove_directory = (id) => {
             return send_delete("/directory", { dir_id: id })
@@ -85,23 +86,54 @@
             return send_delete("/file", { file_id: id })
         };
 
-        const fetch_directory_content = () => {
-            return send_get("/directory/content", { dir_id: dir_id })
+        const map_rich_dir = (item) => {
+            if (item.reason) {
+                return mk_manager_item("", "broken", "/public/img/not-found.png", item.name, "", "")
+            }
+            return mk_manager_item(
+                item.directory.dir_id,
+                "dir",
+                item.image,
+                item.directory.name,
+                item.perms.owner,
+                item.perms.group,
+            )
+        }
+
+        const map_rich_file = (item) => {
+            if (item.reason) {
+                return mk_manager_item("", "broken", "/public/img/not-found.png", item.name, "", "")
+            }
+            return mk_manager_item(
+                item.text_file.file_id,
+                "text_file",
+                item.image,
+                item.text_file.name,
+                item.perms.owner,
+                item.perms.group,
+            )
+        }
+
+        const fetch_root_content = () => {
+            return send_get("/directories/root")
                 .then(res => {
-                    return mk_file_manager([
-                    ...res.map((item) =>
-                        mk_manager_item(
-                        item.node.node_id,
-                        item.node.type,
-                        item.meta.img,
-                        item.meta.name,
-                        item.perms.owner_name,
-                        item.perms.group_name,
-                        ),
-                    ),
-                    ]);
-                });
+                    return mk_file_manager(res.map(map_rich_dir))
+                })
         };
+
+        const fetch_directory_content = () => {
+            return Promise.all([
+                send_get("/directories", { parent_id: dir_id, data_type: "rich" }),
+                send_get("/files", { by_directory: dir_id, data_type: "rich", limit: 0 }),
+            ]).then(([dirs, files]) => {
+                return mk_file_manager([
+                    ...dirs.map(map_rich_dir),
+                    ...files.map(map_rich_file),
+                ])
+            })
+        };
+
+        const get_content = dir_id ? fetch_directory_content : fetch_root_content;
 
         const show_file_manager = (html) => {
             const parent = document.querySelector("#manager-grid");
@@ -119,7 +151,7 @@
                     type === "dir" ? remove_directory(id) : remove_text_file(id);
 
                     result.then((res) => {
-                        file_manager = fetch_directory_content().then((fm) => {
+                        file_manager = get_content().then((fm) => {
                             show_file_manager(fm.items.map(make_item_html).join(""));
                             return fm;
                         });
@@ -128,9 +160,7 @@
             });
         };
 
-        const dir_id = document.querySelector('.manager-grid').dataset.dirId;
-
-        let file_manager = fetch_directory_content().then((fm) => {
+        let file_manager = get_content().then((fm) => {
             show_file_manager(fm.items.map(make_item_html).join(""));
             return fm;
         });
@@ -142,7 +172,7 @@
             const json_object = Object.fromEntries(form_data.entries())
 
             send_post("/directory", json_object).then((_) => {
-                file_manager = fetch_directory_content().then((fm) => {
+                file_manager = get_content().then((fm) => {
                     show_file_manager(fm.items.map(make_item_html).join(""))
                     return fm;
                 })
@@ -157,7 +187,7 @@
             json_object.content = ""
 
             send_post("/file", json_object).then(() => {
-                file_manager = fetch_directory_content().then((fm) => {
+                file_manager = get_content().then((fm) => {
                     show_file_manager(fm.items.map(make_item_html).join(""))
                     return fm
                 })

@@ -13,7 +13,7 @@ form?.addEventListener("submit", e => {
 
   send_post(`/auth/${action}`, data)
     .then(() => {
-      window.location = "/dashboard/home"
+      window.location = "/dashboard/root"
     })
     .catch(text => {
       if (errorEl) {

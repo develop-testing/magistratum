@@ -15,7 +15,6 @@ from backend.auth.member.auth_middleware import *
 from backend.auth.member.fastapi_auth import auth_router
 from backend.file_manager.files.fastapi_file import files_router
 from backend.file_manager.directories.fastapi_dirs import dirs_router
-from backend.file_manager.directory_node.fastapi_dir_node import dir_node_router
 from backend.file_manager.groups.fastapi_groups import groups_router
 from backend.auth.member.fastapi_members import member_router
 
@@ -110,7 +109,6 @@ backend.add_middleware(
 backend.include_router(auth_router)
 backend.include_router(member_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(dirs_router, dependencies=[Depends(auth_middleware)])
-backend.include_router(dir_node_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(groups_router, dependencies=[Depends(auth_middleware)])
 backend.include_router(files_router, dependencies=[Depends(auth_middleware)])
 

@@ -9,7 +9,13 @@ from backend.router.response import *
 
 from .directory import *
 
-from ..permissions.permissions import has_read, has_write, new_permissions
+from ..permissions.permissions import (
+    group_access,
+    has_read,
+    has_write,
+    new_permissions,
+    other_access,
+)
 from .sqlalchemy_dir import *
 from .sqlalchemy_dir import (
     add_image_to_dir,
@@ -198,6 +204,45 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
 
 
 DirRdResult = list[Directory | RichDirectory | BrokenDirectory]
+
+
+@dirs_router.get("/directories/root", tags=["Directories"])
+async def read_root_dirs(req: Request) -> DirRdResult:
+    session_owner = req.state.session.owner
+
+    groups = fetch_groups_by_user(session_owner)
+    group_names = [g.name for g in groups]
+
+    dirs = fetch_dirs_by_parent("")
+
+    if not dirs:
+        raise BadRequest("directories not found")
+
+    prms = fetch_permissions_for([d.dir_id for d in dirs])
+
+    result: DirRdResult = []
+    for d in dirs:
+        prm = next((p for p in prms if p.item_id == d.dir_id), None)
+        if not prm or not has_read(prm, session_owner, group_names):
+            result.append(
+                BrokenDirectory(name=d.name, reason="access not allowed")
+            )
+            continue
+        image = fetch_image_by_dir(d.dir_id)
+        result.append(
+            mk_rich_directory(
+                d,
+                DirPerms.create(
+                    prm.owner_name,
+                    prm.group_name,
+                    group_access(prm),
+                    other_access(prm),
+                ),
+                image,
+            )
+        )
+
+    return result
 
 
 @dirs_router.get("/directories", tags=["Directories"])

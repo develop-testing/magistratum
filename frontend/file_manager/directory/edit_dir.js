@@ -159,7 +159,9 @@ const render_dir_edit_form = form => {
 
   console.log(form)
 
-  back_btn.href = back_btn.href + form.dirs.active
+  back_btn.href = form.dirs.active
+    ? "/dashboard/directory/" + form.dirs.active
+    : "/dashboard/root"
   render_dir_image(form)
 
   name_input.value = form.title

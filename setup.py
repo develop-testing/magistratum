@@ -6,9 +6,6 @@ from backend.auth.member.sqlalchemy_member import save_candidate
 from backend.file_manager.directories.directory import new_directory
 from backend.file_manager.directories.sqlalchemy_dir import save_directory
 
-from backend.file_manager.directories.home_directory import mk_directory as mk_home_dir
-from backend.file_manager.directory_node.sqlalchemy_home_dir import save_home_dir
-
 from backend.file_manager.permissions.permissions import new_permissions
 from backend.file_manager.permissions.sqlalchemy_permissions import save_permissions
 
@@ -32,6 +29,3 @@ if __name__ == "__main__":
 
     save_directory(rhome)
     save_permissions(prmns)
-
-    home = mk_home_dir("root", rhome.dir_id, root.username)
-    save_home_dir(home)
