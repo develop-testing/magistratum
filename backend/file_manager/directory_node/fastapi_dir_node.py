@@ -18,7 +18,7 @@ from ..directories.sqlalchemy_dir import fetch_dirs_by_parent, fetch_image_by_di
 from ..groups.sqlalchemy_group import fetch_groups_by_user
 from ..permissions.sqlalchemy_permissions import fetch_permissions_for as fetch_perms
 from ..files.sqlalchemy_file import fetch_files_by_filter, fetch_image_by_file
-from .sqlalchemy_home_dir import fetch_home_dir_by_username
+from .sqlalchemy_home_dir import fetch_home_dir_by_username, fetch_all_home_dirs
 
 dir_node_router = APIRouter()
 
@@ -111,3 +111,26 @@ async def home_content(req: Request) -> Result:
         images[f.file_id] = fetch_image_by_file(f.file_id)
 
     return _build_nodes(dirs, files, prms, session_owner, group_names, images)
+
+
+@dir_node_router.get("/directory/root", tags=["DirNode"])
+async def root_content(req: Request) -> Result:
+    session_owner = req.state.session.owner
+
+    if session_owner != "root":
+        raise PermissionError("access denied")
+
+    homes = fetch_all_home_dirs()
+
+    result: Result = []
+    for h in homes:
+        img = fetch_image_by_dir(h.dir_id)
+        result.append(
+            mk_rich_node(
+                mk_node("dir", h.dir_id),
+                mk_node_perms(h.user_id, "", "rw", "r-"),
+                mk_node_meta(h.name, img),
+            )
+        )
+
+    return result

@@ -49,6 +49,17 @@ def update_home_dir(h: HomeDirectory) -> HomeDirectory:
     return h
 
 
+def fetch_all_home_dirs() -> list[HomeDirectory]:
+    query = sa.text(
+        "SELECT username AS name, dir_id, username AS user_id FROM home_dirs"
+    )
+
+    with engine.connect() as conn:
+        rows = conn.execute(query).mappings().all()
+
+        return [HomeDirectory(r["name"], r["dir_id"], r["user_id"]) for r in rows]
+
+
 def delete_home_dir(h: HomeDirectory) -> bool:
     query = sa.text("DELETE FROM home_dirs WHERE username = :username")
 
