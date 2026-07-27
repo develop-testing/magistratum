@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 # import traceback
 
 from fastapi import HTTPException, Request, Response, FastAPI, Depends
@@ -91,14 +93,15 @@ async def custom_swagger_ui_html() -> HTMLResponse:
     )
 
 
+cors_origins = [
+    o.strip()
+    for o in os.environ.get("CORS_ORIGINS", "").split(",")
+    if o.strip()
+]
+
 backend.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:8800",
-        "http://localhost:8800",
-        "http://127.0.0.1:8840",
-        "http://localhost:8840",
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

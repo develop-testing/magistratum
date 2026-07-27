@@ -1,6 +1,8 @@
+import os
+
 import sqlalchemy as sa
 
-DATABASE_URL = "mysql+pymysql://admin:hdjywee2@db:3306/lorica_db"
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 metadata = sa.MetaData()
 
