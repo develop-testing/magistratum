@@ -72,7 +72,7 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
 
         new_dir = new_directory(body.name, body.parent_id)
         new_perm = new_permissions(
-            new_dir.dir_id, session_owner, group_name, "rwr-"
+            new_dir.dir_id, session_owner, group_name, "rw--"
         )
 
         new_dir = save_directory(new_dir)

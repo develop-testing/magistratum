@@ -107,7 +107,7 @@ def group_access(p: Permissions) -> str:
         return "read"
     if w:
         return "write"
-    raise ValueError("no permissions for group")
+    return ""
 
 
 def other_access(p: Permissions) -> str:
@@ -118,7 +118,7 @@ def other_access(p: Permissions) -> str:
         return "read"
     if w:
         return "write"
-    raise ValueError("no permissions for other")
+    return ""
 
 
 def has_write(p: Permissions, user_name: str, group_names: list[str]) -> bool:
