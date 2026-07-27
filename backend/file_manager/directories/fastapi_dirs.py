@@ -53,20 +53,26 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
     try:
 
         session_owner = req.state.session.owner
+        group_name = ""
 
-        groups = fetch_groups_by_user(session_owner)
-        group_names = [g.name for g in groups]
+        if body.parent_id:
+            groups = fetch_groups_by_user(session_owner)
+            group_names = [g.name for g in groups]
 
-        parent_dir = fetch_dir_by_id(body.parent_id)
+            parent_dir = fetch_dir_by_id(body.parent_id)
 
-        prms = fetch_permissions_for([parent_dir.dir_id])
-        prm = next((p for p in prms if p.item_id == parent_dir.dir_id), None)
-        if not prm or not has_write(prm, session_owner, group_names):
-            raise Forbidden("access denied")
+            prms = fetch_permissions_for([parent_dir.dir_id])
+            prm = next(
+                (p for p in prms if p.item_id == parent_dir.dir_id), None
+            )
+            if not prm or not has_write(prm, session_owner, group_names):
+                raise Forbidden("access denied")
+
+            group_name = prm.group_name
 
         new_dir = new_directory(body.name, body.parent_id)
         new_perm = new_permissions(
-            new_dir.dir_id, session_owner, prm.group_name, "rwr-"
+            new_dir.dir_id, session_owner, group_name, "rwr-"
         )
 
         new_dir = save_directory(new_dir)
