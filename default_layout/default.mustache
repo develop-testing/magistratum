@@ -3,8 +3,7 @@
     <head>
         <meta charset="utf-8">
         <title>{{title}}</title>
-        <link rel="stylesheet" href="/public/default/common.css">
-        {{{extra_head}}}
+        <link rel="stylesheet" href="/public/default/default.css">
     </head>
     <body>
         <header class="header">
@@ -20,9 +19,11 @@
                         <li>
                             <a href="/dashboard/home">Менеджер</a>
                         </li>
+                        {{#is_root}}
                         <li>
                             <a href="/members">Группы и участники</a>
                         </li>
+                        {{/is_root}}
                         <li>
                             <span data-logout>Выйти</span>
                         </li>

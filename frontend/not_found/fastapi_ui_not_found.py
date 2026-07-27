@@ -1,24 +1,23 @@
 from __future__ import annotations
+
+from fastapi import Request
 from fastapi.responses import HTMLResponse
 
 import chevron  # type: ignore[import-untyped]
 
-layout = "frontend/common.mustache"
+from mustache_default import generate_layout
 
 
-def render_not_found() -> HTMLResponse:
+def render_not_found(request: Request) -> HTMLResponse:
     template = "frontend/not_found/not_found.mustache"
 
     with open(template, "r", encoding="utf-8") as tmpl:
         tmpl_content = chevron.render(tmpl)
 
-    with open(layout, "r", encoding="utf-8") as f:
-        html_content = chevron.render(
-            f,
-            {
-                "title": "404",
-                "content": tmpl_content,
-            },
-        )
+    username = ""
+    if hasattr(request.state, "session"):
+        username = request.state.session.owner
 
-    return HTMLResponse(html_content, status_code=404)
+    return HTMLResponse(
+        generate_layout(tmpl_content, username), status_code=404
+    )

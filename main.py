@@ -138,7 +138,7 @@ frontend.mount(
     "/public/upload", StaticFiles(directory="frontend/public/upload"), name="upload"
 )
 frontend.mount("/public/img", StaticFiles(directory="frontend/public/img"), name="img")
-frontend.mount("/public/default", StaticFiles(directory="frontend"))
+frontend.mount("/public/default", StaticFiles(directory="default_layout"))
 frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)])
 frontend.include_router(ui_directory_router, dependencies=[Depends(auth_middleware)])
@@ -148,7 +148,7 @@ frontend.include_router(ui_auth_router)
 
 @frontend.exception_handler(404)
 async def not_found_handler(request: Request, exc: Exception) -> HTMLResponse:
-    return render_not_found()
+    return render_not_found(request)
 
 
 @frontend.exception_handler(UnauthorizedException)
