@@ -32,7 +32,7 @@ class TextFile:
     file_id: str
     name: str
     content: str
-    parent_id: str
+    parent_id: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,11 +50,11 @@ def mk_broken_file(name: str, reason: str) -> BrokenFile:
     return BrokenFile(name, reason)
 
 
-def mk_text_file(id: str, name: str, content: str, parent_id: str = "") -> TextFile:
+def mk_text_file(id: str, name: str, content: str, parent_id: str | None = None) -> TextFile:
     return TextFile(id, name, content, parent_id)
 
 
-def new_file(name: str, content: str, parent_id: str = "") -> TextFile:
+def new_file(name: str, content: str, parent_id: str | None = None) -> TextFile:
     return mk_text_file("text-file@" + str(uuid.uuid4()), name, content, parent_id)
 
 
@@ -98,7 +98,7 @@ def add_to_start_file(f: TextFile, new_content: str) -> TextFile:
 
 
 def change_file_parent(f: TextFile, new_parent_id: str) -> TextFile:
-    if new_parent_id == "":
+    if not new_parent_id:
         return f
 
     return TextFile(f.file_id, f.name, f.content, new_parent_id)

@@ -22,9 +22,10 @@ sa.Table(
     metadata,
     sa.Column("dir_id", sa.String(255), nullable=False, unique=True, primary_key=True),
     sa.Column("name", sa.String(255), nullable=False),
-    sa.Column("parent_id", sa.String(255), nullable=False, unique=False),
+    sa.Column("parent_id", sa.String(255), nullable=True, unique=False),
     sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
     sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+    sa.ForeignKeyConstraint(["parent_id"], ["directories.dir_id"], ondelete="CASCADE"),
 )
 
 sa.Table(
@@ -33,6 +34,7 @@ sa.Table(
     sa.Column("dir_id", sa.String(255), nullable=False, unique=True, primary_key=True),
     sa.Column("image_path", sa.String(500), nullable=False),
     sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.ForeignKeyConstraint(["dir_id"], ["directories.dir_id"], ondelete="CASCADE"),
 )
 
 
@@ -42,18 +44,25 @@ def fetch_all_dirs() -> list[Directory]:
     with engine.connect() as conn:
         rows = conn.execute(query).mappings().all()
         return [
-            Directory(str(r["dir_id"]), str(r["name"]), str(r["parent_id"]), [])
+            Directory(str(r["dir_id"]), str(r["name"]), r["parent_id"], [])
             for r in rows
         ]
 
 
-def fetch_dirs_by_parent(parent_id: str) -> list[Directory]:
-    query = sa.text(
-        "SELECT dir_id, name, parent_id FROM directories WHERE parent_id = :parent_id"
-    )
+def fetch_dirs_by_parent(parent_id: str | None) -> list[Directory]:
+    if parent_id:
+        query = sa.text(
+            "SELECT dir_id, name, parent_id FROM directories WHERE parent_id = :parent_id"
+        )
+        params: dict[str, str] = {"parent_id": parent_id}
+    else:
+        query = sa.text(
+            "SELECT dir_id, name, parent_id FROM directories WHERE parent_id IS NULL"
+        )
+        params = {}
 
     with engine.connect() as conn:
-        rows = conn.execute(query, {"parent_id": parent_id}).mappings().all()
+        rows = conn.execute(query, params).mappings().all()
 
         if not rows:
             return []
@@ -139,7 +148,7 @@ def update_directory(d: Directory) -> Directory:
             query,
             {
                 "name": d.name,
-                "parent_id": d.parent_id,
+                "parent_id": d.parent_id or None,
                 "dir_id": d.dir_id,
             },
         )
@@ -161,7 +170,7 @@ def save_directory(dir: Directory) -> Directory:
             {
                 "dir_id": dir.dir_id,
                 "name": dir.name,
-                "parent_id": dir.parent_id,
+                "parent_id": dir.parent_id or None,
             },
         )
         conn.commit()

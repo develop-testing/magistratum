@@ -182,7 +182,6 @@ class DeleteDirectoryReq:
     dir_id: str
 
 
-# TODO добавить каскадное удаление файлов и картинок и другое
 @dirs_router.delete("/directory", tags=["Directories"])
 async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
     try:
@@ -214,7 +213,7 @@ async def read_root_dirs(req: Request) -> DirRdResult:
     groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
 
-    dirs = fetch_dirs_by_parent("")
+    dirs = fetch_dirs_by_parent(None)
 
     if not dirs:
         raise BadRequest("directories not found")

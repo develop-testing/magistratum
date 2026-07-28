@@ -115,3 +115,14 @@ def fetch_permissions_for(item_ids: list[str]) -> list[Permissions]:
                     pass
 
     return out
+
+
+def delete_permissions_for(item_ids: list[str]) -> None:
+    if not item_ids:
+        return
+
+    query = sa.text("DELETE FROM permissions WHERE item_id IN :item_ids")
+
+    with engine.connect() as conn:
+        conn.execute(query, {"item_ids": tuple(item_ids)})
+        conn.commit()

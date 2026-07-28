@@ -13,7 +13,7 @@ ui_dashboard_router = APIRouter()
 
 def render_dashboard(dir_id: str, username: str) -> HTMLResponse:
     template = "frontend/file_manager/dashboard/dashboard.mustache"
-    parent_id = ""
+    parent_id: str | None = None
     if dir_id:
         parent_id = fetch_dir_by_id(dir_id).parent_id
 

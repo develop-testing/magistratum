@@ -25,7 +25,7 @@ class BrokenDirectory:
 class Directory:
     dir_id: str
     name: str
-    parent_id: str
+    parent_id: str | None
     files: list[str]
 
 
@@ -44,7 +44,7 @@ def new_directory(dir_name: str, parent_id: str) -> Directory:
     return Directory("dir@" + str(uuid.uuid4()), dir_name, parent_id, [])
 
 
-def mk_directory(dir_id: str, name: str, parent_id: str, files: list[str]) -> Directory:
+def mk_directory(dir_id: str, name: str, parent_id: str | None, files: list[str]) -> Directory:
     return Directory(dir_id, name, parent_id, files)
 
 
@@ -60,7 +60,7 @@ def rename_directory(d: Directory, new_name: str) -> Directory:
 
 
 def change_directory_parent(d: Directory, new_parent_id: str) -> Directory:
-    if new_parent_id == "":
+    if not new_parent_id:
         return d
 
     return Directory(d.dir_id, d.name, new_parent_id, d.files)

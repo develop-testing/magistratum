@@ -21,9 +21,10 @@ sa.Table(
     sa.Column("file_id", sa.String(255), nullable=False, unique=True, primary_key=True),
     sa.Column("name", sa.String(255), nullable=False),
     sa.Column("content", sa.Text, nullable=False, unique=False),
-    sa.Column("parent_id", sa.String(255), nullable=False),
+    sa.Column("parent_id", sa.String(255), nullable=True),
     sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
     sa.Column("updated_at", sa.DateTime, server_default=sa.func.now()),
+    sa.ForeignKeyConstraint(["parent_id"], ["directories.dir_id"], ondelete="CASCADE"),
 )
 
 sa.Table(
@@ -32,6 +33,7 @@ sa.Table(
     sa.Column("file_id", sa.String(255), nullable=False, unique=True, primary_key=True),
     sa.Column("image_path", sa.String(500), nullable=False),
     sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
+    sa.ForeignKeyConstraint(["file_id"], ["files.file_id"], ondelete="CASCADE"),
 )
 
 
@@ -47,7 +49,7 @@ def fetch_file_by_id(file_id: str) -> TextFile:
             raise ValueError("file not found")
 
         return mk_text_file(
-            str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
+            str(row["file_id"]), row["name"], row["content"], row["parent_id"]
         )
 
 
@@ -63,7 +65,7 @@ def fetch_file_by_name(name: str) -> TextFile:
             raise ValueError("file not found")
 
         return mk_text_file(
-            str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
+            str(row["file_id"]), row["name"], row["content"], row["parent_id"]
         )
 
 
@@ -127,7 +129,7 @@ def fetch_files_by_filter(filter: TextFileFilter) -> list[TextFile]:
 
         return [
             mk_text_file(
-                str(row["file_id"]), row["name"], row["content"], str(row["parent_id"])
+                str(row["file_id"]), row["name"], row["content"], row["parent_id"]
             )
             for row in rows
         ]
@@ -206,7 +208,7 @@ def save_file(file: TextFile, perms: Permissions) -> TextFile:
                     "file_id": file.file_id,
                     "name": file.name,
                     "content": file.content,
-                    "parent_id": file.parent_id,
+                    "parent_id": file.parent_id or None,
                 },
             )
 

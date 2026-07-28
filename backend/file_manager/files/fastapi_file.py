@@ -79,7 +79,7 @@ class CreateFileRequest:
 async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
     username = req.state.session.owner
 
-    parent_id = ""
+    parent_id: str | None = None
     if body.dir_id != "":
         dir = fetch_dir_by_id(body.dir_id)
         parent_id = dir.dir_id

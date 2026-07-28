@@ -1,3 +1,5 @@
+import sqlalchemy as sa
+
 from backend.database.database import metadata, engine
 
 from backend.auth.member.member import make_candidate
@@ -17,6 +19,17 @@ import backend.file_manager.files.sqlalchemy_file
 if __name__ == "__main__":
     metadata.drop_all(engine)
     metadata.create_all(engine)
+
+    with engine.connect() as conn:
+        conn.execute(sa.text(
+            "CREATE TRIGGER trg_dir_perms_delete AFTER DELETE ON directories "
+            "FOR EACH ROW DELETE FROM permissions WHERE item_id = OLD.dir_id"
+        ))
+        conn.execute(sa.text(
+            "CREATE TRIGGER trg_file_perms_delete AFTER DELETE ON files "
+            "FOR EACH ROW DELETE FROM permissions WHERE item_id = OLD.file_id"
+        ))
+        conn.commit()
 
     candidate = make_candidate("root", "root")
     root = save_candidate(candidate)
