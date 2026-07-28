@@ -136,6 +136,10 @@ def fetch_files_by_filter(filter: TextFileFilter) -> list[TextFile]:
 
 def fetch_rich_files_by_filter(filter: TextFileFilter) -> list[RichTextFile]:
     files = fetch_files_by_filter(filter)
+
+    if not files:
+        return []
+
     prms = fetch_permissions_for([file.file_id for file in files])
 
     out = []

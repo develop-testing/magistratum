@@ -229,24 +229,21 @@ async def read_root_dirs(req: Request) -> DirRdResult:
     result: DirRdResult = []
     for d in dirs:
         prm = next((p for p in prms if p.item_id == d.dir_id), None)
-        if not prm or not has_read(prm, session_owner, group_names):
+        
+        if prm and has_read(prm, session_owner, group_names):   
+            image = fetch_image_by_dir(d.dir_id)
             result.append(
-                BrokenDirectory(name=d.name, reason="access not allowed")
+                mk_rich_directory(
+                    d,
+                    DirPerms.create(
+                        prm.owner_name,
+                        prm.group_name,
+                        group_access(prm),
+                        other_access(prm),
+                    ),
+                    image,
+                )
             )
-            continue
-        image = fetch_image_by_dir(d.dir_id)
-        result.append(
-            mk_rich_directory(
-                d,
-                DirPerms.create(
-                    prm.owner_name,
-                    prm.group_name,
-                    group_access(prm),
-                    other_access(prm),
-                ),
-                image,
-            )
-        )
 
     return result
 
@@ -276,10 +273,8 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
     for d in dirs:
         d_id = d.dir_id if isinstance(d, Directory) else d.directory.dir_id
         prm = next((p for p in prms if p.item_id == d_id), None)
-        if not prm or not has_read(prm, session_owner, group_names):
-            name = d.name if isinstance(d, Directory) else d.directory.name
-            result.append(BrokenDirectory(name=name, reason="access not allowed"))
-            continue
-        result.append(d)
+
+        if prm and has_read(prm, session_owner, group_names):
+            result.append(d)
 
     return result

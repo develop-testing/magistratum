@@ -108,6 +108,10 @@ def fetch_dirs_by_filter(fltr: DirFilter) -> list[Directory]:
 
 def fetch_rich_dirs_by_filter(fltr: DirFilter) -> list[RichDirectory]:
     dirs = fetch_dirs_by_filter(fltr)
+
+    if not dirs:
+        return []
+
     prms = fetch_permissions_for([d.dir_id for d in dirs])
 
     out: list[RichDirectory] = []

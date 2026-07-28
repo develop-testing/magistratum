@@ -56,13 +56,16 @@ async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
             files = [*fetch_rich_files_by_filter(fltr)]
         case _:
             files = [*fetch_files_by_filter(fltr)]
+    
+    if not files:
+        raise BadRequest("files not found")
 
     prms = fetch_permissions_for([id_of_file(f) for f in files])
 
     for index, file in enumerate(files):
         prm = next((p for p in prms if p.item_id == id_of_file(file)), None)
         if prm is None or not has_read(prm, session.owner, group_names):
-            files[index] = mk_broken_file(name_of_file(file), "access not allowed")
+            del files[index]
             continue
 
     return files
