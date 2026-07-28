@@ -10,11 +10,10 @@ from backend.router.response import *
 from .directory import *
 
 from ..permissions.permissions import (
-    group_access,
+    Permissions,
     has_read,
     has_write,
     new_permissions,
-    other_access,
 )
 from .sqlalchemy_dir import *
 from .sqlalchemy_dir import (
@@ -231,12 +230,7 @@ async def read_root_dirs(req: Request) -> DirRdResult:
             result.append(
                 mk_rich_directory(
                     d,
-                    DirPerms.create(
-                        prm.owner_name,
-                        prm.group_name,
-                        group_access(prm),
-                        other_access(prm),
-                    ),
+                    prm,
                     image,
                 )
             )
@@ -251,19 +245,18 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
     groups = fetch_groups_by_user(session_owner)
     group_names = [g.name for g in groups]
 
-    dirs: list[Directory | RichDirectory]
-    match (fltr.data_type):
+    dirs: list[Directory] | list[RichDirectory]
+    prms: list[Permissions]
+
+    match fltr.data_type:
         case "rich":
-            dirs = [*fetch_rich_dirs_by_filter(fltr)]
+            dirs = fetch_rich_dirs_by_filter(fltr)
+            prms = [d.perms for d in dirs if isinstance(d, RichDirectory)]
         case _:
-            dirs = [*fetch_dirs_by_filter(fltr)]
-
-    if not dirs:
-        return []
-
-    prms = fetch_permissions_for(
-        [d.dir_id if isinstance(d, Directory) else d.directory.dir_id for d in dirs]
-    )
+            dirs = fetch_dirs_by_filter(fltr)
+            prms = fetch_permissions_for(
+                [d.dir_id for d in dirs if isinstance(d, Directory)]
+            )
 
     result: DirRdResult = []
     for d in dirs:

@@ -5,7 +5,7 @@ from backend.database.database import engine, metadata
 
 
 from .directory import *
-from ..permissions.permissions import *
+from ..permissions.permissions import Permissions
 from ..permissions.sqlalchemy_permissions import fetch_permissions_for
 
 
@@ -124,18 +124,7 @@ def fetch_rich_dirs_by_filter(fltr: DirFilter) -> list[RichDirectory]:
 
         image = fetch_image_by_dir(d.dir_id)
 
-        out.append(
-            mk_rich_directory(
-                d,
-                DirPerms.create(
-                    prm.owner_name,
-                    prm.group_name,
-                    group_access(prm),
-                    other_access(prm),
-                ),
-                image,
-            )
-        )
+        out.append(mk_rich_directory(d, prm, image))
 
     return out
 

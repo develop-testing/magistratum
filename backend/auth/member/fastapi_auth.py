@@ -35,7 +35,9 @@ async def login(body: LoginRequest, response: Response) -> bool:
         user_data["is_root"] = True if member.username == "root" else False
 
         json_user_data = json.dumps(user_data)
-        json_user_data = base64.b64encode(json_user_data.encode("utf-8")).decode("utf-8")
+        json_user_data = base64.b64encode(json_user_data.encode("utf-8")).decode(
+            "utf-8"
+        )
 
         response.set_cookie(
             key="access_token",

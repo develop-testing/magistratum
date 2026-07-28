@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 import uuid
 
+from backend.file_manager.permissions.permissions import Permissions
+
 
 @dataclass(frozen=True, slots=True)
 class DirFilter:
@@ -28,25 +30,13 @@ class Directory:
 
 
 @dataclass(frozen=True, slots=True)
-class DirPerms:
-    owner: str
-    group: str
-    group_perms: str
-    other_perms: str
-
-    @staticmethod
-    def create(owner: str, grp: str, grp_prms: str, other_prms: str) -> DirPerms:
-        return DirPerms(owner, grp, grp_prms, other_prms)
-
-
-@dataclass(frozen=True, slots=True)
 class RichDirectory:
     directory: Directory
-    perms: DirPerms
+    perms: Permissions
     image: str
 
 
-def mk_rich_directory(d: Directory, perms: DirPerms, image: str) -> RichDirectory:
+def mk_rich_directory(d: Directory, perms: Permissions, image: str) -> RichDirectory:
     return RichDirectory(d, perms, image)
 
 
