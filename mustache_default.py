@@ -5,7 +5,7 @@ import os
 import chevron  # type: ignore[import-untyped]
 
 layout = os.path.join(
-    os.path.dirname(__file__), "default_layout", "default.mustache"
+    os.path.dirname(__file__), "frontend", "default_layout", "default.mustache"
 )
 
 
