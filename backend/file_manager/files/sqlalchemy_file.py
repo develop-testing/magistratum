@@ -7,11 +7,10 @@ from .files import (
     TextFile,
     RichTextFile,
     TextFileFilter,
-    TextFilePerms,
     mk_text_file,
     mk_rich_text_file,
 )
-from ..permissions.permissions import Permissions, group_access, other_access
+from ..permissions.permissions import Permissions
 
 
 from ..permissions.sqlalchemy_permissions import fetch_permissions_for
@@ -155,9 +154,7 @@ def fetch_rich_files_by_filter(filter: TextFileFilter) -> list[RichTextFile]:
         out.append(
             mk_rich_text_file(
                 file,
-                TextFilePerms.create(
-                    prm.owner_name, prm.group_name, group_access(prm), other_access(prm)
-                ),
+                prm,
                 image,
             )
         )

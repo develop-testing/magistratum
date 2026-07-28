@@ -39,7 +39,7 @@ def _value_to_perm_code(value: str) -> str:
     return "--"
 
 
-ReadRet = list[TextFile | BrokenFile | RichTextFile]
+ReadRet = list[TextFile | RichTextFile]
 
 
 @files_router.get("/files", tags=["Files"])
@@ -48,27 +48,24 @@ async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
     groups = fetch_groups_by_user(session.owner)
     group_names = [g.name for g in groups]
 
-    files: list[TextFile | RichTextFile | BrokenFile]
-    match (fltr.data_type):
-        case "min":
-            files = [*fetch_files_by_filter(fltr)]
+    files: list[TextFile] | list[RichTextFile]
+    prms: list[Permissions]
+    result: ReadRet = []
+
+    match fltr.data_type:
         case "rich":
-            files = [*fetch_rich_files_by_filter(fltr)]
+            files = fetch_rich_files_by_filter(fltr)
+            prms = [f.perms for f in files]
         case _:
-            files = [*fetch_files_by_filter(fltr)]
-    
-    if not files:
-        return []
+            files = fetch_files_by_filter(fltr)
+            prms = fetch_permissions_for([id_of_file(f) for f in files])
 
-    prms = fetch_permissions_for([id_of_file(f) for f in files])
-
-    for index, file in enumerate(files):
+    for file in files:
         prm = next((p for p in prms if p.item_id == id_of_file(file)), None)
-        if prm is None or not has_read(prm, session.owner, group_names):
-            del files[index]
-            continue
+        if prm and has_read(prm, session.owner, group_names):
+            result.append(file)
 
-    return files
+    return result
 
 
 @dataclass(frozen=True, slots=True)

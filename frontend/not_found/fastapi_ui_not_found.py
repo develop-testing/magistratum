@@ -18,6 +18,4 @@ def render_not_found(request: Request) -> HTMLResponse:
     if hasattr(request.state, "session"):
         username = request.state.session.owner
 
-    return HTMLResponse(
-        generate_layout(tmpl_content, username), status_code=404
-    )
+    return HTMLResponse(generate_layout(tmpl_content, username), status_code=404)

@@ -17,6 +17,4 @@ async def dashboar(req: Request, dir_id: str) -> HTMLResponse:
     with open(template_file, "r", encoding="utf-8") as tmpl:
         tmpl_content = chevron.render(tmpl)
 
-    return HTMLResponse(
-        generate_layout(tmpl_content, req.state.session.owner)
-    )
+    return HTMLResponse(generate_layout(tmpl_content, req.state.session.owner))

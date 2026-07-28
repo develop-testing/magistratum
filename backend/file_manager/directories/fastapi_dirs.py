@@ -62,18 +62,14 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
             parent_dir = fetch_dir_by_id(body.parent_id)
 
             prms = fetch_permissions_for([parent_dir.dir_id])
-            prm = next(
-                (p for p in prms if p.item_id == parent_dir.dir_id), None
-            )
+            prm = next((p for p in prms if p.item_id == parent_dir.dir_id), None)
             if not prm or not has_write(prm, session_owner, group_names):
                 raise Forbidden("access denied")
 
             group_name = prm.group_name
 
         new_dir = new_directory(body.name, body.parent_id)
-        new_perm = new_permissions(
-            new_dir.dir_id, session_owner, group_name, "rw--"
-        )
+        new_perm = new_permissions(new_dir.dir_id, session_owner, group_name, "rw--")
 
         new_dir = save_directory(new_dir)
         new_perm = save_permissions(new_perm)
@@ -229,8 +225,8 @@ async def read_root_dirs(req: Request) -> DirRdResult:
     result: DirRdResult = []
     for d in dirs:
         prm = next((p for p in prms if p.item_id == d.dir_id), None)
-        
-        if prm and has_read(prm, session_owner, group_names):   
+
+        if prm and has_read(prm, session_owner, group_names):
             image = fetch_image_by_dir(d.dir_id)
             result.append(
                 mk_rich_directory(

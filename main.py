@@ -93,9 +93,7 @@ async def custom_swagger_ui_html() -> HTMLResponse:
 
 
 cors_origins = [
-    o.strip()
-    for o in os.environ.get("CORS_ORIGINS", "").split(",")
-    if o.strip()
+    o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()
 ]
 
 backend.add_middleware(

@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 import uuid
 
+from backend.file_manager.permissions.permissions import Permissions
+
 
 @dataclass(frozen=True, slots=True)
 class TextFileFilter:
@@ -34,25 +36,13 @@ class TextFile:
 
 
 @dataclass(frozen=True, slots=True)
-class TextFilePerms:
-    owner: str
-    group: str
-    group_perms: str
-    other_perms: str
-
-    @staticmethod
-    def create(owner: str, grp: str, grp_prms: str, other_prms: str) -> TextFilePerms:
-        return TextFilePerms(owner, grp, grp_prms, other_prms)
-
-
-@dataclass(frozen=True, slots=True)
 class RichTextFile:
     text_file: TextFile
-    perms: TextFilePerms
+    perms: Permissions
     image: str
 
 
-def mk_rich_text_file(file: TextFile, perms: TextFilePerms, image: str) -> RichTextFile:
+def mk_rich_text_file(file: TextFile, perms: Permissions, image: str) -> RichTextFile:
     return RichTextFile(file, perms, image)
 
 
