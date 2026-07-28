@@ -58,7 +58,7 @@ async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
             files = [*fetch_files_by_filter(fltr)]
     
     if not files:
-        raise BadRequest("files not found")
+        return []
 
     prms = fetch_permissions_for([id_of_file(f) for f in files])
 

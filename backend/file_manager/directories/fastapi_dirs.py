@@ -263,7 +263,7 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
             dirs = [*fetch_dirs_by_filter(fltr)]
 
     if not dirs:
-        raise BadRequest("directories not found")
+        return []
 
     prms = fetch_permissions_for(
         [d.dir_id if isinstance(d, Directory) else d.directory.dir_id for d in dirs]

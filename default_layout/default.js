@@ -54,7 +54,7 @@ const send_get = (url, params) => {
   return fetch(full_url, { credentials: "include" }).then(res => {
     if (!res.ok)
       return res.text().then(text => {
-        throw text
+        throw { status: res.status, message: text }
       })
     return res.json()
   })
@@ -69,7 +69,7 @@ const send_post = (url, data) => {
   }).then(res => {
     if (!res.ok)
       return res.text().then(text => {
-        throw text
+        throw { status: res.status, message: text }
       })
     return res.json()
   })
@@ -84,7 +84,7 @@ const send_patch = (url, data) => {
   }).then(res => {
     if (!res.ok)
       return res.text().then(text => {
-        throw text
+        throw { status: res.status, message: text }
       })
     return res.json()
   })
@@ -99,7 +99,7 @@ const send_delete = (url, data) => {
   }).then(res => {
     if (!res.ok)
       return res.text().then(text => {
-        throw text
+        throw { status: res.status, message: text }
       })
     return res.json()
   })

@@ -87,6 +87,9 @@ def update_permissions(perms: list[Permissions]) -> None:
 
 
 def fetch_permissions_for(item_ids: list[str]) -> list[Permissions]:
+    if not item_ids:
+        return []
+
     query = sa.text("""
         SELECT item_id, owner_name, group_name, content
         FROM permissions
