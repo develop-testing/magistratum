@@ -22,8 +22,10 @@ from ..groups.sqlalchemy_group import fetch_groups_by_user
 from ..permissions.permissions import Permissions, new_permissions, has_read, has_write
 
 from ..permissions.sqlalchemy_permissions import (
-    fetch_permissions_for,
-    update_permissions,
+    fetch_file_permissions_for,
+    fetch_dir_permissions_for,
+    save_file_permissions,
+    update_file_permissions,
 )
 
 files_router = APIRouter()
@@ -58,7 +60,7 @@ async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
             prms = [f.perms for f in files]
         case _:
             files = fetch_files_by_filter(fltr)
-            prms = fetch_permissions_for([id_of_file(f) for f in files])
+            prms = fetch_file_permissions_for([id_of_file(f) for f in files])
 
     for file in files:
         prm = next((p for p in prms if p.item_id == id_of_file(file)), None)
@@ -87,7 +89,7 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
         groups = fetch_groups_by_user(username)
         group_names = [g.name for g in groups]
 
-        prms = fetch_permissions_for([dir.dir_id])
+        prms = fetch_dir_permissions_for([dir.dir_id])
         prm = next((p for p in prms if p.item_id == dir.dir_id), None)
         if not prm or not has_write(prm, username, group_names):
             raise Forbidden("access denied")
@@ -96,7 +98,10 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
 
     p = new_permissions(fl.file_id, username, "root", "rwr-")
 
-    return save_file(fl, p)
+    save_file(fl)
+    save_file_permissions(p)
+
+    return fl
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,14 +118,14 @@ async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
 
     fl = fetch_file_by_id(body.file_id)
 
-    prms = fetch_permissions_for([fl.file_id])
+    prms = fetch_file_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)
     if not prm or not has_read(prm, username, group_names):
         raise Forbidden("access denied")
 
     dir = fetch_dir_by_id(body.parent_id)
 
-    dir_prms = fetch_permissions_for([dir.dir_id])
+    dir_prms = fetch_dir_permissions_for([dir.dir_id])
     dir_prm = next((p for p in dir_prms if p.item_id == dir.dir_id), None)
     if not dir_prm or not has_write(dir_prm, username, group_names):
         raise Forbidden("access denied")
@@ -129,7 +134,10 @@ async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
 
     p = new_permissions(new_fl.file_id, username, "root", "rwr-")
 
-    return save_file(new_fl, p)
+    save_file(new_fl)
+    save_file_permissions(p)
+
+    return new_fl
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,7 +161,7 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
 
     fl = fetch_file_by_id(body.file_id)
 
-    prms = fetch_permissions_for([fl.file_id])
+    prms = fetch_file_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)
     if not prm or not has_write(prm, session.owner, group_names):
         raise Forbidden("access denied")
@@ -195,7 +203,7 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
             else (prm.group_name if prm else "root")
         )
         updated_prm = new_permissions(body.file_id, new_owner, new_grp, new_content)
-        update_permissions([updated_prm])
+        update_file_permissions([updated_prm])
 
     if body.new_cover:
         _save_image(body.file_id, body.new_cover)
@@ -243,7 +251,7 @@ async def delete_file(req: Request, body: DeletFileReq) -> bool:
 
     fl = fetch_file_by_id(body.file_id)
 
-    prms = fetch_permissions_for([fl.file_id])
+    prms = fetch_file_permissions_for([fl.file_id])
     prm = next((p for p in prms if p.item_id == fl.file_id), None)
     if not prm or not has_write(prm, session.owner, group_names):
         raise Forbidden("access denied")

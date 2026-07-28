@@ -117,12 +117,6 @@ def update_group(old_name: str, group: Group) -> Group:
 def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> None:
     id_query = sa.text("SELECT id FROM groups WHERE name = :name")
 
-    update_perms_query = sa.text("""
-        UPDATE permissions
-        SET owner_name = :owner_name, group_name = :group_name, content = :content
-        WHERE item_id = :item_id
-    """)
-
     delete_members_query = sa.text(
         "DELETE FROM users_to_groups WHERE group_id = CAST(:group_id AS CHAR)"
     )
@@ -130,16 +124,22 @@ def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> Non
     delete_group_query = sa.text("DELETE FROM groups WHERE name = :name")
 
     with engine.connect() as conn:
-        for p in perms:
-            conn.execute(
-                update_perms_query,
-                {
-                    "item_id": p.item_id,
-                    "owner_name": p.owner_name,
-                    "group_name": p.group_name,
-                    "content": p.content,
-                },
+        for table in ("dir_permissions", "file_permissions"):
+            update_perms_query = sa.text(
+                f"UPDATE {table}"
+                " SET owner_name = :owner_name, group_name = :group_name, content = :content"
+                " WHERE item_id = :item_id"
             )
+            for p in perms:
+                conn.execute(
+                    update_perms_query,
+                    {
+                        "item_id": p.item_id,
+                        "owner_name": p.owner_name,
+                        "group_name": p.group_name,
+                        "content": p.content,
+                    },
+                )
 
         row = conn.execute(id_query, {"name": removed.name}).mappings().first()
         if row is not None:

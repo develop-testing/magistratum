@@ -23,9 +23,9 @@ from .sqlalchemy_dir import (
 )
 from ..groups.sqlalchemy_group import fetch_groups_by_user
 from ..permissions.sqlalchemy_permissions import (
-    fetch_permissions_for,
-    save_permissions,
-    update_permissions,
+    fetch_dir_permissions_for,
+    save_dir_permissions,
+    update_dir_permissions,
 )
 
 dirs_router = APIRouter()
@@ -60,7 +60,7 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
 
             parent_dir = fetch_dir_by_id(body.parent_id)
 
-            prms = fetch_permissions_for([parent_dir.dir_id])
+            prms = fetch_dir_permissions_for([parent_dir.dir_id])
             prm = next((p for p in prms if p.item_id == parent_dir.dir_id), None)
             if not prm or not has_write(prm, session_owner, group_names):
                 raise Forbidden("access denied")
@@ -71,7 +71,7 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
         new_perm = new_permissions(new_dir.dir_id, session_owner, group_name, "rw--")
 
         new_dir = save_directory(new_dir)
-        new_perm = save_permissions(new_perm)
+        new_perm = save_dir_permissions(new_perm)
 
         return new_dir
 
@@ -101,7 +101,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
 
         dir = fetch_dir_by_id(body.dir_id)
 
-        prms = fetch_permissions_for([dir.dir_id])
+        prms = fetch_dir_permissions_for([dir.dir_id])
         prm = next((p for p in prms if p.item_id == dir.dir_id), None)
         if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
@@ -139,7 +139,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
                 else (prm.group_name if prm else "root")
             )
             updated_prm = new_permissions(body.dir_id, new_owner, new_grp, new_content)
-            update_permissions([updated_prm])
+            update_dir_permissions([updated_prm])
 
         if body.new_cover:
             _save_image(body.dir_id, body.new_cover)
@@ -192,7 +192,7 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
 
         dir = fetch_dir_by_id(body.dir_id)
 
-        prms = fetch_permissions_for([dir.dir_id])
+        prms = fetch_dir_permissions_for([dir.dir_id])
         prm = next((p for p in prms if p.item_id == dir.dir_id), None)
         if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
@@ -218,7 +218,7 @@ async def read_root_dirs(req: Request) -> DirRdResult:
     if not dirs:
         raise BadRequest("directories not found")
 
-    prms = fetch_permissions_for([d.dir_id for d in dirs])
+    prms = fetch_dir_permissions_for([d.dir_id for d in dirs])
 
     result: DirRdResult = []
     for d in dirs:
@@ -253,7 +253,7 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
             prms = [d.perms for d in dirs if isinstance(d, RichDirectory)]
         case _:
             dirs = fetch_dirs_by_filter(fltr)
-            prms = fetch_permissions_for(
+            prms = fetch_dir_permissions_for(
                 [d.dir_id for d in dirs if isinstance(d, Directory)]
             )
 

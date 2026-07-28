@@ -7,7 +7,10 @@ from backend.router.response import *
 from .groups import *
 from ..permissions.permissions import change_group
 from .sqlalchemy_group import *
-from ..permissions.sqlalchemy_permissions import fetch_permissions_by_group
+from ..permissions.sqlalchemy_permissions import (
+    fetch_dir_permissions_by_group,
+    fetch_file_permissions_by_group,
+)
 
 groups_router = APIRouter()
 
@@ -83,7 +86,7 @@ async def delete_group(req: Request, body: RemoveGroupReq) -> bool:
     if session_owner != "root" and session_owner != g.owner:
         raise Forbidden("only root or group owner can delete groups")
 
-    perms = fetch_permissions_by_group(g.name)
+    perms = fetch_dir_permissions_by_group(g.name) + fetch_file_permissions_by_group(g.name)
     updated = [change_group(p, "root") for p in perms]
 
     removed = destroy_group(g)

@@ -6,7 +6,7 @@ from backend.database.database import engine, metadata
 
 from .directory import *
 from ..permissions.permissions import Permissions
-from ..permissions.sqlalchemy_permissions import fetch_permissions_for
+from ..permissions.sqlalchemy_permissions import fetch_dir_permissions_for
 
 
 @dataclass
@@ -121,7 +121,7 @@ def fetch_rich_dirs_by_filter(fltr: DirFilter) -> list[RichDirectory]:
     if not dirs:
         return []
 
-    prms = fetch_permissions_for([d.dir_id for d in dirs])
+    prms = fetch_dir_permissions_for([d.dir_id for d in dirs])
 
     out: list[RichDirectory] = []
 

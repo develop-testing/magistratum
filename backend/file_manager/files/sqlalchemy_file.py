@@ -10,10 +10,7 @@ from .files import (
     mk_text_file,
     mk_rich_text_file,
 )
-from ..permissions.permissions import Permissions
-
-
-from ..permissions.sqlalchemy_permissions import fetch_permissions_for
+from ..permissions.sqlalchemy_permissions import fetch_file_permissions_for
 
 sa.Table(
     "files",
@@ -141,7 +138,7 @@ def fetch_rich_files_by_filter(filter: TextFileFilter) -> list[RichTextFile]:
     if not files:
         return []
 
-    prms = fetch_permissions_for([file.file_id for file in files])
+    prms = fetch_file_permissions_for([file.file_id for file in files])
 
     out = []
 
@@ -191,14 +188,10 @@ def update_file_by_id(file_id: str, file: TextFile) -> TextFile:
         return file
 
 
-def save_file(file: TextFile, perms: Permissions) -> TextFile:
+def save_file(file: TextFile) -> TextFile:
     try:
         insert_file_query = sa.text(
             "INSERT INTO files (file_id, name, content, parent_id) VALUES (:file_id, :name, :content, :parent_id)"
-        )
-
-        insert_perms_query = sa.text(
-            "INSERT INTO permissions (item_id, owner_name, group_name, content) VALUES (:item_id, :owner_name, :group_name, :content)"
         )
 
         with engine.connect() as conn:
@@ -209,16 +202,6 @@ def save_file(file: TextFile, perms: Permissions) -> TextFile:
                     "name": file.name,
                     "content": file.content,
                     "parent_id": file.parent_id or None,
-                },
-            )
-
-            conn.execute(
-                insert_perms_query,
-                {
-                    "item_id": perms.item_id,
-                    "owner_name": perms.owner_name,
-                    "group_name": perms.group_name,
-                    "content": perms.content,
                 },
             )
 
