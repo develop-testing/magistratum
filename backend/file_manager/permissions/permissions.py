@@ -30,6 +30,8 @@ def new_permissions(
 
 
 def has_read(p: Permissions, user_name: str, group_names: list[str]) -> bool:
+    if user_name == "root":
+        return True
     if user_name != "" and p.owner_name == user_name:
         return True
 
@@ -40,6 +42,8 @@ def has_read(p: Permissions, user_name: str, group_names: list[str]) -> bool:
 
 
 def has_write(p: Permissions, user_name: str, group_names: list[str]) -> bool:
+    if user_name == "root":
+        return True
     if user_name != "" and p.owner_name == user_name:
         return True
 
