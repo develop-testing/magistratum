@@ -183,7 +183,8 @@
             send_post("/directory", json_object).then((_) => {
                 file_manager = get_content().then((fm) => {
                     show_file_manager(fm.items.map(make_item_html).join(""))
-                    return fm;
+                    close_modals()
+                    return fm
                 }).catch(err => {
                     if (err && err.status === 400) return;
                     throw err;
@@ -201,6 +202,7 @@
             send_post("/file", json_object).then(() => {
                 file_manager = get_content().then((fm) => {
                     show_file_manager(fm.items.map(make_item_html).join(""))
+                    close_modals()
                     return fm
                 }).catch(err => {
                     if (err && err.status === 400) return;

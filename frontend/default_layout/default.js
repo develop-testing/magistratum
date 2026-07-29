@@ -40,6 +40,12 @@ const modals = () => {
   })
 }
 
+const close_modals = () => {
+  document.querySelectorAll(".modal").forEach(item => {
+    item.classList.remove("-show")
+  })
+}
+
 const send_get = (url, params) => {
   const full_url = new URL(`http://127.0.0.1:8800${url}`)
 
