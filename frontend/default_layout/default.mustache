@@ -49,9 +49,11 @@
             return clean_b64 ? JSON.parse(atob(clean_b64)) : {}
         }
 
-        const render_username = username => {
-            const username_block = document.querySelector("[data-username]")
-            username_block.innerHTML = username
+        const render_username = username => {   
+            if (username) {
+                const username_block = document.querySelector("[data-username]")
+                username_block.innerHTML = username
+            }
         }
         
         render_username(fetch_user_data().username)
