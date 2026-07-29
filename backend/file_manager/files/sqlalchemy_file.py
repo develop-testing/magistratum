@@ -11,6 +11,7 @@ from .files import (
     mk_text_file,
     mk_rich_text_file,
 )
+from ..permissions.permissions import find_permition_in_list
 from ..permissions.sqlalchemy_permissions import fetch_file_permissions_for
 
 sa.Table(
@@ -141,7 +142,7 @@ def fetch_rich_files_by_filter(
     out = []
 
     for file in files:
-        prm = next((p for p in prms if p.item_id == file.file_id), None)
+        prm = find_permition_in_list(prms, file.file_id)
 
         if prm is None:
             raise ValueError(f"Missing permissions for file with ID: {file.file_id}")

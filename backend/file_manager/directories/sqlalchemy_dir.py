@@ -6,7 +6,7 @@ from backend.database.database import engine, metadata
 
 
 from .directory import *
-from ..permissions.permissions import Permissions
+from ..permissions.permissions import Permissions, find_permition_in_list
 from ..permissions.sqlalchemy_permissions import fetch_dir_permissions_for
 
 
@@ -120,7 +120,7 @@ def fetch_rich_dirs_by_filter(conn: Conn, fltr: DirFilter) -> list[RichDirectory
     out: list[RichDirectory] = []
 
     for d in dirs:
-        prm = next((p for p in prms if p.item_id == d.dir_id), None)
+        prm = find_permition_in_list(prms, d.dir_id)
 
         if prm is None:
             continue

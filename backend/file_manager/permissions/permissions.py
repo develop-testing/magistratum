@@ -55,3 +55,8 @@ def has_write(p: Permissions, user_name: str, group_names: list[str]) -> bool:
 
 def change_group(p: Permissions, new_group_name: str) -> Permissions:
     return new_permissions(p.item_id, p.owner_name, new_group_name, p.content)
+
+
+def find_permition_in_list(prms: list[Permissions], needly_id: str) -> Permissions | None:
+    return next((p for p in prms if p.item_id == needly_id), None)
+

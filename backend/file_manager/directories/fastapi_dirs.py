@@ -15,6 +15,7 @@ from .directory import *
 
 from ..permissions.permissions import (
     Permissions,
+    find_permition_in_list,
     has_read,
     has_write,
     new_permissions,
@@ -65,7 +66,7 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
             parent_dir = fetch_dir_by_id(conn, body.parent_id)
 
             prms = fetch_dir_permissions_for(conn, [parent_dir.dir_id])
-            prm = next((p for p in prms if p.item_id == parent_dir.dir_id), None)
+            prm = find_permition_in_list(prms, parent_dir.dir_id)
             if not prm or not has_write(prm, session_owner, group_names):
                 raise Forbidden("access denied")
 
@@ -110,7 +111,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
         dir = fetch_dir_by_id(conn, body.dir_id)
 
         prms = fetch_dir_permissions_for(conn, [dir.dir_id])
-        prm = next((p for p in prms if p.item_id == dir.dir_id), None)
+        prm = find_permition_in_list(prms, dir.dir_id)
         if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
 
@@ -206,7 +207,7 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
         dir = fetch_dir_by_id(conn, body.dir_id)
 
         prms = fetch_dir_permissions_for(conn, [dir.dir_id])
-        prm = next((p for p in prms if p.item_id == dir.dir_id), None)
+        prm = find_permition_in_list(prms, dir.dir_id)
         if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
 
@@ -243,7 +244,7 @@ async def read_root_dirs(req: Request) -> DirRdResult:
 
         result: DirRdResult = []
         for d in dirs:
-            prm = next((p for p in prms if p.item_id == d.dir_id), None)
+            prm = find_permition_in_list(prms, d.dir_id)
 
             if prm and has_read(prm, session_owner, group_names):
                 image = fetch_image_by_dir(conn, d.dir_id)
@@ -287,7 +288,7 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
         result: DirRdResult = []
         for d in dirs:
             d_id = d.dir_id if isinstance(d, Directory) else d.directory.dir_id
-            prm = next((p for p in prms if p.item_id == d_id), None)
+            prm = find_permition_in_list(prms, d_id)
 
             if prm and has_read(prm, session_owner, group_names):
                 if fltr.only_can_write and not has_write(
