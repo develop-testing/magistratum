@@ -23,6 +23,7 @@ from .sqlalchemy_file import (
     add_image_to_file,
 )
 from ..groups.sqlalchemy_group import fetch_groups_by_user
+from ..groups.groups import get_group_names
 from ..permissions.permissions import (
     Permissions,
     find_permition_in_list,
@@ -60,7 +61,7 @@ async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
     try:
         session = req.state.session
         groups = fetch_groups_by_user(conn, session.owner)
-        group_names = [g.name for g in groups]
+        group_names = get_group_names(groups)
 
         files: list[TextFile] | list[RichTextFile]
         prms: list[Permissions]
@@ -105,7 +106,7 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
             parent_id = dir.dir_id
 
             groups = fetch_groups_by_user(conn, username)
-            group_names = [g.name for g in groups]
+            group_names = get_group_names(groups)
 
             prms = fetch_dir_permissions_for(conn, [dir.dir_id])
             prm = find_permition_in_list(prms, dir.dir_id)
@@ -139,7 +140,7 @@ async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
     try:
         username = req.state.session.owner
         groups = fetch_groups_by_user(conn, username)
-        group_names = [g.name for g in groups]
+        group_names = get_group_names(groups)
 
         fl = fetch_file_by_id(conn, body.file_id)
 
@@ -189,7 +190,7 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
     try:
         session = req.state.session
         groups = fetch_groups_by_user(conn, session.owner)
-        group_names = [g.name for g in groups]
+        group_names = get_group_names(groups)
 
         fl = fetch_file_by_id(conn, body.file_id)
 
@@ -287,7 +288,7 @@ async def delete_file(req: Request, body: DeletFileReq) -> bool:
     try:
         session = req.state.session
         groups = fetch_groups_by_user(conn, session.owner)
-        group_names = [g.name for g in groups]
+        group_names = get_group_names(groups)
 
         fl = fetch_file_by_id(conn, body.file_id)
 

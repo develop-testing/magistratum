@@ -55,3 +55,6 @@ def mk_group(name: str, owner: str, members: list[str]) -> Group:
 
 def destroy_group(g: Group) -> RemovedGroup:
     return RemovedGroup(g.name)
+
+def get_group_names(groups: list[Group]) -> list[str]:
+    return [g.name for g in groups]

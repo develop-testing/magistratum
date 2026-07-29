@@ -27,6 +27,7 @@ from .sqlalchemy_dir import (
     fetch_rich_dirs_by_filter,
 )
 from ..groups.sqlalchemy_group import fetch_groups_by_user
+from ..groups.groups import get_group_names
 from ..permissions.sqlalchemy_permissions import (
     fetch_dir_permissions_for,
     save_dir_permissions,
@@ -61,12 +62,13 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
 
         if body.parent_id:
             groups = fetch_groups_by_user(conn, session_owner)
-            group_names = [g.name for g in groups]
+            group_names = get_group_names(groups)
 
             parent_dir = fetch_dir_by_id(conn, body.parent_id)
 
             prms = fetch_dir_permissions_for(conn, [parent_dir.dir_id])
             prm = find_permition_in_list(prms, parent_dir.dir_id)
+            
             if not prm or not has_write(prm, session_owner, group_names):
                 raise Forbidden("access denied")
 
@@ -106,7 +108,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
     try:
         session_owner = req.state.session.owner
         groups = fetch_groups_by_user(conn, session_owner)
-        group_names = [g.name for g in groups]
+        group_names = get_group_names(groups)
 
         dir = fetch_dir_by_id(conn, body.dir_id)
 
@@ -202,7 +204,7 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
     try:
         session_owner = req.state.session.owner
         groups = fetch_groups_by_user(conn, session_owner)
-        group_names = [g.name for g in groups]
+        group_names = get_group_names(groups)
 
         dir = fetch_dir_by_id(conn, body.dir_id)
 
@@ -233,7 +235,7 @@ async def read_root_dirs(req: Request) -> DirRdResult:
         session_owner = req.state.session.owner
 
         groups = fetch_groups_by_user(conn, session_owner)
-        group_names = [g.name for g in groups]
+        group_names = get_group_names(groups)
 
         dirs = fetch_dirs_by_parent(conn, None)
 
@@ -270,7 +272,7 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
         session_owner = req.state.session.owner
 
         groups = fetch_groups_by_user(conn, session_owner)
-        group_names = [g.name for g in groups]
+        group_names = get_group_names(groups)
 
         dirs: list[Directory] | list[RichDirectory]
         prms: list[Permissions]
