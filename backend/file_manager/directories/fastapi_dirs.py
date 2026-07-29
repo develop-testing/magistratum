@@ -19,7 +19,6 @@ from ..groups import sqlalchemy_group as grps_src
 from ..groups import groups as grps
 from ..permissions import sqlalchemy_permissions as prms_src
 
-
 dirs_router = APIRouter()
 
 
@@ -38,7 +37,9 @@ class CreateDirectoryReq:
     name: str
     parent_id: str
 
+
 CResult = dirs.Directory
+
 
 @dirs_router.post("/directory", tags=["Directories"])
 async def create_directory(req: Request, body: CreateDirectoryReq) -> CResult:
@@ -95,9 +96,7 @@ class EditDirectoryReq:
 
 
 @dirs_router.patch("/directory", tags=["Directories"])
-async def edit_directory(
-    req: Request, body: EditDirectoryReq
-) -> dirs.Directory:
+async def edit_directory(req: Request, body: EditDirectoryReq) -> dirs.Directory:
     conn = db.engine.connect()
     try:
         session_owner = req.state.session.owner
@@ -264,9 +263,7 @@ async def read_root_dirs(req: Request) -> DirRdResult:
 
 
 @dirs_router.get("/directories", tags=["Directories"])
-async def read_dirs(
-    req: Request, fltr: dirs.DirFilter = Depends()
-) -> DirRdResult:
+async def read_dirs(req: Request, fltr: dirs.DirFilter = Depends()) -> DirRdResult:
     conn = db.engine.connect()
     try:
         session_owner = req.state.session.owner
@@ -292,11 +289,7 @@ async def read_dirs(
 
         result: DirRdResult = []
         for d in dir_list:
-            d_id = (
-                d.dir_id
-                if isinstance(d, dirs.Directory)
-                else d.directory.dir_id
-            )
+            d_id = d.dir_id if isinstance(d, dirs.Directory) else d.directory.dir_id
             prm = prms.find_permition_in_list(permitions, d_id)
 
             if prm and prms.has_read(prm, session_owner, group_names):

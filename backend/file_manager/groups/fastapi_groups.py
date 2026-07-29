@@ -2,17 +2,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from fastapi import APIRouter, Depends, Request
 
-from backend.database.database import engine
-
-from backend.router.response import *
-
-from .groups import *
-from ..permissions.permissions import change_group
-from .sqlalchemy_group import *
-from ..permissions.sqlalchemy_permissions import (
-    fetch_dir_permissions_by_group,
-    fetch_file_permissions_by_group,
-)
+import backend.database.database as db
+import backend.router.response as resp
+from . import groups as grps, sqlalchemy_group as grps_src
+from ..permissions import permissions as prms, sqlalchemy_permissions as prms_src
 
 groups_router = APIRouter()
 
@@ -25,14 +18,14 @@ class CreateGroupRequest:
 
 
 @groups_router.post("/group", tags=["Groups"])
-async def create_group(req: Request, body: CreateGroupRequest) -> Group:
-    conn = engine.connect()
+async def create_group(req: Request, body: CreateGroupRequest) -> grps.Group:
+    conn = db.engine.connect()
     try:
         if req.state.session.owner != "root":
-            raise Forbidden("only root can create groups")
+            raise resp.Forbidden("only root can create groups")
 
-        g = mk_group(body.name, body.owner, body.members)
-        conn = save_group(conn, g)
+        g = grps.mk_group(body.name, body.owner, body.members)
+        conn = grps_src.save_group(conn, g)
         conn.commit()
         return g
 
@@ -50,26 +43,26 @@ class EditGroupRequest:
 
 
 @groups_router.patch("/group", tags=["Groups"])
-async def edit_group(req: Request, body: EditGroupRequest) -> Group:
-    conn = engine.connect()
+async def edit_group(req: Request, body: EditGroupRequest) -> grps.Group:
+    conn = db.engine.connect()
     try:
         session_owner: str = req.state.session.owner
 
-        g = fetch_group_by_name(conn, body.name)
+        g = grps_src.fetch_group_by_name(conn, body.name)
 
         if session_owner != "root" and session_owner != g.owner:
-            raise Forbidden("only root or group owner can edit groups")
+            raise resp.Forbidden("only root or group owner can edit groups")
 
-        g = rename_group(g, body.new_name)
-        g = change_owner(g, body.new_owner)
+        g = grps.rename_group(g, body.new_name)
+        g = grps.change_owner(g, body.new_owner)
 
         for username in g.members:
-            g = remove_member(g, username)
+            g = grps.remove_member(g, username)
 
         for username in body.new_members:
-            g = add_member(g, username)
+            g = grps.add_member(g, username)
 
-        conn = update_group(conn, body.name, g)
+        conn = grps_src.update_group(conn, body.name, g)
         conn.commit()
         return g
 
@@ -79,16 +72,18 @@ async def edit_group(req: Request, body: EditGroupRequest) -> Group:
 
 
 @groups_router.get("/groups", tags=["Groups"])
-async def read_groups(req: Request, filter: FetchGroupReq = Depends()) -> list[Group]:
-    conn = engine.connect()
+async def read_groups(
+    req: Request, filter: grps.FetchGroupReq = Depends()
+) -> list[grps.Group]:
+    conn = db.engine.connect()
     try:
         owner = filter.owner if filter.owner != "" else req.state.session.owner
         member = filter.member if filter.owner != "" else req.state.session.owner
 
         if not owner and not member:
-            return fetch_groups_by_user(conn, req.state.session.owner)
+            return grps_src.fetch_groups_by_user(conn, req.state.session.owner)
 
-        return fetch_groups_by_filter(conn, filter)
+        return grps_src.fetch_groups_by_filter(conn, filter)
 
     finally:
         conn.rollback()
@@ -102,22 +97,22 @@ class RemoveGroupReq:
 
 @groups_router.delete("/group", tags=["Groups"])
 async def delete_group(req: Request, body: RemoveGroupReq) -> bool:
-    conn = engine.connect()
+    conn = db.engine.connect()
     try:
         session_owner: str = req.state.session.owner
 
-        g = fetch_group_by_name(conn, body.name)
+        g = grps_src.fetch_group_by_name(conn, body.name)
 
         if session_owner != "root" and session_owner != g.owner:
-            raise Forbidden("only root or group owner can delete groups")
+            raise resp.Forbidden("only root or group owner can delete groups")
 
-        perms = fetch_dir_permissions_by_group(
+        perms = prms_src.fetch_dir_permissions_by_group(
             conn, g.name
-        ) + fetch_file_permissions_by_group(conn, g.name)
-        updated = [change_group(p, "root") for p in perms]
+        ) + prms_src.fetch_file_permissions_by_group(conn, g.name)
+        updated = [prms.change_group(p, "root") for p in perms]
 
-        removed = destroy_group(g)
-        conn = delete_group_by_name(conn, removed, updated)
+        removed = grps.destroy_group(g)
+        conn = grps_src.delete_group_by_name(conn, removed, updated)
         conn.commit()
 
         return True

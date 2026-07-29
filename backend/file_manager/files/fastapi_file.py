@@ -7,37 +7,12 @@ from fastapi import APIRouter, Depends, Response, Request
 
 from sqlalchemy.engine import Connection
 
-from backend.database.database import engine
-
-from backend.router.response import *
-from .files import *
-from ..directories.sqlalchemy_dir import fetch_dir_by_id
-from .sqlalchemy_file import (
-    save_file,
-    fetch_files_by_filter,
-    fetch_rich_files_by_filter,
-    fetch_file_by_id,
-    delete_file_by_id,
-    move_file,
-    update_file_by_id,
-    add_image_to_file,
-)
-from ..groups.sqlalchemy_group import fetch_groups_by_user
-from ..groups.groups import get_group_names
-from ..permissions.permissions import (
-    Permissions,
-    find_permition_in_list,
-    new_permissions,
-    has_read,
-    has_write,
-)
-
-from ..permissions.sqlalchemy_permissions import (
-    fetch_file_permissions_for,
-    fetch_dir_permissions_for,
-    save_file_permissions,
-    update_file_permissions,
-)
+import backend.database.database as db
+import backend.router.response as resp
+from . import files as files_ent, sqlalchemy_file as file_src
+from ..directories import sqlalchemy_dir as dir_src
+from ..groups import groups as grps, sqlalchemy_group as grps_src
+from ..permissions import permissions as prms, sqlalchemy_permissions as prms_src
 
 files_router = APIRouter()
 
@@ -52,32 +27,36 @@ def _value_to_perm_code(value: str) -> str:
     return "--"
 
 
-ReadRet = list[TextFile | RichTextFile]
+ReadRet = list[files_ent.TextFile | files_ent.RichTextFile]
 
 
 @files_router.get("/files", tags=["Files"])
-async def read_files(req: Request, fltr: TextFileFilter = Depends()) -> ReadRet:
-    conn = engine.connect()
+async def read_files(
+    req: Request, fltr: files_ent.TextFileFilter = Depends()
+) -> ReadRet:
+    conn = db.engine.connect()
     try:
         session = req.state.session
-        groups = fetch_groups_by_user(conn, session.owner)
-        group_names = get_group_names(groups)
+        groups = grps_src.fetch_groups_by_user(conn, session.owner)
+        group_names = grps.get_group_names(groups)
 
-        files: list[TextFile] | list[RichTextFile]
-        prms: list[Permissions]
+        files: list[files_ent.TextFile] | list[files_ent.RichTextFile]
+        permitions: list[prms.Permissions]
         result: ReadRet = []
 
         match fltr.data_type:
             case "rich":
-                files = fetch_rich_files_by_filter(conn, fltr)
-                prms = [f.perms for f in files]
+                files = file_src.fetch_rich_files_by_filter(conn, fltr)
+                permitions = [f.perms for f in files]
             case _:
-                files = fetch_files_by_filter(conn, fltr)
-                prms = fetch_file_permissions_for(conn, [id_of_file(f) for f in files])
+                files = file_src.fetch_files_by_filter(conn, fltr)
+                permitions = prms_src.fetch_file_permissions_for(
+                    conn, [files_ent.id_of_file(f) for f in files]
+                )
 
         for file in files:
-            prm = find_permition_in_list(prms, id_of_file(file))
-            if prm and has_read(prm, session.owner, group_names):
+            prm = prms.find_permition_in_list(permitions, files_ent.id_of_file(file))
+            if prm and prms.has_read(prm, session.owner, group_names):
                 result.append(file)
 
         return result
@@ -95,30 +74,30 @@ class CreateFileRequest:
 
 
 @files_router.post("/file", tags=["Files"])
-async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
-    conn = engine.connect()
+async def create_file(req: Request, body: CreateFileRequest) -> files_ent.TextFile:
+    conn = db.engine.connect()
     try:
         username = req.state.session.owner
 
         parent_id: str | None = None
         if body.dir_id != "":
-            dir = fetch_dir_by_id(conn, body.dir_id)
+            dir = dir_src.fetch_dir_by_id(conn, body.dir_id)
             parent_id = dir.dir_id
 
-            groups = fetch_groups_by_user(conn, username)
-            group_names = get_group_names(groups)
+            groups = grps_src.fetch_groups_by_user(conn, username)
+            group_names = grps.get_group_names(groups)
 
-            prms = fetch_dir_permissions_for(conn, [dir.dir_id])
-            prm = find_permition_in_list(prms, dir.dir_id)
-            if not prm or not has_write(prm, username, group_names):
-                raise Forbidden("access denied")
+            permitions = prms_src.fetch_dir_permissions_for(conn, [dir.dir_id])
+            prm = prms.find_permition_in_list(permitions, dir.dir_id)
+            if not prm or not prms.has_write(prm, username, group_names):
+                raise resp.Forbidden("access denied")
 
-        fl = new_file(body.filename, body.content, parent_id)
+        fl = files_ent.new_file(body.filename, body.content, parent_id)
 
-        p = new_permissions(fl.file_id, username, "root", "rwr-")
+        p = prms.new_permissions(fl.file_id, username, "root", "rwr-")
 
-        conn = save_file(conn, fl)
-        conn = save_file_permissions(conn, p)
+        conn = file_src.save_file(conn, fl)
+        conn = prms_src.save_file_permissions(conn, p)
         conn.commit()
 
         return fl
@@ -135,33 +114,33 @@ class CopyFileRequest:
 
 
 @files_router.post("/file/copy", tags=["Files"])
-async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
-    conn = engine.connect()
+async def copy_file(req: Request, body: CopyFileRequest) -> files_ent.TextFile:
+    conn = db.engine.connect()
     try:
         username = req.state.session.owner
-        groups = fetch_groups_by_user(conn, username)
-        group_names = get_group_names(groups)
+        groups = grps_src.fetch_groups_by_user(conn, username)
+        group_names = grps.get_group_names(groups)
 
-        fl = fetch_file_by_id(conn, body.file_id)
+        fl = file_src.fetch_file_by_id(conn, body.file_id)
 
-        prms = fetch_file_permissions_for(conn, [fl.file_id])
-        prm = find_permition_in_list(prms, fl.file_id)
-        if not prm or not has_read(prm, username, group_names):
-            raise Forbidden("access denied")
+        permitions = prms_src.fetch_file_permissions_for(conn, [fl.file_id])
+        prm = prms.find_permition_in_list(permitions, fl.file_id)
+        if not prm or not prms.has_read(prm, username, group_names):
+            raise resp.Forbidden("access denied")
 
-        dir = fetch_dir_by_id(conn, body.parent_id)
+        dir = dir_src.fetch_dir_by_id(conn, body.parent_id)
 
-        dir_prms = fetch_dir_permissions_for(conn, [dir.dir_id])
-        dir_prm = find_permition_in_list(dir_prms, dir.dir_id)
-        if not dir_prm or not has_write(dir_prm, username, group_names):
-            raise Forbidden("access denied")
+        dir_permitions = prms_src.fetch_dir_permissions_for(conn, [dir.dir_id])
+        dir_prm = prms.find_permition_in_list(dir_permitions, dir.dir_id)
+        if not dir_prm or not prms.has_write(dir_prm, username, group_names):
+            raise resp.Forbidden("access denied")
 
-        new_fl = copy_file_to(fl, body.parent_id)
+        new_fl = files_ent.copy_file_to(fl, body.parent_id)
 
-        p = new_permissions(new_fl.file_id, username, "root", "rwr-")
+        p = prms.new_permissions(new_fl.file_id, username, "root", "rwr-")
 
-        conn = save_file(conn, new_fl)
-        conn = save_file_permissions(conn, p)
+        conn = file_src.save_file(conn, new_fl)
+        conn = prms_src.save_file_permissions(conn, p)
         conn.commit()
 
         return new_fl
@@ -185,28 +164,28 @@ class EditFileRequest:
 
 
 @files_router.patch("/file", tags=["Files"])
-async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
-    conn = engine.connect()
+async def edit_file(req: Request, body: EditFileRequest) -> files_ent.TextFile:
+    conn = db.engine.connect()
     try:
         session = req.state.session
-        groups = fetch_groups_by_user(conn, session.owner)
-        group_names = get_group_names(groups)
+        groups = grps_src.fetch_groups_by_user(conn, session.owner)
+        group_names = grps.get_group_names(groups)
 
-        fl = fetch_file_by_id(conn, body.file_id)
+        fl = file_src.fetch_file_by_id(conn, body.file_id)
 
-        prms = fetch_file_permissions_for(conn, [fl.file_id])
-        prm = find_permition_in_list(prms, fl.file_id)
-        if not prm or not has_write(prm, session.owner, group_names):
-            raise Forbidden("access denied")
+        permitions = prms_src.fetch_file_permissions_for(conn, [fl.file_id])
+        prm = prms.find_permition_in_list(permitions, fl.file_id)
+        if not prm or not prms.has_write(prm, session.owner, group_names):
+            raise resp.Forbidden("access denied")
 
-        fl = change_file_content(fl, body.new_content)
-        fl = rename_file(fl, body.new_filename)
-        fl = change_file_parent(fl, body.new_parent_id)
+        fl = files_ent.change_file_content(fl, body.new_content)
+        fl = files_ent.rename_file(fl, body.new_filename)
+        fl = files_ent.change_file_parent(fl, body.new_parent_id)
 
         if body.new_parent_id:
-            conn = move_file(conn, fl.file_id, body.new_parent_id)
+            conn = file_src.move_file(conn, fl.file_id, body.new_parent_id)
 
-        conn = update_file_by_id(conn, body.file_id, fl)
+        conn = file_src.update_file_by_id(conn, body.file_id, fl)
 
         if (
             body.new_group_perms
@@ -235,8 +214,10 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
                 if body.new_group_name
                 else (prm.group_name if prm else "root")
             )
-            updated_prm = new_permissions(body.file_id, new_owner, new_grp, new_content)
-            conn = update_file_permissions(conn, [updated_prm])
+            updated_prm = prms.new_permissions(
+                body.file_id, new_owner, new_grp, new_content
+            )
+            conn = prms_src.update_file_permissions(conn, [updated_prm])
 
         if body.new_cover:
             _save_image(conn, body.file_id, body.new_cover)
@@ -274,7 +255,7 @@ def _save_image(conn: Connection, file_id: str, data_url: str) -> None:
     file_path = images_dir / f"{uuid.uuid4().hex}.{ext}"
     file_path.write_bytes(raw)
 
-    conn = add_image_to_file(conn, file_id, f"/public/upload/{file_path.name}")
+    conn = file_src.add_image_to_file(conn, file_id, f"/public/upload/{file_path.name}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -284,22 +265,22 @@ class DeletFileReq:
 
 @files_router.delete("/file", tags=["Files"])
 async def delete_file(req: Request, body: DeletFileReq) -> bool:
-    conn = engine.connect()
+    conn = db.engine.connect()
     try:
         session = req.state.session
-        groups = fetch_groups_by_user(conn, session.owner)
-        group_names = get_group_names(groups)
+        groups = grps_src.fetch_groups_by_user(conn, session.owner)
+        group_names = grps.get_group_names(groups)
 
-        fl = fetch_file_by_id(conn, body.file_id)
+        fl = file_src.fetch_file_by_id(conn, body.file_id)
 
-        prms = fetch_file_permissions_for(conn, [fl.file_id])
-        prm = find_permition_in_list(prms, fl.file_id)
-        if not prm or not has_write(prm, session.owner, group_names):
-            raise Forbidden("access denied")
+        permitions = prms_src.fetch_file_permissions_for(conn, [fl.file_id])
+        prm = prms.find_permition_in_list(permitions, fl.file_id)
+        if not prm or not prms.has_write(prm, session.owner, group_names):
+            raise resp.Forbidden("access denied")
 
-        destroy_file(fl)
+        files_ent.destroy_file(fl)
 
-        conn = delete_file_by_id(conn, fl.file_id)
+        conn = file_src.delete_file_by_id(conn, fl.file_id)
         conn.commit()
 
         return True

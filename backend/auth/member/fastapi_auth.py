@@ -4,14 +4,11 @@ from fastapi import APIRouter, Request, Response, Depends
 import json
 import base64
 
-from backend.database.database import engine
-from backend.router.response import *
-from ..session.session import *
-from .member import *
-from .sqlalchemy_member import *
-from ..session.redis_sessions import *
-from ...file_manager.groups.groups import mk_group
-from ...file_manager.groups.sqlalchemy_group import save_group
+import backend.database.database as db
+import backend.router.response as resp
+from ..session import session as sessions, redis_sessions as session_redis
+from . import member as members, sqlalchemy_member as member_src
+from ...file_manager.groups import groups as grps, sqlalchemy_group as grps_src
 
 auth_router = APIRouter()
 
@@ -24,13 +21,13 @@ class LoginRequest:
 
 @auth_router.post("/auth/login", tags=["Auth"])
 async def login(body: LoginRequest, response: Response) -> bool:
-    conn = engine.connect()
+    conn = db.engine.connect()
     try:
-        member = fetch_member_by_username(conn, body.username)
-        member = is_password_incorect(member, body.password)
-        ssn = generate_session_for(member.username)
+        member = member_src.fetch_member_by_username(conn, body.username)
+        member = members.is_password_incorect(member, body.password)
+        ssn = sessions.generate_session_for(member.username)
 
-        user_session = save_session(ssn)
+        user_session = session_redis.save_session(ssn)
 
         user_data: dict[str, str | bool] = {}
         user_data["username"] = member.username
@@ -60,7 +57,7 @@ async def login(body: LoginRequest, response: Response) -> bool:
 
         return True
     except ValueError:
-        raise BadRequest("incorrect username or password")
+        raise resp.BadRequest("incorrect username or password")
     finally:
         conn.rollback()
         conn.close()
@@ -69,8 +66,8 @@ async def login(body: LoginRequest, response: Response) -> bool:
 @auth_router.post("/auth/logout", tags=["Auth"])
 def logout(request: Request, response: Response) -> bool:
     access_token = request.cookies.get("access_token", "")
-    ssn = fetch_session_by_id(access_token)
-    close_session(ssn)
+    ssn = session_redis.fetch_session_by_id(access_token)
+    session_redis.close_session(ssn)
     response.delete_cookie(key="access_token", secure=True, samesite="strict")
     response.delete_cookie(key="user_data", samesite="strict")
     return True
@@ -84,13 +81,13 @@ class RegisterRequest:
 
 @auth_router.post("/auth/register", tags=["Auth"])
 def register(body: RegisterRequest) -> bool:
-    conn = engine.connect()
+    conn = db.engine.connect()
     try:
-        cnd = make_candidate(body.username, body.password)
-        group = mk_group(cnd.username, cnd.username, [body.username])
+        cnd = members.make_candidate(body.username, body.password)
+        group = grps.mk_group(cnd.username, cnd.username, [body.username])
 
-        conn = save_candidate(conn, cnd)
-        conn = save_group(conn, group)
+        conn = member_src.save_candidate(conn, cnd)
+        conn = grps_src.save_group(conn, group)
         conn.commit()
 
         return True
