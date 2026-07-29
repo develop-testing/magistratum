@@ -4,8 +4,15 @@ const mk_file_edit_form = data => {
   const usersList = data.users || []
   const groupsList = data.groups || []
 
-  const mapPerms = permString => {
+  const mapPerms = (permString, type = "group") => {
     if (!permString) return ""
+    if (permString.length === 4) {
+      const offset = type === "other" ? 2 : 0
+      const g =
+        (permString[offset] === "r" ? "r" : "") +
+        (permString[offset + 1] === "w" ? "w" : "")
+      return g || ""
+    }
     const lower = permString.toLowerCase()
     if (lower.includes("read") && lower.includes("write")) return "rw"
     if (lower.includes("read")) return "r"
@@ -23,18 +30,20 @@ const mk_file_edit_form = data => {
     },
     dirs: {
       active: file.parent_id || "",
-      list: dirsList.map(d => ({ value: d.dir_id, label: d.name })),
+      list: dirsList
+        .filter(d => d.dir_id !== file.file_id)
+        .map(d => ({ value: d.dir_id, label: d.name })),
     },
     owner: {
-      active: file.owner || "",
+      active: file.owner_name || "",
       list: usersList.map(u => ({ value: u.username, label: u.username })),
     },
     group: {
-      active: file.group || "",
+      active: file.group_name || "",
       list: groupsList.map(g => ({ value: g.name, label: g.name })),
     },
     group_perms: {
-      active: mapPerms(file.group_perms),
+      active: mapPerms(file.content, "group"),
       list: [
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
@@ -42,7 +51,7 @@ const mk_file_edit_form = data => {
       ],
     },
     other_perms: {
-      active: mapPerms(file.other_perms),
+      active: mapPerms(file.content, "other"),
       list: [
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },

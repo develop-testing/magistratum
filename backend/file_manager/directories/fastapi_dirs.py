@@ -263,6 +263,10 @@ async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
         prm = next((p for p in prms if p.item_id == d_id), None)
 
         if prm and has_read(prm, session_owner, group_names):
+            if fltr.only_can_write and not has_write(
+                prm, session_owner, group_names
+            ):
+                continue
             result.append(d)
 
     return result

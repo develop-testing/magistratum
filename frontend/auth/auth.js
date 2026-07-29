@@ -12,9 +12,7 @@ form?.addEventListener("submit", e => {
   const data = Object.fromEntries(new FormData(form))
 
   send_post(`/auth/${action}`, data)
-    .then(() => {
-      window.location = "/dashboard/root"
-    })
+    .then(() => (window.location = "/dashboard/root"))
     .catch(err => {
       if (errorEl) {
         errorEl.textContent = err.message || "Ошибка"

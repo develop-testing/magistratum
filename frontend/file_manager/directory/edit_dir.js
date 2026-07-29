@@ -1,8 +1,10 @@
-const mapPerms = permString => {
+const mapPerms = (permString, type = "group") => {
   if (!permString) return ""
   if (permString.length === 4) {
+    const offset = type === "other" ? 2 : 0
     const g =
-      (permString[0] === "r" ? "r" : "") + (permString[1] === "w" ? "w" : "")
+      (permString[offset] === "r" ? "r" : "") +
+      (permString[offset + 1] === "w" ? "w" : "")
     return g || ""
   }
   const lower = permString.toLowerCase()
@@ -46,27 +48,29 @@ const mk_dir_edit_form = data => {
     },
     dirs: {
       active: dir.parent_id || "",
-      list: (data.dirs || []).map(d => ({
-        value: d.dir_id,
-        label: d.name,
-      })),
+      list: (data.dirs || [])
+        .filter(d => d.dir_id !== dir.dir_id)
+        .map(d => ({
+          value: d.dir_id,
+          label: d.name,
+        })),
     },
     owner: {
-      active: dir.owner || "",
+      active: dir.owner_name || "",
       list: (data.users || []).map(u => ({
         value: u.username,
         label: u.username,
       })),
     },
     group: {
-      active: dir.group || "",
+      active: dir.group_name || "",
       list: (data.groups || []).map(g => ({
         value: g.name,
         label: g.name,
       })),
     },
     group_perms: {
-      active: mapPerms(dir.group_perms),
+      active: mapPerms(dir.content, "group"),
       list: [
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
@@ -74,7 +78,7 @@ const mk_dir_edit_form = data => {
       ],
     },
     other_perms: {
-      active: mapPerms(dir.other_perms),
+      active: mapPerms(dir.content, "other"),
       list: [
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
@@ -156,8 +160,6 @@ const render_dir_edit_form = form => {
   const group_perms_select = document.querySelector('[name="perm-group-perms"]')
   const other_perms_select = document.querySelector('[name="perm-other-perms"]')
   const back_btn = document.querySelector("#back-btn")
-
-  console.log(form)
 
   back_btn.href = form.dirs.active
     ? "/dashboard/directory/" + form.dirs.active

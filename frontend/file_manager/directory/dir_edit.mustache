@@ -103,6 +103,6 @@
     save_btn.addEventListener('click', e => {
         save_dir_edit_form(dir_edit_form, dir_id)
             .then(() => alert("Сохранено успешно"))
-            .catch(() => alert("Ошибка при сохранении"))
+            .catch(err => alert(err.message))
     })
 </script>
