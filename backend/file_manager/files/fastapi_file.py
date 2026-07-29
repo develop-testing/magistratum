@@ -110,8 +110,8 @@ async def create_file(req: Request, body: CreateFileRequest) -> TextFile:
 
         p = new_permissions(fl.file_id, username, "root", "rwr-")
 
-        save_file(conn, fl)
-        save_file_permissions(conn, p)
+        conn = save_file(conn, fl)
+        conn = save_file_permissions(conn, p)
         conn.commit()
 
         return fl
@@ -153,8 +153,8 @@ async def copy_file(req: Request, body: CopyFileRequest) -> TextFile:
 
         p = new_permissions(new_fl.file_id, username, "root", "rwr-")
 
-        save_file(conn, new_fl)
-        save_file_permissions(conn, p)
+        conn = save_file(conn, new_fl)
+        conn = save_file_permissions(conn, p)
         conn.commit()
 
         return new_fl
@@ -197,9 +197,9 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
         fl = change_file_parent(fl, body.new_parent_id)
 
         if body.new_parent_id:
-            move_file(conn, fl.file_id, body.new_parent_id)
+            conn = move_file(conn, fl.file_id, body.new_parent_id)
 
-        updated_fl = update_file_by_id(conn, body.file_id, fl)
+        conn = update_file_by_id(conn, body.file_id, fl)
 
         if (
             body.new_group_perms
@@ -229,21 +229,21 @@ async def edit_file(req: Request, body: EditFileRequest) -> TextFile:
                 else (prm.group_name if prm else "root")
             )
             updated_prm = new_permissions(body.file_id, new_owner, new_grp, new_content)
-            update_file_permissions(conn, [updated_prm])
+            conn = update_file_permissions(conn, [updated_prm])
 
         if body.new_cover:
             _save_image(conn, body.file_id, body.new_cover)
 
         conn.commit()
 
-        return updated_fl
+        return fl
 
     finally:
         conn.rollback()
         conn.close()
 
 
-def _save_image(conn: Connection, file_id: str, data_url: str) -> str:
+def _save_image(conn: Connection, file_id: str, data_url: str) -> None:
     if "," not in data_url:
         raise ValueError("invalid image data")
 
@@ -267,7 +267,7 @@ def _save_image(conn: Connection, file_id: str, data_url: str) -> str:
     file_path = images_dir / f"{uuid.uuid4().hex}.{ext}"
     file_path.write_bytes(raw)
 
-    return add_image_to_file(conn, file_id, f"/public/upload/{file_path.name}")
+    conn = add_image_to_file(conn, file_id, f"/public/upload/{file_path.name}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -292,7 +292,7 @@ async def delete_file(req: Request, body: DeletFileReq) -> bool:
 
         destroy_file(fl)
 
-        delete_file_by_id(conn, fl.file_id)
+        conn = delete_file_by_id(conn, fl.file_id)
         conn.commit()
 
         return True

@@ -89,8 +89,8 @@ def register(body: RegisterRequest) -> bool:
         cnd = make_candidate(body.username, body.password)
         group = mk_group(cnd.username, cnd.username, [body.username])
 
-        save_candidate(conn, cnd)
-        save_group(conn, group)
+        conn = save_candidate(conn, cnd)
+        conn = save_group(conn, group)
         conn.commit()
 
         return True

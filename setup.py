@@ -23,10 +23,10 @@ if __name__ == "__main__":
     conn = engine.connect()
     try:
         candidate = make_candidate("root", "root")
-        root = save_candidate(conn, candidate)
+        conn = save_candidate(conn, candidate)
 
-        rgroup = mk_group("root", root.username, [])
-        save_group(conn, rgroup)
+        rgroup = mk_group("root", candidate.username, [])
+        conn = save_group(conn, rgroup)
 
         conn.commit()
     finally:

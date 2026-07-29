@@ -26,7 +26,7 @@ sa.Table(
 )
 
 
-def save_group(conn: Connection, grp: Group) -> Group:
+def save_group(conn: Connection, grp: Group) -> Connection:
     create_query = sa.text("""
         INSERT INTO groups (name, owner_name)
         VALUES (:name, :owner_name)
@@ -50,7 +50,7 @@ def save_group(conn: Connection, grp: Group) -> Group:
     if members_data:
         conn.execute(members_query, members_data)
 
-    return grp
+    return conn
 
 
 def fetch_group_by_name(conn: Connection, name: str) -> Group:
@@ -70,7 +70,7 @@ def fetch_group_by_name(conn: Connection, name: str) -> Group:
     return Group(row["name"], row["owner_name"], members)
 
 
-def update_group(conn: Connection, old_name: str, group: Group) -> Group:
+def update_group(conn: Connection, old_name: str, group: Group) -> Connection:
     select_id_query = sa.text("SELECT id FROM groups WHERE name = :name")
 
     update_query = sa.text(
@@ -103,12 +103,12 @@ def update_group(conn: Connection, old_name: str, group: Group) -> Group:
             {"username": username, "group_id": group_id},
         )
 
-    return group
+    return conn
 
 
 def delete_group_by_name(
     conn: Connection, removed: RemovedGroup, perms: list[Permissions]
-) -> None:
+) -> Connection:
     id_query = sa.text("SELECT id FROM groups WHERE name = :name")
 
     delete_members_query = sa.text(
@@ -138,6 +138,8 @@ def delete_group_by_name(
     if row is not None:
         conn.execute(delete_members_query, {"group_id": row["id"]})
         conn.execute(delete_group_query, {"name": removed.name})
+
+    return conn
 
 
 def fetch_groups_by_filter(conn: Connection, filter: FetchGroupReq) -> list[Group]:

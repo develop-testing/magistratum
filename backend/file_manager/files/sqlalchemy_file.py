@@ -159,7 +159,7 @@ def fetch_rich_files_by_filter(
     return out
 
 
-def update_file(conn: Connection, old_name: str, file: TextFile) -> TextFile:
+def update_file(conn: Connection, old_name: str, file: TextFile) -> Connection:
     query = sa.text(
         "UPDATE files SET content = :content, name = :new_name WHERE name = :old_name"
     )
@@ -168,10 +168,10 @@ def update_file(conn: Connection, old_name: str, file: TextFile) -> TextFile:
         {"content": file.content, "new_name": file.name, "old_name": old_name},
     )
 
-    return file
+    return conn
 
 
-def update_file_by_id(conn: Connection, file_id: str, file: TextFile) -> TextFile:
+def update_file_by_id(conn: Connection, file_id: str, file: TextFile) -> Connection:
     query = sa.text(
         "UPDATE files SET content = :content, name = :name WHERE file_id = :file_id"
     )
@@ -179,10 +179,10 @@ def update_file_by_id(conn: Connection, file_id: str, file: TextFile) -> TextFil
         query,
         {"content": file.content, "name": file.name, "file_id": file_id},
     )
-    return file
+    return conn
 
 
-def save_file(conn: Connection, file: TextFile) -> TextFile:
+def save_file(conn: Connection, file: TextFile) -> Connection:
     try:
         insert_file_query = sa.text(
             "INSERT INTO files (file_id, name, content, parent_id) VALUES (:file_id, :name, :content, :parent_id)"
@@ -198,29 +198,29 @@ def save_file(conn: Connection, file: TextFile) -> TextFile:
             },
         )
 
-        return mk_text_file(file.file_id, file.name, file.content, file.parent_id)
+        return conn
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
             raise ValueError("file with this name is exists")
         raise
 
 
-def move_file(conn: Connection, file_id: str, new_dir_id: str) -> str:
+def move_file(conn: Connection, file_id: str, new_dir_id: str) -> Connection:
     query = sa.text("UPDATE files SET parent_id = :dir_id WHERE file_id = :file_id")
 
     conn.execute(query, {"file_id": file_id, "dir_id": new_dir_id})
-    return file_id
+    return conn
 
 
-def delete_file_by_id(conn: Connection, file_id: str) -> bool:
+def delete_file_by_id(conn: Connection, file_id: str) -> Connection:
     query = sa.text("DELETE FROM files WHERE file_id = :file_id")
 
     conn.execute(query, {"file_id": file_id})
 
-    return True
+    return conn
 
 
-def add_image_to_file(conn: Connection, file_id: str, image_path: str) -> str:
+def add_image_to_file(conn: Connection, file_id: str, image_path: str) -> Connection:
     query = sa.text(
         "INSERT INTO files_to_image (file_id, image_path) VALUES (:file_id, :image_path)"
         " ON DUPLICATE KEY UPDATE image_path = :image_path"
@@ -228,7 +228,7 @@ def add_image_to_file(conn: Connection, file_id: str, image_path: str) -> str:
 
     try:
         conn.execute(query, {"file_id": file_id, "image_path": image_path})
-        return image_path
+        return conn
     except sa.exc.IntegrityError:
         raise RuntimeError("failed to save image")
 

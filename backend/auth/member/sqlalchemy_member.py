@@ -50,7 +50,7 @@ def fetch_member_profile_by_username(conn: Connection, username: str) -> MemberP
     return mk_member_profile(str(row["username"]))
 
 
-def save_candidate(conn: Connection, cnd: Candidate) -> Member:
+def save_candidate(conn: Connection, cnd: Candidate) -> Connection:
     try:
         query = sa.text(
             "INSERT INTO users (username, password) VAlUES (:username, :password)"
@@ -63,7 +63,7 @@ def save_candidate(conn: Connection, cnd: Candidate) -> Member:
             },
         )
 
-        return new_member(cnd.username, cnd.password_hash)
+        return conn
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
             raise ValueError("user is exists")
@@ -105,7 +105,7 @@ def fetch_members_by_filter(
     return fetch_all_profiles(conn)
 
 
-def delete_member_by_username(conn: Connection, username: str) -> bool:
+def delete_member_by_username(conn: Connection, username: str) -> Connection:
     query = sa.text("DELETE FROM users WHERE username = :username")
 
     result = conn.execute(query, {"username": username})
@@ -113,4 +113,4 @@ def delete_member_by_username(conn: Connection, username: str) -> bool:
     if result.rowcount == 0:
         raise DeleteError("user not found")
 
-    return True
+    return conn

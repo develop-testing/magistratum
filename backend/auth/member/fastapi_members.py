@@ -35,7 +35,7 @@ def remove_member(req: Request, body: RemoveMemberReq) -> bool:
         if session_owner != "root" and session_owner != body.username:
             raise Forbidden("access not allowed")
 
-        delete_member_by_username(conn, body.username)
+        conn = delete_member_by_username(conn, body.username)
         conn.commit()
 
         return True

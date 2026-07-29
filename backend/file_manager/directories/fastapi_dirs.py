@@ -74,8 +74,8 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
         new_dir = new_directory(body.name, body.parent_id)
         new_perm = new_permissions(new_dir.dir_id, session_owner, group_name, "rw--")
 
-        save_directory(conn, new_dir)
-        save_dir_permissions(conn, new_perm)
+        conn = save_directory(conn, new_dir)
+        conn = save_dir_permissions(conn, new_perm)
         conn.commit()
 
         return new_dir
@@ -117,7 +117,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
         dir = rename_directory(dir, body.new_name)
         dir = change_directory_parent(dir, body.new_parent_id)
 
-        update_directory(conn, dir)
+        conn = update_directory(conn, dir)
 
         if (
             body.new_group_perms
@@ -147,7 +147,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
                 else (prm.group_name if prm else "root")
             )
             updated_prm = new_permissions(body.dir_id, new_owner, new_grp, new_content)
-            update_dir_permissions(conn, [updated_prm])
+            conn = update_dir_permissions(conn, [updated_prm])
 
         if body.new_cover:
             _save_image(conn, body.dir_id, body.new_cover)
@@ -187,7 +187,7 @@ def _save_image(conn: Connection, dir_id: str, data_url: str) -> None:
     file_path = images_dir / f"{uuid.uuid4().hex}.{ext}"
     file_path.write_bytes(raw)
 
-    add_image_to_dir(conn, dir_id, f"/public/upload/{file_path.name}")
+    conn = add_image_to_dir(conn, dir_id, f"/public/upload/{file_path.name}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -210,7 +210,7 @@ async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
         if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
 
-        delete_directory(conn, dir.dir_id)
+        conn = delete_directory(conn, dir.dir_id)
         conn.commit()
 
         return True

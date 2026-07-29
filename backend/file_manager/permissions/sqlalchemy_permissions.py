@@ -32,7 +32,7 @@ sa.Table(
 )
 
 
-def _save(conn: Connection, table_name: str, prms: Permissions) -> None:
+def _save(conn: Connection, table_name: str, prms: Permissions) -> Connection:
     query = sa.text(
         f"INSERT INTO {table_name}"
         " (item_id, owner_name, group_name, content)"
@@ -48,6 +48,8 @@ def _save(conn: Connection, table_name: str, prms: Permissions) -> None:
             "content": prms.content,
         },
     )
+
+    return conn
 
 
 def _fetch_for(
@@ -107,7 +109,7 @@ def _fetch_by_group(
     return out
 
 
-def _update(conn: Connection, table_name: str, perms: list[Permissions]) -> None:
+def _update(conn: Connection, table_name: str, perms: list[Permissions]) -> Connection:
     query = sa.text(
         f"UPDATE {table_name}"
         " SET owner_name = :owner_name, group_name = :group_name, content = :content"
@@ -125,13 +127,15 @@ def _update(conn: Connection, table_name: str, perms: list[Permissions]) -> None
             },
         )
 
-
-def save_dir_permissions(conn: Connection, prms: Permissions) -> None:
-    _save(conn, "dir_permissions", prms)
+    return conn
 
 
-def save_file_permissions(conn: Connection, prms: Permissions) -> None:
-    _save(conn, "file_permissions", prms)
+def save_dir_permissions(conn: Connection, prms: Permissions) -> Connection:
+    return _save(conn, "dir_permissions", prms)
+
+
+def save_file_permissions(conn: Connection, prms: Permissions) -> Connection:
+    return _save(conn, "file_permissions", prms)
 
 
 def fetch_dir_permissions_for(
@@ -158,9 +162,9 @@ def fetch_file_permissions_by_group(
     return _fetch_by_group(conn, "file_permissions", group_name)
 
 
-def update_dir_permissions(conn: Connection, perms: list[Permissions]) -> None:
-    _update(conn, "dir_permissions", perms)
+def update_dir_permissions(conn: Connection, perms: list[Permissions]) -> Connection:
+    return _update(conn, "dir_permissions", perms)
 
 
-def update_file_permissions(conn: Connection, perms: list[Permissions]) -> None:
-    _update(conn, "file_permissions", perms)
+def update_file_permissions(conn: Connection, perms: list[Permissions]) -> Connection:
+    return _update(conn, "file_permissions", perms)

@@ -32,7 +32,7 @@ async def create_group(req: Request, body: CreateGroupRequest) -> Group:
             raise Forbidden("only root can create groups")
 
         g = mk_group(body.name, body.owner, body.members)
-        save_group(conn, g)
+        conn = save_group(conn, g)
         conn.commit()
         return g
 
@@ -69,7 +69,7 @@ async def edit_group(req: Request, body: EditGroupRequest) -> Group:
         for username in body.new_members:
             g = add_member(g, username)
 
-        update_group(conn, body.name, g)
+        conn = update_group(conn, body.name, g)
         conn.commit()
         return g
 
@@ -117,7 +117,7 @@ async def delete_group(req: Request, body: RemoveGroupReq) -> bool:
         updated = [change_group(p, "root") for p in perms]
 
         removed = destroy_group(g)
-        delete_group_by_name(conn, removed, updated)
+        conn = delete_group_by_name(conn, removed, updated)
         conn.commit()
 
         return True
