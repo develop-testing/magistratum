@@ -27,16 +27,18 @@ const delete_user = username => {
 }
 
 const create_user_table_row = user => {
+  const isRoot = user.username === "root"
+
   return `
     <tr>
         <td class="p-4" data-username>${user.username}</td>
         <td class="p-4">
             <div class="table-buttons">
-                <button class="def-button flex-basic px-2" data-user-remove="${user.username}">Удалить</button>
+                <button class="def-button flex-basic px-2" data-user-remove="${user.username}" ${isRoot ? "disabled" : ""}>Удалить</button>
             </div>
         </td>
     </tr>
-    `
+  `
 }
 
 const create_group_table_row = (group, users) => {
@@ -44,8 +46,10 @@ const create_group_table_row = (group, users) => {
   let ownerHtml = ""
 
   users.forEach(user => {
+    const isRoot = user.username === "root"
     const is_member = group.members.includes(user.username)
     const user_in_group = is_member ? "checked" : ""
+    const rootDisabled = isRoot ? "disabled" : ""
 
     const is_owner = group.owner === user.username
     const owner_checked = is_owner ? "checked" : ""
@@ -59,6 +63,7 @@ const create_group_table_row = (group, users) => {
                 name="members[]"
                 type="checkbox"
                 value="${user.username}"
+                ${rootDisabled}
               >
               <span>${user.username}</span>
           </label>
@@ -74,12 +79,16 @@ const create_group_table_row = (group, users) => {
                 name="owner-${group.name}-"
                 type="radio"
                 value="${user.username}"
+                ${rootDisabled}
               >
               <span>${user.username}</span>
           </label>
       </div>
     `
   })
+
+  const isRootGroup = group.name === "root"
+  const buttonsDisabled = isRootGroup ? "disabled" : ""
 
   return `
     <tr>
@@ -90,8 +99,8 @@ const create_group_table_row = (group, users) => {
         </td>
         <td class="p-4">
             <div class="table-buttons">
-                <button class="def-button flex-basic px-2" data-group-remove="${group.name}">Удалить</button>
-                <button class="def-button flex-basic px-2" data-group-save="${group.name}">Сохранить</button>
+                <button class="def-button flex-basic px-2" data-group-remove="${group.name}" ${buttonsDisabled}>Удалить</button>
+                <button class="def-button flex-basic px-2" data-group-save="${group.name}" ${buttonsDisabled}>Сохранить</button>
             </div>
         </td>
     </tr>

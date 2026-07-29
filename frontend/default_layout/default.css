@@ -95,6 +95,11 @@
   text-decoration: none;
 }
 
+.def-button:disabled {
+  background-color: #ddd;
+  color: var(--mark-color);
+}
+
 .def-field {
   display: block;
 }
