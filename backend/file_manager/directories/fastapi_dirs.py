@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from fastapi import APIRouter, Depends, Request
 
+from sqlalchemy.engine import Connection
+
+from backend.database.database import engine
+
 from backend.router.response import *
 
 from .directory import *
@@ -49,18 +53,18 @@ class CreateDirectoryReq:
 
 @dirs_router.post("/directory", tags=["Directories"])
 async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
+    conn = engine.connect()
     try:
-
         session_owner = req.state.session.owner
         group_name = ""
 
         if body.parent_id:
-            groups = fetch_groups_by_user(session_owner)
+            groups = fetch_groups_by_user(conn, session_owner)
             group_names = [g.name for g in groups]
 
-            parent_dir = fetch_dir_by_id(body.parent_id)
+            parent_dir = fetch_dir_by_id(conn, body.parent_id)
 
-            prms = fetch_dir_permissions_for([parent_dir.dir_id])
+            prms = fetch_dir_permissions_for(conn, [parent_dir.dir_id])
             prm = next((p for p in prms if p.item_id == parent_dir.dir_id), None)
             if not prm or not has_write(prm, session_owner, group_names):
                 raise Forbidden("access denied")
@@ -70,13 +74,17 @@ async def create_directory(req: Request, body: CreateDirectoryReq) -> Directory:
         new_dir = new_directory(body.name, body.parent_id)
         new_perm = new_permissions(new_dir.dir_id, session_owner, group_name, "rw--")
 
-        new_dir = save_directory(new_dir)
-        new_perm = save_dir_permissions(new_perm)
+        save_directory(conn, new_dir)
+        save_dir_permissions(conn, new_perm)
+        conn.commit()
 
         return new_dir
 
     except DirFetchError as e:
         raise BadRequest(str(e))
+    finally:
+        conn.rollback()
+        conn.close()
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,15 +101,15 @@ class EditDirectoryReq:
 
 @dirs_router.patch("/directory", tags=["Directories"])
 async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
+    conn = engine.connect()
     try:
-
         session_owner = req.state.session.owner
-        groups = fetch_groups_by_user(session_owner)
+        groups = fetch_groups_by_user(conn, session_owner)
         group_names = [g.name for g in groups]
 
-        dir = fetch_dir_by_id(body.dir_id)
+        dir = fetch_dir_by_id(conn, body.dir_id)
 
-        prms = fetch_dir_permissions_for([dir.dir_id])
+        prms = fetch_dir_permissions_for(conn, [dir.dir_id])
         prm = next((p for p in prms if p.item_id == dir.dir_id), None)
         if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
@@ -109,7 +117,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
         dir = rename_directory(dir, body.new_name)
         dir = change_directory_parent(dir, body.new_parent_id)
 
-        updated_dir = update_directory(dir)
+        update_directory(conn, dir)
 
         if (
             body.new_group_perms
@@ -139,18 +147,23 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> Directory:
                 else (prm.group_name if prm else "root")
             )
             updated_prm = new_permissions(body.dir_id, new_owner, new_grp, new_content)
-            update_dir_permissions([updated_prm])
+            update_dir_permissions(conn, [updated_prm])
 
         if body.new_cover:
-            _save_image(body.dir_id, body.new_cover)
+            _save_image(conn, body.dir_id, body.new_cover)
 
-        return updated_dir
+        conn.commit()
+
+        return dir
 
     except DirFetchError as e:
         raise BadRequest(str(e))
+    finally:
+        conn.rollback()
+        conn.close()
 
 
-def _save_image(dir_id: str, data_url: str) -> str:
+def _save_image(conn: Connection, dir_id: str, data_url: str) -> None:
     if "," not in data_url:
         raise ValueError("invalid image data")
 
@@ -174,7 +187,7 @@ def _save_image(dir_id: str, data_url: str) -> str:
     file_path = images_dir / f"{uuid.uuid4().hex}.{ext}"
     file_path.write_bytes(raw)
 
-    return add_image_to_dir(dir_id, f"/public/upload/{file_path.name}")
+    add_image_to_dir(conn, dir_id, f"/public/upload/{file_path.name}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -184,23 +197,29 @@ class DeleteDirectoryReq:
 
 @dirs_router.delete("/directory", tags=["Directories"])
 async def delete_dir(req: Request, body: DeleteDirectoryReq) -> bool:
+    conn = engine.connect()
     try:
-
         session_owner = req.state.session.owner
-        groups = fetch_groups_by_user(session_owner)
+        groups = fetch_groups_by_user(conn, session_owner)
         group_names = [g.name for g in groups]
 
-        dir = fetch_dir_by_id(body.dir_id)
+        dir = fetch_dir_by_id(conn, body.dir_id)
 
-        prms = fetch_dir_permissions_for([dir.dir_id])
+        prms = fetch_dir_permissions_for(conn, [dir.dir_id])
         prm = next((p for p in prms if p.item_id == dir.dir_id), None)
         if not prm or not has_write(prm, session_owner, group_names):
             raise Forbidden("access denied")
 
-        return delete_directory(dir.dir_id)
+        delete_directory(conn, dir.dir_id)
+        conn.commit()
+
+        return True
 
     except DirFetchError as e:
         raise BadRequest(str(e))
+    finally:
+        conn.rollback()
+        conn.close()
 
 
 DirRdResult = list[Directory | RichDirectory | BrokenDirectory]
@@ -208,65 +227,77 @@ DirRdResult = list[Directory | RichDirectory | BrokenDirectory]
 
 @dirs_router.get("/directories/root", tags=["Directories"])
 async def read_root_dirs(req: Request) -> DirRdResult:
-    session_owner = req.state.session.owner
+    conn = engine.connect()
+    try:
+        session_owner = req.state.session.owner
 
-    groups = fetch_groups_by_user(session_owner)
-    group_names = [g.name for g in groups]
+        groups = fetch_groups_by_user(conn, session_owner)
+        group_names = [g.name for g in groups]
 
-    dirs = fetch_dirs_by_parent(None)
+        dirs = fetch_dirs_by_parent(conn, None)
 
-    if not dirs:
-        raise BadRequest("directories not found")
+        if not dirs:
+            raise BadRequest("directories not found")
 
-    prms = fetch_dir_permissions_for([d.dir_id for d in dirs])
+        prms = fetch_dir_permissions_for(conn, [d.dir_id for d in dirs])
 
-    result: DirRdResult = []
-    for d in dirs:
-        prm = next((p for p in prms if p.item_id == d.dir_id), None)
+        result: DirRdResult = []
+        for d in dirs:
+            prm = next((p for p in prms if p.item_id == d.dir_id), None)
 
-        if prm and has_read(prm, session_owner, group_names):
-            image = fetch_image_by_dir(d.dir_id)
-            result.append(
-                mk_rich_directory(
-                    d,
-                    prm,
-                    image,
+            if prm and has_read(prm, session_owner, group_names):
+                image = fetch_image_by_dir(conn, d.dir_id)
+                result.append(
+                    mk_rich_directory(
+                        d,
+                        prm,
+                        image,
+                    )
                 )
-            )
 
-    return result
+        return result
+
+    finally:
+        conn.rollback()
+        conn.close()
 
 
 @dirs_router.get("/directories", tags=["Directories"])
 async def read_dirs(req: Request, fltr: DirFilter = Depends()) -> DirRdResult:
-    session_owner = req.state.session.owner
+    conn = engine.connect()
+    try:
+        session_owner = req.state.session.owner
 
-    groups = fetch_groups_by_user(session_owner)
-    group_names = [g.name for g in groups]
+        groups = fetch_groups_by_user(conn, session_owner)
+        group_names = [g.name for g in groups]
 
-    dirs: list[Directory] | list[RichDirectory]
-    prms: list[Permissions]
+        dirs: list[Directory] | list[RichDirectory]
+        prms: list[Permissions]
 
-    match fltr.data_type:
-        case "rich":
-            dirs = fetch_rich_dirs_by_filter(fltr)
-            prms = [d.perms for d in dirs if isinstance(d, RichDirectory)]
-        case _:
-            dirs = fetch_dirs_by_filter(fltr)
-            prms = fetch_dir_permissions_for(
-                [d.dir_id for d in dirs if isinstance(d, Directory)]
-            )
+        match fltr.data_type:
+            case "rich":
+                dirs = fetch_rich_dirs_by_filter(conn, fltr)
+                prms = [d.perms for d in dirs if isinstance(d, RichDirectory)]
+            case _:
+                dirs = fetch_dirs_by_filter(conn, fltr)
+                prms = fetch_dir_permissions_for(
+                    conn, [d.dir_id for d in dirs if isinstance(d, Directory)]
+                )
 
-    result: DirRdResult = []
-    for d in dirs:
-        d_id = d.dir_id if isinstance(d, Directory) else d.directory.dir_id
-        prm = next((p for p in prms if p.item_id == d_id), None)
+        result: DirRdResult = []
+        for d in dirs:
+            d_id = d.dir_id if isinstance(d, Directory) else d.directory.dir_id
+            prm = next((p for p in prms if p.item_id == d_id), None)
 
-        if prm and has_read(prm, session_owner, group_names):
-            if fltr.only_can_write and not has_write(
-                prm, session_owner, group_names
-            ):
-                continue
-            result.append(d)
+            if prm and has_read(prm, session_owner, group_names):
+                if fltr.only_can_write and not has_write(
+                    prm, session_owner, group_names
+                ):
+                    continue
+                result.append(d)
 
-    return result
+        return result
+
+    finally:
+        conn.rollback()
+        conn.close()

@@ -1,7 +1,8 @@
 from collections.abc import Sequence
 import sqlalchemy as sa
+from sqlalchemy.engine import Connection
 
-from backend.database.database import engine, metadata
+from backend.database.database import metadata
 
 from .groups import FetchGroupReq, Group, RemovedGroup
 from ..permissions.permissions import Permissions
@@ -25,7 +26,7 @@ sa.Table(
 )
 
 
-def save_group(grp: Group) -> Group:
+def save_group(conn: Connection, grp: Group) -> Group:
     create_query = sa.text("""
         INSERT INTO groups (name, owner_name)
         VALUES (:name, :owner_name)
@@ -38,44 +39,38 @@ def save_group(grp: Group) -> Group:
         VALUES (:username, :group_id)
     """)
 
-    with engine.connect() as conn:
-        conn.execute(create_query, {"name": grp.name, "owner_name": grp.owner})
+    conn.execute(create_query, {"name": grp.name, "owner_name": grp.owner})
 
-        group_id = conn.execute(select_id_query, {"name": grp.name}).scalar()
+    group_id = conn.execute(select_id_query, {"name": grp.name}).scalar()
 
-        members_data = [
-            {"username": username, "group_id": group_id} for username in grp.members
-        ]
+    members_data = [
+        {"username": username, "group_id": group_id} for username in grp.members
+    ]
 
-        if members_data:
-            conn.execute(members_query, members_data)
-
-        conn.commit()
+    if members_data:
+        conn.execute(members_query, members_data)
 
     return grp
 
 
-def fetch_group_by_name(name: str) -> Group:
+def fetch_group_by_name(conn: Connection, name: str) -> Group:
     query = sa.text("SELECT id, name, owner_name FROM groups WHERE name = :name")
 
     members_query = sa.text(
         "SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS CHAR)"
     )
 
-    with engine.connect() as conn:
-        row = conn.execute(query, {"name": name}).mappings().first()
+    row = conn.execute(query, {"name": name}).mappings().first()
 
-        if row is None:
-            raise ValueError("group not found")
+    if row is None:
+        raise ValueError("group not found")
 
-        members = [
-            row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
-        ]
+    members = [row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})]
 
-        return Group(row["name"], row["owner_name"], members)
+    return Group(row["name"], row["owner_name"], members)
 
 
-def update_group(old_name: str, group: Group) -> Group:
+def update_group(conn: Connection, old_name: str, group: Group) -> Group:
     select_id_query = sa.text("SELECT id FROM groups WHERE name = :name")
 
     update_query = sa.text(
@@ -90,31 +85,30 @@ def update_group(old_name: str, group: Group) -> Group:
         "INSERT INTO users_to_groups (username, group_id) VALUES (:username, :group_id)"
     )
 
-    with engine.connect() as conn:
-        group_id = conn.execute(select_id_query, {"name": old_name}).scalar()
+    group_id = conn.execute(select_id_query, {"name": old_name}).scalar()
 
-        if group_id is None:
-            raise ValueError("group not found")
+    if group_id is None:
+        raise ValueError("group not found")
 
+    conn.execute(
+        update_query,
+        {"new_name": group.name, "owner_name": group.owner, "old_name": old_name},
+    )
+
+    conn.execute(delete_members_query, {"group_id": group_id})
+
+    for username in group.members:
         conn.execute(
-            update_query,
-            {"new_name": group.name, "owner_name": group.owner, "old_name": old_name},
+            insert_members_query,
+            {"username": username, "group_id": group_id},
         )
 
-        conn.execute(delete_members_query, {"group_id": group_id})
-
-        for username in group.members:
-            conn.execute(
-                insert_members_query,
-                {"username": username, "group_id": group_id},
-            )
-
-        conn.commit()
-
-        return group
+    return group
 
 
-def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> None:
+def delete_group_by_name(
+    conn: Connection, removed: RemovedGroup, perms: list[Permissions]
+) -> None:
     id_query = sa.text("SELECT id FROM groups WHERE name = :name")
 
     delete_members_query = sa.text(
@@ -123,33 +117,30 @@ def delete_group_by_name(removed: RemovedGroup, perms: list[Permissions]) -> Non
 
     delete_group_query = sa.text("DELETE FROM groups WHERE name = :name")
 
-    with engine.connect() as conn:
-        for table in ("dir_permissions", "file_permissions"):
-            update_perms_query = sa.text(
-                f"UPDATE {table}"
-                " SET owner_name = :owner_name, group_name = :group_name, content = :content"
-                " WHERE item_id = :item_id"
+    for table in ("dir_permissions", "file_permissions"):
+        update_perms_query = sa.text(
+            f"UPDATE {table}"
+            " SET owner_name = :owner_name, group_name = :group_name, content = :content"
+            " WHERE item_id = :item_id"
+        )
+        for p in perms:
+            conn.execute(
+                update_perms_query,
+                {
+                    "item_id": p.item_id,
+                    "owner_name": p.owner_name,
+                    "group_name": p.group_name,
+                    "content": p.content,
+                },
             )
-            for p in perms:
-                conn.execute(
-                    update_perms_query,
-                    {
-                        "item_id": p.item_id,
-                        "owner_name": p.owner_name,
-                        "group_name": p.group_name,
-                        "content": p.content,
-                    },
-                )
 
-        row = conn.execute(id_query, {"name": removed.name}).mappings().first()
-        if row is not None:
-            conn.execute(delete_members_query, {"group_id": row["id"]})
-            conn.execute(delete_group_query, {"name": removed.name})
-
-        conn.commit()
+    row = conn.execute(id_query, {"name": removed.name}).mappings().first()
+    if row is not None:
+        conn.execute(delete_members_query, {"group_id": row["id"]})
+        conn.execute(delete_group_query, {"name": removed.name})
 
 
-def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
+def fetch_groups_by_filter(conn: Connection, filter: FetchGroupReq) -> list[Group]:
     sql = """
         SELECT g.id, g.name, g.owner_name, utg.username
         FROM groups g
@@ -181,8 +172,7 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
         """
         params = {"member": filter.member}
 
-    with engine.connect() as conn:
-        rows = conn.execute(sa.text(sql), params).mappings().all()
+    rows = conn.execute(sa.text(sql), params).mappings().all()
 
     groups_dict: dict[tuple[int, str, str], list[str]] = {}
     for row in rows:
@@ -198,7 +188,7 @@ def fetch_groups_by_filter(filter: FetchGroupReq) -> list[Group]:
     ]
 
 
-def fetch_groups_by_user(username: str) -> list[Group]:
+def fetch_groups_by_user(conn: Connection, username: str) -> list[Group]:
     groups_query = sa.text("""
         SELECT g.id, g.name, g.owner_name
         FROM groups g
@@ -210,21 +200,19 @@ def fetch_groups_by_user(username: str) -> list[Group]:
         SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS CHAR)
     """)
 
-    with engine.connect() as conn:
-        group_rows = conn.execute(groups_query, {"username": username}).mappings().all()
+    group_rows = conn.execute(groups_query, {"username": username}).mappings().all()
 
-        groups: list[Group] = []
-        for row in group_rows:
-            members = [
-                row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
-            ]
-            groups.append(Group(row["name"], row["owner_name"], members))
+    groups: list[Group] = []
+    for row in group_rows:
+        members = [
+            row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
+        ]
+        groups.append(Group(row["name"], row["owner_name"], members))
 
     return groups
 
 
-def fetch_all_groups() -> list[str]:
+def fetch_all_groups(conn: Connection) -> list[str]:
     query = sa.text("SELECT name FROM groups")
 
-    with engine.connect() as conn:
-        return [str(r["name"]) for r in conn.execute(query).mappings().all()]
+    return [str(r["name"]) for r in conn.execute(query).mappings().all()]

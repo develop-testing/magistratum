@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 import sqlalchemy as sa
+from sqlalchemy.engine import Connection
 
 
-from backend.database.database import engine, metadata
+from backend.database.database import metadata
 from .member import *
 
 sa.Table(
@@ -21,102 +22,95 @@ class DeleteError(Exception):
         super().__init__(message)
 
 
-def fetch_member_by_username(username: str) -> Member:
+def fetch_member_by_username(conn: Connection, username: str) -> Member:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )
 
-    with engine.connect() as conn:
-        result = conn.execute(query, {"username": username})
-        row = result.mappings().first()
+    result = conn.execute(query, {"username": username})
+    row = result.mappings().first()
 
-        if row is None:
-            raise ValueError("user not found")
+    if row is None:
+        raise ValueError("user not found")
 
-        return new_member(row["username"], row["password"])
+    return new_member(row["username"], row["password"])
 
 
-def fetch_member_profile_by_username(username: str) -> MemberProfile:
+def fetch_member_profile_by_username(conn: Connection, username: str) -> MemberProfile:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )
 
-    with engine.connect() as conn:
-        result = conn.execute(query, {"username": username})
-        row = result.mappings().first()
+    result = conn.execute(query, {"username": username})
+    row = result.mappings().first()
 
-        if row is None:
-            raise ValueError("user not found")
+    if row is None:
+        raise ValueError("user not found")
 
-        return mk_member_profile(str(row["username"]))
+    return mk_member_profile(str(row["username"]))
 
 
-def save_candidate(cnd: Candidate) -> Member:
+def save_candidate(conn: Connection, cnd: Candidate) -> Member:
     try:
-        with engine.connect() as conn:
-            query = sa.text(
-                "INSERT INTO users (username, password) VAlUES (:username, :password)"
-            )
-            conn.execute(
-                query,
-                {
-                    "username": cnd.username,
-                    "password": cnd.password_hash,
-                },
-            )
-            conn.commit()
+        query = sa.text(
+            "INSERT INTO users (username, password) VAlUES (:username, :password)"
+        )
+        conn.execute(
+            query,
+            {
+                "username": cnd.username,
+                "password": cnd.password_hash,
+            },
+        )
 
-            return new_member(cnd.username, cnd.password_hash)
+        return new_member(cnd.username, cnd.password_hash)
     except sa.exc.IntegrityError as e:
         if e.orig and len(e.orig.args) > 0 and e.orig.args[0] == 1062:
             raise ValueError("user is exists")
         raise
 
 
-def fetch_all_members() -> list[Member]:
+def fetch_all_members(conn: Connection) -> list[Member]:
     query = sa.text("SELECT username, password FROM users")
 
-    with engine.connect() as conn:
-        rows = conn.execute(query).mappings().all()
+    rows = conn.execute(query).mappings().all()
 
-        out: list[Member] = []
-        for row in rows:
-            m = new_member(str(row["username"]), str(row["password"]))
-            out.append(m)
+    out: list[Member] = []
+    for row in rows:
+        m = new_member(str(row["username"]), str(row["password"]))
+        out.append(m)
 
-        return out
+    return out
 
 
-def fetch_all_profiles() -> list[MemberProfile]:
+def fetch_all_profiles(conn: Connection) -> list[MemberProfile]:
     query = sa.text("SELECT username, password FROM users")
 
-    with engine.connect() as conn:
-        rows = conn.execute(query).mappings().all()
+    rows = conn.execute(query).mappings().all()
 
-        out: list[MemberProfile] = []
-        for row in rows:
-            m = mk_member_profile(str(row["username"]))
-            out.append(m)
+    out: list[MemberProfile] = []
+    for row in rows:
+        m = mk_member_profile(str(row["username"]))
+        out.append(m)
 
-        return out
+    return out
 
 
-def fetch_members_by_filter(fltr: FilterOfMember) -> list[MemberProfile]:
+def fetch_members_by_filter(
+    conn: Connection, fltr: FilterOfMember
+) -> list[MemberProfile]:
     if fltr.by_name:
-        return [fetch_member_profile_by_username(fltr.by_name)]
+        return [fetch_member_profile_by_username(conn, fltr.by_name)]
 
-    return fetch_all_profiles()
+    return fetch_all_profiles(conn)
 
 
-def delete_member_by_username(username: str) -> bool:
+def delete_member_by_username(conn: Connection, username: str) -> bool:
     query = sa.text("DELETE FROM users WHERE username = :username")
 
-    with engine.connect() as conn:
-        result = conn.execute(query, {"username": username})
+    result = conn.execute(query, {"username": username})
 
-        if result.rowcount == 0:
-            raise DeleteError("user not found")
-
-        conn.commit()
+    if result.rowcount == 0:
+        raise DeleteError("user not found")
 
     return True

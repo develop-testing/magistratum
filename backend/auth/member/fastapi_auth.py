@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request, Response, Depends
 import json
 import base64
 
+from backend.database.database import engine
 from backend.router.response import *
 from ..session.session import *
 from .member import *
@@ -23,8 +24,9 @@ class LoginRequest:
 
 @auth_router.post("/auth/login", tags=["Auth"])
 async def login(body: LoginRequest, response: Response) -> bool:
+    conn = engine.connect()
     try:
-        member = fetch_member_by_username(body.username)
+        member = fetch_member_by_username(conn, body.username)
         member = is_password_incorect(member, body.password)
         ssn = generate_session_for(member.username)
 
@@ -59,6 +61,9 @@ async def login(body: LoginRequest, response: Response) -> bool:
         return True
     except ValueError:
         raise BadRequest("incorrect username or password")
+    finally:
+        conn.rollback()
+        conn.close()
 
 
 @auth_router.post("/auth/logout", tags=["Auth"])
@@ -79,10 +84,16 @@ class RegisterRequest:
 
 @auth_router.post("/auth/register", tags=["Auth"])
 def register(body: RegisterRequest) -> bool:
-    cnd = make_candidate(body.username, body.password)
-    group = mk_group(cnd.username, cnd.username, [body.username])
+    conn = engine.connect()
+    try:
+        cnd = make_candidate(body.username, body.password)
+        group = mk_group(cnd.username, cnd.username, [body.username])
 
-    save_candidate(cnd)
-    save_group(group)
+        save_candidate(conn, cnd)
+        save_group(conn, group)
+        conn.commit()
 
-    return True
+        return True
+    finally:
+        conn.rollback()
+        conn.close()

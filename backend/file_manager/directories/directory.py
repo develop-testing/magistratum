@@ -44,7 +44,9 @@ def new_directory(dir_name: str, parent_id: str) -> Directory:
     return Directory("dir@" + str(uuid.uuid4()), dir_name, parent_id, [])
 
 
-def mk_directory(dir_id: str, name: str, parent_id: str | None, files: list[str]) -> Directory:
+def mk_directory(
+    dir_id: str, name: str, parent_id: str | None, files: list[str]
+) -> Directory:
     return Directory(dir_id, name, parent_id, files)
 
 

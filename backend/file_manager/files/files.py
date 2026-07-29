@@ -50,7 +50,9 @@ def mk_broken_file(name: str, reason: str) -> BrokenFile:
     return BrokenFile(name, reason)
 
 
-def mk_text_file(id: str, name: str, content: str, parent_id: str | None = None) -> TextFile:
+def mk_text_file(
+    id: str, name: str, content: str, parent_id: str | None = None
+) -> TextFile:
     return TextFile(id, name, content, parent_id)
 
 

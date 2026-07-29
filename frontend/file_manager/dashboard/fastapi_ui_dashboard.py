@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 
 import chevron  # type: ignore[import-untyped]
 
+from backend.database.database import engine
 from backend.file_manager.directories.sqlalchemy_dir import fetch_dir_by_id
 from mustache_default import generate_layout
 
@@ -15,7 +16,12 @@ def render_dashboard(dir_id: str, username: str) -> HTMLResponse:
     template = "frontend/file_manager/dashboard/dashboard.mustache"
     parent_id: str | None = None
     if dir_id:
-        parent_id = fetch_dir_by_id(dir_id).parent_id
+        conn = engine.connect()
+        try:
+            parent_id = fetch_dir_by_id(conn, dir_id).parent_id
+        finally:
+            conn.rollback()
+            conn.close()
 
     with open(template, "r", encoding="utf-8") as tmpl:
         tmpl_content = chevron.render(

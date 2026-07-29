@@ -20,8 +20,15 @@ if __name__ == "__main__":
     metadata.drop_all(engine)
     metadata.create_all(engine)
 
-    candidate = make_candidate("root", "root")
-    root = save_candidate(candidate)
+    conn = engine.connect()
+    try:
+        candidate = make_candidate("root", "root")
+        root = save_candidate(conn, candidate)
 
-    rgroup = mk_group("root", root.username, [])
-    rgroup = save_group(rgroup)
+        rgroup = mk_group("root", root.username, [])
+        save_group(conn, rgroup)
+
+        conn.commit()
+    finally:
+        conn.rollback()
+        conn.close()
