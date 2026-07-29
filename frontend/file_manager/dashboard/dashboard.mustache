@@ -152,9 +152,12 @@
 
                     result.then((res) => {
                         file_manager = get_content().then((fm) => {
-                            show_file_manager(fm.items.map(make_item_html).join(""));
-                            return fm;
+                            show_file_manager(fm.items.map(make_item_html).join(""))
+                            return fm
                         }).catch(err => {
+                            if (err.message === "directories not found")
+                                show_file_manager("")
+
                             if (err && err.status === 400) return;
                             throw err;
                         });
