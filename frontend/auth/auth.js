@@ -15,9 +15,9 @@ form?.addEventListener("submit", e => {
     .then(() => {
       window.location = "/dashboard/root"
     })
-    .catch(text => {
+    .catch(err => {
       if (errorEl) {
-        errorEl.textContent = text || "Ошибка"
+        errorEl.textContent = err.message || "Ошибка"
         errorEl.classList.add("-show")
       }
     })
