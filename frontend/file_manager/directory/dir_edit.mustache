@@ -71,6 +71,7 @@
         .then(form => {
             dir_edit_form = render_dir_edit_form(form)
         })
+        .catch(err => alert(err.message))
 
     edit_card.addEventListener('change', e => {
         const target = e.target

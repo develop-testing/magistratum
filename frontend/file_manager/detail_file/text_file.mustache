@@ -75,7 +75,7 @@
 
     fetch_file_edit_form(file_id, "root").then(form =>
         file_edit_form = render_file_edit_form(form)
-    )
+    ).catch(err => alert(err.message))
 
     edit_card.addEventListener('change', e => {
         const target = e.target
