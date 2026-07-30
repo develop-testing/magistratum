@@ -13,6 +13,7 @@ from backend.database.database import metadata
 import backend.auth.member.sqlalchemy_member
 import backend.file_manager.node.sqlalchemy_node
 import backend.file_manager.groups.sqlalchemy_group
+import backend.image.sqlalchemy_image
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

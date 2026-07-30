@@ -19,16 +19,22 @@ const combinePerms = (g, o) => {
          (o.includes("r") ? "r" : "-") + (o.includes("w") ? "w" : "-")
 }
 
+const _file_name = c => (c?.file?.name || c?.name || "")
+const _file_content = c => (c?.file?.content || c?.content || "")
+const _file_img = c => (c?.decor?.cover || "")
+const _dir_name = c => (c?.directory?.name || c?.name || "")
+
 const mk_file_edit_form = data => {
   const file = data.file || {}
   const dirsList = data.dirs || []
   const usersList = data.users || []
   const groupsList = data.groups || []
+  const c = file.value?.content
 
   return {
     file_id: file.id || "",
-    title: (file.value && file.value.content && file.value.content.name) || "",
-    content: (file.value && file.value.content && file.value.content.content) || "",
+    title: _file_name(c),
+    content: _file_content(c),
     image: {
       url: file.image || "",
       file: null,
@@ -37,7 +43,7 @@ const mk_file_edit_form = data => {
       active: file.parent_id || "",
       list: dirsList
         .filter(d => d.id !== file.id)
-        .map(d => ({ value: d.id, label: d.value.content.name })),
+        .map(d => ({ value: d.id, label: _dir_name(d.value?.content) })),
     },
     owner: {
       active: file.owner || "",
@@ -101,10 +107,10 @@ const change_file_edit_form = (form, field, value) => {
 
 const fetch_file_edit_form = (file_id, username) => {
   return Promise.all([
-    send_get("/node/" + file_id).then(node => ({
+    send_get("/node/" + file_id, { data_type: "rich" }).then(node => ({
       ...node,
       ...node.permitions,
-      image: "",
+      image: _file_img(node.value?.content),
     })),
     send_get("/groups", { member: username, only_can_write: true }),
     send_get("/nodes", { type_filter: "directory" }),
@@ -189,8 +195,8 @@ const render_file_edit_form = form => {
   return form
 }
 
-const save_file_edit_form = (form, file_id) => {
-  return send_patch("/node/text_file/" + file_id, {
+const save_file_edit_form = async (form, file_id) => {
+  const payload = {
     node_id: file_id,
     new_name: form.title,
     new_content: form.content,
@@ -201,5 +207,16 @@ const save_file_edit_form = (form, file_id) => {
       form.group_perms.active,
       form.other_perms.active,
     ),
-  })
+  }
+
+  if (form.image.file) {
+    payload.new_cover = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => reject(new Error("Failed to read image"))
+      reader.readAsDataURL(form.image.file)
+    })
+  }
+
+  return send_patch("/node/text_file/" + file_id, payload)
 }

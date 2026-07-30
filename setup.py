@@ -9,6 +9,7 @@ from backend.file_manager.groups.groups import mk_group
 from backend.file_manager.groups.sqlalchemy_group import save_group
 
 import backend.file_manager.node.sqlalchemy_node
+import backend.image.sqlalchemy_image
 
 if __name__ == "__main__":
     with engine.connect() as conn:
@@ -20,6 +21,8 @@ if __name__ == "__main__":
             "dir_permissions",
             "file_permissions",
             "permissions",
+            "nodes_to_dir_images",
+            "nodes_to_images",
         ]:
             conn.execute(sa.text(f"DROP TABLE IF EXISTS {tbl}"))
         conn.commit()

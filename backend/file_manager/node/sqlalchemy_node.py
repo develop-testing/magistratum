@@ -4,9 +4,9 @@ import sqlalchemy as sa
 from sqlalchemy.engine import Connection as Conn
 
 from backend.database.database import engine, metadata
-from .node import Node, NodeFilter, NodePermitions, NodeValue
-from ..directories.directory import Directory
-from ..files.files import TextFile
+from ..directories import directory as dirs
+from ..files import files as txt
+from .node import Node, NodeFilter, NodePermitions, NodeValue, Values
 
 
 sa.Table(
@@ -35,6 +35,20 @@ sa.Table(
     sa.Column("node_id", sa.String(255), sa.ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True),
 )
 
+sa.Table(
+    "file_to_images",
+    metadata,
+    sa.Column("node_id", sa.String(255), sa.ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True),
+    sa.Column("image_id", sa.String(255), sa.ForeignKey("images.id", ondelete="CASCADE")),
+)
+
+sa.Table(
+    "dir_to_images",
+    metadata,
+    sa.Column("node_id", sa.String(255), sa.ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True),
+    sa.Column("image_id", sa.String(255), sa.ForeignKey("images.id", ondelete="CASCADE")),
+)
+
 
 @dataclass
 class NodeFetchError(Exception):
@@ -46,10 +60,10 @@ class NodeFetchError(Exception):
 
 def row_to_node(row: sa.RowMapping) -> Node:
     if row.get("dir_node_id") is not None:
-        content: Directory | TextFile = Directory(name=row["name"])
+        content: Values = dirs.Directory(name=row["name"])
         ntype = "directory"
     else:
-        content = TextFile(name=row["name"], content=row.get("content") or "")
+        content = txt.TextFile(name=row["name"], content=row.get("content") or "")
         ntype = "text_file"
 
     return Node(
@@ -65,6 +79,12 @@ def row_to_node(row: sa.RowMapping) -> Node:
 
 
 def save_node(conn: Conn, node: Node) -> Conn:
+    content = node.value.content
+    if isinstance(content, txt.RichTextFile):
+        content = content.file
+    elif isinstance(content, dirs.RichDirectory):
+        content = content.directory
+
     conn.execute(
         sa.text(
             "INSERT INTO nodes (id, parent_id, name, owner, `group`, permissions) "
@@ -73,19 +93,19 @@ def save_node(conn: Conn, node: Node) -> Conn:
         {
             "id": node.id,
             "parent_id": node.parent_id or None,
-            "name": node.value.content.name,
+            "name": content.name,
             "owner": node.permitions.owner,
             "group": node.permitions.group,
             "permissions": node.permitions.permitions,
         },
     )
 
-    if isinstance(node.value.content, TextFile):
+    if isinstance(content, txt.TextFile):
         conn.execute(
             sa.text(
                 "INSERT INTO node_text_files (node_id, content) VALUES (:node_id, :content)"
             ),
-            {"node_id": node.id, "content": node.value.content.content},
+            {"node_id": node.id, "content": content.content},
         )
     else:
         conn.execute(
@@ -148,6 +168,12 @@ def fetch_nodes(conn: Conn, fltr: NodeFilter = NodeFilter()) -> list[Node]:
 
 
 def update_node(conn: Conn, node: Node) -> Conn:
+    content = node.value.content
+    if isinstance(content, txt.RichTextFile):
+        content = content.file
+    elif isinstance(content, dirs.RichDirectory):
+        content = content.directory
+
     conn.execute(
         sa.text(
             "UPDATE nodes SET parent_id = :parent_id, name = :name, "
@@ -157,21 +183,21 @@ def update_node(conn: Conn, node: Node) -> Conn:
         {
             "id": node.id,
             "parent_id": node.parent_id or None,
-            "name": node.value.content.name,
+            "name": content.name,
             "owner": node.permitions.owner,
             "group": node.permitions.group,
             "permissions": node.permitions.permitions,
         },
     )
 
-    if isinstance(node.value.content, TextFile):
+    if isinstance(content, txt.TextFile):
         conn.execute(
             sa.text(
                 "INSERT INTO node_text_files (node_id, content) "
                 "VALUES (:node_id, :content) "
                 "ON DUPLICATE KEY UPDATE content = :content"
             ),
-            {"node_id": node.id, "content": node.value.content.content},
+            {"node_id": node.id, "content": content.content},
         )
     else:
         conn.execute(
@@ -188,4 +214,76 @@ def update_node(conn: Conn, node: Node) -> Conn:
 
 def delete_node(conn: Conn, node_id: str) -> Conn:
     conn.execute(sa.text("DELETE FROM nodes WHERE id = :id"), {"id": node_id})
+    return conn
+
+
+def add_image_to_file(conn: Conn, node_id: str, image_id: str) -> Conn:
+    conn.execute(
+        sa.text(
+            "INSERT INTO file_to_images (node_id, image_id) "
+            "VALUES (:node_id, :image_id) "
+            "ON DUPLICATE KEY UPDATE image_id = :image_id"
+        ),
+        {"node_id": node_id, "image_id": image_id},
+    )
+    return conn
+
+
+def fetch_image_by_file(conn: Conn, node_id: str) -> str | None:
+    row = conn.execute(
+        sa.text(
+            "SELECT i.src FROM file_to_images nti "
+            "JOIN images i ON nti.image_id = i.id "
+            "WHERE nti.node_id = :node_id"
+        ),
+        {"node_id": node_id},
+    ).mappings().first()
+
+    if row is None:
+        return None
+
+    return str(row["src"])
+
+
+def remove_image_from_file(conn: Conn, node_id: str) -> Conn:
+    conn.execute(
+        sa.text("DELETE FROM file_to_images WHERE node_id = :node_id"),
+        {"node_id": node_id},
+    )
+    return conn
+
+
+def add_image_to_dir(conn: Conn, node_id: str, image_id: str) -> Conn:
+    conn.execute(
+        sa.text(
+            "INSERT INTO dir_to_images (node_id, image_id) "
+            "VALUES (:node_id, :image_id) "
+            "ON DUPLICATE KEY UPDATE image_id = :image_id"
+        ),
+        {"node_id": node_id, "image_id": image_id},
+    )
+    return conn
+
+
+def fetch_image_by_dir(conn: Conn, node_id: str) -> str | None:
+    row = conn.execute(
+        sa.text(
+            "SELECT i.src FROM dir_to_images nti "
+            "JOIN images i ON nti.image_id = i.id "
+            "WHERE nti.node_id = :node_id"
+        ),
+        {"node_id": node_id},
+    ).mappings().first()
+
+    if row is None:
+        return None
+
+    return str(row["src"])
+
+
+def remove_image_from_dir(conn: Conn, node_id: str) -> Conn:
+    conn.execute(
+        sa.text("DELETE FROM dir_to_images WHERE node_id = :node_id"),
+        {"node_id": node_id},
+    )
     return conn

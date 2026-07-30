@@ -87,18 +87,21 @@
         const type_map = { directory: "dir", text_file: "text_file" }
 
         const map_item = (item) => {
+            const c = item.value.content
+            const name = c.file?.name || c.directory?.name || c.name || ""
+            const img = c.decor?.cover || "/public/img/not-found.png"
             return mk_manager_item(
                 item.id,
                 type_map[item.value.type] || "broken",
-                "",
-                item.value.content.name,
+                img,
+                name,
                 item.permitions.owner,
                 item.permitions.group,
             )
         }
 
         const fetch_content = () => {
-            const params = dir_id ? { parent_id: dir_id } : { parent_id: "root" }
+            const params = dir_id ? { parent_id: dir_id, data_type: "rich" } : { parent_id: "root", data_type: "rich" }
             return send_get("/nodes", params)
                 .then(res => mk_file_manager(res.map(map_item)))
         };

@@ -6,6 +6,9 @@ import backend.database.database as db
 import backend.router.response as resp
 
 from backend.auth.member.auth_middleware import auth_middleware
+from backend.image.upload_image import save_image_file
+from backend.image.image import new_image
+from backend.image.sqlalchemy_image import save_image as save_image_to_db
 from ..directories import directory as dirs
 from ..files import files as txt
 from . import node as nmd
@@ -108,6 +111,7 @@ class EditDirectoryReq:
     new_owner: str = ""
     new_group: str = ""
     new_permissions: str = ""
+    new_cover: str = ""
 
 
 @node_router.patch("/node/directory/{node_id}", tags=["Nodes"])
@@ -145,6 +149,13 @@ async def edit_directory(
         )
 
         conn = node_src.update_node(conn, node)
+
+        if body.new_cover:
+            src = save_image_file(body.new_cover)
+            image = new_image(src)
+            conn = save_image_to_db(conn, image)
+            conn = node_src.add_image_to_dir(conn, node.id, image.id)
+
         conn.commit()
         return node
 
@@ -164,6 +175,7 @@ class EditTextFileReq:
     new_owner: str = ""
     new_group: str = ""
     new_permissions: str = ""
+    new_cover: str = ""
 
 
 @node_router.patch("/node/text_file/{node_id}", tags=["Nodes"])
@@ -205,6 +217,13 @@ async def edit_text_file(
         )
 
         conn = node_src.update_node(conn, node)
+
+        if body.new_cover:
+            src = save_image_file(body.new_cover)
+            image = new_image(src)
+            conn = save_image_to_db(conn, image)
+            conn = node_src.add_image_to_file(conn, node.id, image.id)
+
         conn.commit()
         return node
 
@@ -229,6 +248,19 @@ async def read_nodes(req: Request, fltr: nmd.NodeFilter = Depends()) -> list[nmd
         result: list[nmd.Node] = []
         for n in nodes:
             if nmd.has_read(n, session_owner, group_names):
+                if fltr.data_type == "rich":
+                    if isinstance(n.value.content, txt.TextFile):
+                        src = node_src.fetch_image_by_file(conn, n.id) or "/public/img/not-found.png"
+                        n = nmd.Node(
+                            n.id, n.parent_id, n.permitions,
+                            NodeValue("text_file", txt.RichTextFile(n.value.content, txt.Decoration(src))),
+                        )
+                    elif isinstance(n.value.content, dirs.Directory):
+                        src = node_src.fetch_image_by_dir(conn, n.id) or "/public/img/not-found.png"
+                        n = nmd.Node(
+                            n.id, n.parent_id, n.permitions,
+                            NodeValue("directory", dirs.RichDirectory(n.value.content, txt.Decoration(src))),
+                        )
                 result.append(n)
         return result
 
@@ -238,7 +270,7 @@ async def read_nodes(req: Request, fltr: nmd.NodeFilter = Depends()) -> list[nmd
 
 
 @node_router.get("/node/{node_id}", tags=["Nodes"])
-async def read_node(req: Request, node_id: str) -> nmd.Node:
+async def read_node(req: Request, node_id: str, data_type: str = "") -> nmd.Node:
     conn = db.engine.connect()
     try:
         session_owner = req.state.session.owner
@@ -249,6 +281,20 @@ async def read_node(req: Request, node_id: str) -> nmd.Node:
         node = node_src.fetch_node(conn, node_id)
         if not nmd.has_read(node, session_owner, group_names):
             raise resp.Forbidden("access denied")
+
+        if data_type == "rich":
+            if isinstance(node.value.content, txt.TextFile):
+                src = node_src.fetch_image_by_file(conn, node_id) or "/public/img/not-found.png"
+                node = nmd.Node(
+                    node.id, node.parent_id, node.permitions,
+                    NodeValue("text_file", txt.RichTextFile(node.value.content, txt.Decoration(src))),
+                )
+            elif isinstance(node.value.content, dirs.Directory):
+                src = node_src.fetch_image_by_dir(conn, node_id) or "/public/img/not-found.png"
+                node = nmd.Node(
+                    node.id, node.parent_id, node.permitions,
+                    NodeValue("directory", dirs.RichDirectory(node.value.content, txt.Decoration(src))),
+                )
 
         return node
 

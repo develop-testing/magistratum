@@ -7,7 +7,7 @@ from ..directories import directory as dirs
 from ..files import files as txt
 
 
-Values = dirs.Directory | txt.TextFile
+Values = dirs.Directory | dirs.RichDirectory | txt.TextFile | txt.RichTextFile
 
 
 @dataclass(slots=True, frozen=True)
@@ -35,10 +35,11 @@ class Node:
 class NodeFilter:
     parent_id: str = ""
     type_filter: str = ""
+    data_type: str = ""
 
 
 def new_node(parent_id: str, permitions: NodePermitions, content: Values) -> Node:
-    typ = "directory" if isinstance(content, dirs.Directory) else "text_file"
+    typ = "directory" if isinstance(content, (dirs.Directory, dirs.RichDirectory)) else "text_file"
     return Node(
         id=str(uuid.uuid4()),
         parent_id=parent_id,

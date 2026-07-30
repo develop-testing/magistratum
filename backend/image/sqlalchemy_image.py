@@ -4,7 +4,7 @@ from sqlalchemy.engine import Connection
 
 from backend.database.database import metadata
 from .image import Image
-from .file_image import save_image_file, delete_image_file
+from .upload_image import delete_image_file
 
 
 sa.Table(
@@ -18,14 +18,12 @@ sa.Table(
 
 
 def save_image(conn: Connection, image: Image) -> Connection:
-    src = save_image_file(image.src)
-
     conn.execute(
         sa.text(
             "INSERT INTO images (id, src) VALUES (:id, :src)"
             " ON DUPLICATE KEY UPDATE src = :src"
         ),
-        {"id": image.id, "src": src},
+        {"id": image.id, "src": image.src},
     )
     return conn
 

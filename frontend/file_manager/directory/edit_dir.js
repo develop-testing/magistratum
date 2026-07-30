@@ -23,12 +23,15 @@ const combinePerms = (g, o) => {
   )
 }
 
+const _dir_name = c => (c?.directory?.name || c?.name || "")
+const _dir_img = c => (c?.decor?.cover || "")
+
 const fetch_directory = dir_id => {
   return Promise.all([
-    send_get("/node/" + dir_id).then(node => ({
+    send_get("/node/" + dir_id, { data_type: "rich" }).then(node => ({
       ...node,
       ...node.permitions,
-      image: "",
+      image: _dir_img(node.value?.content),
     })),
     send_get("/nodes", { type_filter: "directory" }),
     send_get("/members"),
@@ -42,12 +45,10 @@ const fetch_directory = dir_id => {
 }
 
 const mk_dir_edit_form = data => {
-  console.log(data)
-
   const dir = data.dir || {}
   return {
     dir_id: dir.id || "",
-    title: (dir.value && dir.value.content && dir.value.content.name) || "",
+    title: _dir_name(dir.value?.content),
     image: {
       url: dir.image || "",
       file: null,
@@ -58,7 +59,7 @@ const mk_dir_edit_form = data => {
         .filter(d => d.id !== dir.id)
         .map(d => ({
           value: d.id,
-          label: d.value.content.name,
+          label: _dir_name(d.value?.content),
         })),
     },
     owner: {
@@ -132,8 +133,8 @@ const render_dir_image = form => {
   return form
 }
 
-const save_dir_edit_form = (form, dir_id) => {
-  return send_patch("/node/directory/" + dir_id, {
+const save_dir_edit_form = async (form, dir_id) => {
+  const payload = {
     node_id: dir_id,
     new_name: form.title,
     new_parent_id: form.dirs.active,
@@ -143,7 +144,18 @@ const save_dir_edit_form = (form, dir_id) => {
       form.group_perms.active,
       form.other_perms.active,
     ),
-  })
+  }
+
+  if (form.image.file) {
+    payload.new_cover = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => reject(new Error("Failed to read image"))
+      reader.readAsDataURL(form.image.file)
+    })
+  }
+
+  return send_patch("/node/directory/" + dir_id, payload)
 }
 
 const render_dir_edit_form = form => {
