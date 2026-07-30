@@ -212,6 +212,26 @@ def update_node(conn: Conn, node: nmd.Node) -> Conn:
     return conn
 
 
+def cascade_update_children_perms(
+    conn: Conn, node_id: str, owner: str, group: str, permissions: str
+) -> Conn:
+    conn.execute(
+        sa.text("""
+            WITH RECURSIVE descendants AS (
+                SELECT id FROM nodes WHERE parent_id = :root_id
+                UNION ALL
+                SELECT n.id FROM nodes n
+                JOIN descendants d ON n.parent_id = d.id
+            )
+            UPDATE nodes
+            SET owner = :owner, `group` = :group, permissions = :permissions
+            WHERE id IN (SELECT id FROM descendants)
+        """),
+        {"root_id": node_id, "owner": owner, "group": group, "permissions": permissions},
+    )
+    return conn
+
+
 def delete_node(conn: Conn, node_id: str) -> Conn:
     conn.execute(sa.text("DELETE FROM nodes WHERE id = :id"), {"id": node_id})
     return conn

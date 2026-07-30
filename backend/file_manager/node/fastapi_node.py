@@ -149,6 +149,11 @@ async def edit_directory(
 
         conn = node_src.update_node(conn, node)
 
+        if body.new_owner or body.new_group or body.new_permissions:
+            conn = node_src.cascade_update_children_perms(
+                conn, node.id, new_owner, new_group, new_perms,
+            )
+
         if body.new_cover:
             src = save_image_file(body.new_cover)
             image = new_image(src)
