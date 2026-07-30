@@ -1,3 +1,14 @@
+const get_cookie = (name) => {
+    const cookieString = document.cookie.replace(/;\s*/g, '&')
+    return new URLSearchParams(cookieString).get(name)
+}
+
+const fetch_user_data = () => {
+    const raw_b64 = get_cookie('user_data')
+    const clean_b64 = raw_b64 ? raw_b64.replace(/^"|"$/g, '') : null
+    return clean_b64 ? JSON.parse(atob(clean_b64)) : {}
+}
+
 const tabs = (btns_tags, tabs_tags) => {
   const tabs_buttons = document.querySelectorAll(btns_tags)
   const tabs = document.querySelectorAll(tabs_tags)

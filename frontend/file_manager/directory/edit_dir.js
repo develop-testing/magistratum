@@ -14,19 +14,23 @@ const mapPerms = (permString, type = "group") => {
   return ""
 }
 
+const combinePerms = (g, o) => {
+  return (
+    (g.includes("r") ? "r" : "-") +
+    (g.includes("w") ? "w" : "-") +
+    (o.includes("r") ? "r" : "-") +
+    (o.includes("w") ? "w" : "-")
+  )
+}
+
 const fetch_directory = dir_id => {
   return Promise.all([
-    send_get("/directories", { by_id: dir_id, data_type: "rich" }).then(
-      items => {
-        const item = items[0] || {}
-        return {
-          ...(item.directory || {}),
-          ...(item.perms || {}),
-          image: item.image || "",
-        }
-      },
-    ),
-    send_get("/directories", { only_can_write: true }),
+    send_get("/node/" + dir_id).then(node => ({
+      ...node,
+      ...node.permitions,
+      image: "",
+    })),
+    send_get("/nodes", { type_filter: "directory" }),
     send_get("/members"),
     send_get("/groups"),
   ]).then(res => ({
@@ -38,10 +42,12 @@ const fetch_directory = dir_id => {
 }
 
 const mk_dir_edit_form = data => {
+  console.log(data)
+
   const dir = data.dir || {}
   return {
-    dir_id: dir.dir_id || "",
-    title: dir.name || "",
+    dir_id: dir.id || "",
+    title: (dir.value && dir.value.content && dir.value.content.name) || "",
     image: {
       url: dir.image || "",
       file: null,
@@ -49,28 +55,28 @@ const mk_dir_edit_form = data => {
     dirs: {
       active: dir.parent_id || "",
       list: (data.dirs || [])
-        .filter(d => d.dir_id !== dir.dir_id)
+        .filter(d => d.id !== dir.id)
         .map(d => ({
-          value: d.dir_id,
-          label: d.name,
+          value: d.id,
+          label: d.value.content.name,
         })),
     },
     owner: {
-      active: dir.owner_name || "",
+      active: dir.owner || "",
       list: (data.users || []).map(u => ({
         value: u.username,
         label: u.username,
       })),
     },
     group: {
-      active: dir.group_name || "",
+      active: dir.group || "",
       list: (data.groups || []).map(g => ({
         value: g.name,
         label: g.name,
       })),
     },
     group_perms: {
-      active: mapPerms(dir.content, "group"),
+      active: mapPerms(dir.permitions, "group"),
       list: [
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
@@ -78,7 +84,7 @@ const mk_dir_edit_form = data => {
       ],
     },
     other_perms: {
-      active: mapPerms(dir.content, "other"),
+      active: mapPerms(dir.permitions, "other"),
       list: [
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
@@ -127,28 +133,16 @@ const render_dir_image = form => {
 }
 
 const save_dir_edit_form = (form, dir_id) => {
-  const get_cover = new Promise(resolve => {
-    if (form.image.file === null) {
-      resolve("")
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.readAsDataURL(form.image.file)
-  })
-
-  return get_cover.then(cover_data => {
-    return send_patch("/directory", {
-      dir_id: dir_id,
-      new_name: form.title,
-      new_parent_id: form.dirs.active,
-      new_owner: form.owner.active,
-      new_group_name: form.group.active,
-      new_group_perms: form.group_perms.active,
-      new_other_perms: form.other_perms.active,
-      new_cover: cover_data,
-    })
+  return send_patch("/node/directory/" + dir_id, {
+    node_id: dir_id,
+    new_name: form.title,
+    new_parent_id: form.dirs.active,
+    new_owner: form.owner.active,
+    new_group: form.group.active,
+    new_permissions: combinePerms(
+      form.group_perms.active,
+      form.other_perms.active,
+    ),
   })
 }
 

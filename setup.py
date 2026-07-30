@@ -8,13 +8,20 @@ from backend.auth.member.sqlalchemy_member import save_candidate
 from backend.file_manager.groups.groups import mk_group
 from backend.file_manager.groups.sqlalchemy_group import save_group
 
-import backend.file_manager.files.sqlalchemy_file
-import backend.file_manager.directories.sqlalchemy_dir
-import backend.file_manager.permissions.sqlalchemy_permissions
+import backend.file_manager.node.sqlalchemy_node
 
 if __name__ == "__main__":
     with engine.connect() as conn:
-        conn.execute(sa.text("DROP TABLE IF EXISTS permissions"))
+        for tbl in [
+            "dirs_to_image",
+            "directories",
+            "files_to_image",
+            "files",
+            "dir_permissions",
+            "file_permissions",
+            "permissions",
+        ]:
+            conn.execute(sa.text(f"DROP TABLE IF EXISTS {tbl}"))
         conn.commit()
 
     metadata.drop_all(engine)

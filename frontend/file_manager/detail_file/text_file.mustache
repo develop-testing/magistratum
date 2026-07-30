@@ -113,6 +113,6 @@
     save_btn.addEventListener('click', e => {
         save_file_edit_form(file_edit_form, file_id)
             .then(() => alert("Сохранено успешно"))
-            .catch(() => alert("Ошибка при сохранении"))
+            .catch(err => alert(err.message))
     })
 </script>

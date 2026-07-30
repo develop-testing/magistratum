@@ -1,29 +1,34 @@
+const mapPerms = (permString, type = "group") => {
+  if (!permString) return ""
+  if (permString.length === 4) {
+    const offset = type === "other" ? 2 : 0
+    const g =
+      (permString[offset] === "r" ? "r" : "") +
+      (permString[offset + 1] === "w" ? "w" : "")
+    return g || ""
+  }
+  const lower = permString.toLowerCase()
+  if (lower.includes("read") && lower.includes("write")) return "rw"
+  if (lower.includes("read")) return "r"
+  if (lower.includes("write")) return "w"
+  return ""
+}
+
+const combinePerms = (g, o) => {
+  return (g.includes("r") ? "r" : "-") + (g.includes("w") ? "w" : "-") +
+         (o.includes("r") ? "r" : "-") + (o.includes("w") ? "w" : "-")
+}
+
 const mk_file_edit_form = data => {
   const file = data.file || {}
   const dirsList = data.dirs || []
   const usersList = data.users || []
   const groupsList = data.groups || []
 
-  const mapPerms = (permString, type = "group") => {
-    if (!permString) return ""
-    if (permString.length === 4) {
-      const offset = type === "other" ? 2 : 0
-      const g =
-        (permString[offset] === "r" ? "r" : "") +
-        (permString[offset + 1] === "w" ? "w" : "")
-      return g || ""
-    }
-    const lower = permString.toLowerCase()
-    if (lower.includes("read") && lower.includes("write")) return "rw"
-    if (lower.includes("read")) return "r"
-    if (lower.includes("write")) return "w"
-    return ""
-  }
-
   return {
-    file_id: file.file_id || "",
-    title: file.name || "",
-    content: file.content || "",
+    file_id: file.id || "",
+    title: (file.value && file.value.content && file.value.content.name) || "",
+    content: (file.value && file.value.content && file.value.content.content) || "",
     image: {
       url: file.image || "",
       file: null,
@@ -31,19 +36,19 @@ const mk_file_edit_form = data => {
     dirs: {
       active: file.parent_id || "",
       list: dirsList
-        .filter(d => d.dir_id !== file.file_id)
-        .map(d => ({ value: d.dir_id, label: d.name })),
+        .filter(d => d.id !== file.id)
+        .map(d => ({ value: d.id, label: d.value.content.name })),
     },
     owner: {
-      active: file.owner_name || "",
+      active: file.owner || "",
       list: usersList.map(u => ({ value: u.username, label: u.username })),
     },
     group: {
-      active: file.group_name || "",
+      active: file.group || "",
       list: groupsList.map(g => ({ value: g.name, label: g.name })),
     },
     group_perms: {
-      active: mapPerms(file.content, "group"),
+      active: mapPerms(file.permitions, "group"),
       list: [
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
@@ -51,7 +56,7 @@ const mk_file_edit_form = data => {
       ],
     },
     other_perms: {
-      active: mapPerms(file.content, "other"),
+      active: mapPerms(file.permitions, "other"),
       list: [
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
@@ -96,16 +101,13 @@ const change_file_edit_form = (form, field, value) => {
 
 const fetch_file_edit_form = (file_id, username) => {
   return Promise.all([
-    send_get("/files", { by_id: file_id, data_type: "rich" }).then(items => {
-      const item = items[0] || {}
-      return {
-        ...(item.text_file || {}),
-        ...(item.perms || {}),
-        image: item.image,
-      }
-    }),
+    send_get("/node/" + file_id).then(node => ({
+      ...node,
+      ...node.permitions,
+      image: "",
+    })),
     send_get("/groups", { member: username, only_can_write: true }),
-    send_get("/directories"),
+    send_get("/nodes", { type_filter: "directory" }),
     send_get("/members"),
   ])
     .then(res => ({
@@ -188,28 +190,16 @@ const render_file_edit_form = form => {
 }
 
 const save_file_edit_form = (form, file_id) => {
-  const get_cover = new Promise(resolve => {
-    if (form.image.file === null) {
-      resolve("")
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.readAsDataURL(form.image.file)
-  })
-
-  return get_cover.then(cover_data => {
-    return send_patch("/file", {
-      file_id: file_id,
-      new_filename: form.title,
-      new_content: form.content,
-      new_parent_id: form.dirs.active,
-      new_owner: form.owner.active,
-      new_group_name: form.group.active,
-      new_group_perms: form.group_perms.active,
-      new_other_perms: form.other_perms.active,
-      new_cover: cover_data,
-    })
+  return send_patch("/node/text_file/" + file_id, {
+    node_id: file_id,
+    new_name: form.title,
+    new_content: form.content,
+    new_parent_id: form.dirs.active,
+    new_owner: form.owner.active,
+    new_group: form.group.active,
+    new_permissions: combinePerms(
+      form.group_perms.active,
+      form.other_perms.active,
+    ),
   })
 }

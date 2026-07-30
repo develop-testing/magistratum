@@ -5,7 +5,6 @@ from sqlalchemy.engine import Connection
 from backend.database.database import metadata
 
 from .groups import FetchGroupReq, Group, RemovedGroup
-from ..permissions.permissions import Permissions
 
 sa.Table(
     "groups",
@@ -106,33 +105,17 @@ def update_group(conn: Connection, old_name: str, group: Group) -> Connection:
     return conn
 
 
-def delete_group_by_name(
-    conn: Connection, removed: RemovedGroup, perms: list[Permissions]
-) -> Connection:
-    id_query = sa.text("SELECT id FROM groups WHERE name = :name")
+def delete_group_by_name(conn: Connection, removed: RemovedGroup) -> Connection:
+    conn.execute(
+        sa.text("UPDATE nodes SET `group` = 'root' WHERE `group` = :name"),
+        {"name": removed.name},
+    )
 
+    id_query = sa.text("SELECT id FROM groups WHERE name = :name")
     delete_members_query = sa.text(
         "DELETE FROM users_to_groups WHERE group_id = CAST(:group_id AS CHAR)"
     )
-
     delete_group_query = sa.text("DELETE FROM groups WHERE name = :name")
-
-    for table in ("dir_permissions", "file_permissions"):
-        update_perms_query = sa.text(
-            f"UPDATE {table}"
-            " SET owner_name = :owner_name, group_name = :group_name, content = :content"
-            " WHERE item_id = :item_id"
-        )
-        for p in perms:
-            conn.execute(
-                update_perms_query,
-                {
-                    "item_id": p.item_id,
-                    "owner_name": p.owner_name,
-                    "group_name": p.group_name,
-                    "content": p.content,
-                },
-            )
 
     row = conn.execute(id_query, {"name": removed.name}).mappings().first()
     if row is not None:

@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 import chevron  # type: ignore[import-untyped]
 
 from backend.database.database import engine
-from backend.file_manager.directories.sqlalchemy_dir import fetch_dir_by_id
+from backend.file_manager.node.sqlalchemy_node import fetch_node
 from mustache_default import generate_layout
 
 ui_dashboard_router = APIRouter()
@@ -18,7 +18,7 @@ def render_dashboard(dir_id: str, username: str) -> HTMLResponse:
     if dir_id:
         conn = engine.connect()
         try:
-            parent_id = fetch_dir_by_id(conn, dir_id).parent_id
+            parent_id = fetch_node(conn, dir_id).parent_id
         finally:
             conn.rollback()
             conn.close()

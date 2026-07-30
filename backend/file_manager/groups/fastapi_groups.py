@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Request
 import backend.database.database as db
 import backend.router.response as resp
 from . import groups as grps, sqlalchemy_group as grps_src
-from ..permissions import permissions as prms, sqlalchemy_permissions as prms_src
 
 groups_router = APIRouter()
 
@@ -106,13 +105,8 @@ async def delete_group(req: Request, body: RemoveGroupReq) -> bool:
         if session_owner != "root" and session_owner != g.owner:
             raise resp.Forbidden("only root or group owner can delete groups")
 
-        perms = prms_src.fetch_dir_permissions_by_group(
-            conn, g.name
-        ) + prms_src.fetch_file_permissions_by_group(conn, g.name)
-        updated = [prms.change_group(p, "root") for p in perms]
-
         removed = grps.destroy_group(g)
-        conn = grps_src.delete_group_by_name(conn, removed, updated)
+        conn = grps_src.delete_group_by_name(conn, removed)
         conn.commit()
 
         return True
