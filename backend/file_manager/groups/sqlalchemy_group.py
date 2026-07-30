@@ -4,7 +4,7 @@ from sqlalchemy.engine import Connection
 
 from backend.database.database import metadata
 
-from .groups import FetchGroupReq, Group, RemovedGroup
+from . import groups as grps
 
 sa.Table(
     "groups",
@@ -25,7 +25,7 @@ sa.Table(
 )
 
 
-def save_group(conn: Connection, grp: Group) -> Connection:
+def save_group(conn: Connection, grp: grps.Group) -> Connection:
     create_query = sa.text("""
         INSERT INTO groups (name, owner_name)
         VALUES (:name, :owner_name)
@@ -52,7 +52,7 @@ def save_group(conn: Connection, grp: Group) -> Connection:
     return conn
 
 
-def fetch_group_by_name(conn: Connection, name: str) -> Group:
+def fetch_group_by_name(conn: Connection, name: str) -> grps.Group:
     query = sa.text("SELECT id, name, owner_name FROM groups WHERE name = :name")
 
     members_query = sa.text(
@@ -66,10 +66,10 @@ def fetch_group_by_name(conn: Connection, name: str) -> Group:
 
     members = [row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})]
 
-    return Group(row["name"], row["owner_name"], members)
+    return grps.Group(row["name"], row["owner_name"], members)
 
 
-def update_group(conn: Connection, old_name: str, group: Group) -> Connection:
+def update_group(conn: Connection, old_name: str, group: grps.Group) -> Connection:
     select_id_query = sa.text("SELECT id FROM groups WHERE name = :name")
 
     update_query = sa.text(
@@ -105,7 +105,7 @@ def update_group(conn: Connection, old_name: str, group: Group) -> Connection:
     return conn
 
 
-def delete_group_by_name(conn: Connection, removed: RemovedGroup) -> Connection:
+def delete_group_by_name(conn: Connection, removed: grps.RemovedGroup) -> Connection:
     conn.execute(
         sa.text("UPDATE nodes SET `group` = 'root' WHERE `group` = :name"),
         {"name": removed.name},
@@ -125,7 +125,7 @@ def delete_group_by_name(conn: Connection, removed: RemovedGroup) -> Connection:
     return conn
 
 
-def fetch_groups_by_filter(conn: Connection, filter: FetchGroupReq) -> list[Group]:
+def fetch_groups_by_filter(conn: Connection, filter: grps.FetchGroupReq) -> list[grps.Group]:
     sql = """
         SELECT g.id, g.name, g.owner_name, utg.username
         FROM groups g
@@ -168,12 +168,12 @@ def fetch_groups_by_filter(conn: Connection, filter: FetchGroupReq) -> list[Grou
             members_list.append(row["username"])
 
     return [
-        Group(name=name, owner=owner, members=members)
+        grps.Group(name=name, owner=owner, members=members)
         for (g_id, name, owner), members in groups_dict.items()
     ]
 
 
-def fetch_groups_by_user(conn: Connection, username: str) -> list[Group]:
+def fetch_groups_by_user(conn: Connection, username: str) -> list[grps.Group]:
     groups_query = sa.text("""
         SELECT g.id, g.name, g.owner_name
         FROM groups g
@@ -187,12 +187,12 @@ def fetch_groups_by_user(conn: Connection, username: str) -> list[Group]:
 
     group_rows = conn.execute(groups_query, {"username": username}).mappings().all()
 
-    groups: list[Group] = []
+    groups: list[grps.Group] = []
     for row in group_rows:
         members = [
             row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
         ]
-        groups.append(Group(row["name"], row["owner_name"], members))
+        groups.append(grps.Group(row["name"], row["owner_name"], members))
 
     return groups
 

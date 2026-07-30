@@ -6,7 +6,7 @@ from sqlalchemy.engine import Connection as Conn
 from backend.database.database import engine, metadata
 from ..directories import directory as dirs
 from ..files import files as txt
-from .node import Node, NodeFilter, NodePermitions, NodeValue, Values
+from . import node as nmd
 
 
 sa.Table(
@@ -58,27 +58,27 @@ class NodeFetchError(Exception):
         super().__init__(self.message)
 
 
-def row_to_node(row: sa.RowMapping) -> Node:
+def row_to_node(row: sa.RowMapping) -> nmd.Node:
     if row.get("dir_node_id") is not None:
-        content: Values = dirs.Directory(name=row["name"])
+        content: nmd.Values = dirs.Directory(name=row["name"])
         ntype = "directory"
     else:
         content = txt.TextFile(name=row["name"], content=row.get("content") or "")
         ntype = "text_file"
 
-    return Node(
+    return nmd.Node(
         id=row["id"],
         parent_id=row["parent_id"] or "",
-        permitions=NodePermitions(
+        permitions=nmd.NodePermitions(
             owner=row["owner"],
             group=row["group"],
             permitions=row["permissions"],
         ),
-        value=NodeValue(type=ntype, content=content),
+        value=nmd.NodeValue(type=ntype, content=content),
     )
 
 
-def save_node(conn: Conn, node: Node) -> Conn:
+def save_node(conn: Conn, node: nmd.Node) -> Conn:
     content = node.value.content
     if isinstance(content, txt.RichTextFile):
         content = content.file
@@ -118,7 +118,7 @@ def save_node(conn: Conn, node: Node) -> Conn:
     return conn
 
 
-def fetch_node(conn: Conn, node_id: str) -> Node:
+def fetch_node(conn: Conn, node_id: str) -> nmd.Node:
     row = conn.execute(
         sa.text(
             "SELECT n.*, ntf.content, nd.node_id AS dir_node_id "
@@ -134,7 +134,7 @@ def fetch_node(conn: Conn, node_id: str) -> Node:
     return row_to_node(row)
 
 
-def fetch_nodes(conn: Conn, fltr: NodeFilter = NodeFilter()) -> list[Node]:
+def fetch_nodes(conn: Conn, fltr: nmd.NodeFilter = nmd.NodeFilter()) -> list[nmd.Node]:
     conditions = []
     params: dict[str, str] = {}
 
@@ -167,7 +167,7 @@ def fetch_nodes(conn: Conn, fltr: NodeFilter = NodeFilter()) -> list[Node]:
     return [row_to_node(r) for r in rows]
 
 
-def update_node(conn: Conn, node: Node) -> Conn:
+def update_node(conn: Conn, node: nmd.Node) -> Conn:
     content = node.value.content
     if isinstance(content, txt.RichTextFile):
         content = content.file

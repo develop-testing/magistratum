@@ -12,7 +12,6 @@ from backend.image.sqlalchemy_image import save_image as save_image_to_db
 from ..directories import directory as dirs
 from ..files import files as txt
 from . import node as nmd
-from .node import NodeValue
 from . import sqlalchemy_node as node_src
 from ..groups import groups as grps, sqlalchemy_group as grps_src
 
@@ -145,7 +144,7 @@ async def edit_directory(
         node = nmd.Node(
             node.id, new_parent,
             nmd.NodePermitions(new_owner, new_group, new_perms),
-            NodeValue("directory", new_content),
+            nmd.NodeValue("directory", new_content),
         )
 
         conn = node_src.update_node(conn, node)
@@ -213,7 +212,7 @@ async def edit_text_file(
         node = nmd.Node(
             node.id, new_parent,
             nmd.NodePermitions(new_owner, new_group, new_perms),
-            NodeValue("text_file", new_content),
+            nmd.NodeValue("text_file", new_content),
         )
 
         conn = node_src.update_node(conn, node)
@@ -253,13 +252,13 @@ async def read_nodes(req: Request, fltr: nmd.NodeFilter = Depends()) -> list[nmd
                         src = node_src.fetch_image_by_file(conn, n.id) or "/public/img/not-found.png"
                         n = nmd.Node(
                             n.id, n.parent_id, n.permitions,
-                            NodeValue("text_file", txt.RichTextFile(n.value.content, txt.Decoration(src))),
+                            nmd.NodeValue("text_file", txt.RichTextFile(n.value.content, txt.Decoration(src))),
                         )
                     elif isinstance(n.value.content, dirs.Directory):
                         src = node_src.fetch_image_by_dir(conn, n.id) or "/public/img/not-found.png"
                         n = nmd.Node(
                             n.id, n.parent_id, n.permitions,
-                            NodeValue("directory", dirs.RichDirectory(n.value.content, txt.Decoration(src))),
+                            nmd.NodeValue("directory", dirs.RichDirectory(n.value.content, txt.Decoration(src))),
                         )
                 result.append(n)
         return result
@@ -287,13 +286,13 @@ async def read_node(req: Request, node_id: str, data_type: str = "") -> nmd.Node
                 src = node_src.fetch_image_by_file(conn, node_id) or "/public/img/not-found.png"
                 node = nmd.Node(
                     node.id, node.parent_id, node.permitions,
-                    NodeValue("text_file", txt.RichTextFile(node.value.content, txt.Decoration(src))),
+                    nmd.NodeValue("text_file", txt.RichTextFile(node.value.content, txt.Decoration(src))),
                 )
             elif isinstance(node.value.content, dirs.Directory):
                 src = node_src.fetch_image_by_dir(conn, node_id) or "/public/img/not-found.png"
                 node = nmd.Node(
                     node.id, node.parent_id, node.permitions,
-                    NodeValue("directory", dirs.RichDirectory(node.value.content, txt.Decoration(src))),
+                    nmd.NodeValue("directory", dirs.RichDirectory(node.value.content, txt.Decoration(src))),
                 )
 
         return node

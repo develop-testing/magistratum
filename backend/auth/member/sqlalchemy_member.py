@@ -4,7 +4,7 @@ from sqlalchemy.engine import Connection
 
 
 from backend.database.database import metadata
-from .member import *
+from . import member as mbr
 
 sa.Table(
     "users",
@@ -22,7 +22,7 @@ class DeleteError(Exception):
         super().__init__(message)
 
 
-def fetch_member_by_username(conn: Connection, username: str) -> Member:
+def fetch_member_by_username(conn: Connection, username: str) -> mbr.Member:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )
@@ -33,10 +33,10 @@ def fetch_member_by_username(conn: Connection, username: str) -> Member:
     if row is None:
         raise ValueError("user not found")
 
-    return new_member(row["username"], row["password"])
+    return mbr.new_member(row["username"], row["password"])
 
 
-def fetch_member_profile_by_username(conn: Connection, username: str) -> MemberProfile:
+def fetch_member_profile_by_username(conn: Connection, username: str) -> mbr.MemberProfile:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )
@@ -47,10 +47,10 @@ def fetch_member_profile_by_username(conn: Connection, username: str) -> MemberP
     if row is None:
         raise ValueError("user not found")
 
-    return mk_member_profile(str(row["username"]))
+    return mbr.mk_member_profile(str(row["username"]))
 
 
-def save_candidate(conn: Connection, cnd: Candidate) -> Connection:
+def save_candidate(conn: Connection, cnd: mbr.Candidate) -> Connection:
     try:
         query = sa.text(
             "INSERT INTO users (username, password) VAlUES (:username, :password)"
@@ -70,35 +70,35 @@ def save_candidate(conn: Connection, cnd: Candidate) -> Connection:
         raise
 
 
-def fetch_all_members(conn: Connection) -> list[Member]:
+def fetch_all_members(conn: Connection) -> list[mbr.Member]:
     query = sa.text("SELECT username, password FROM users")
 
     rows = conn.execute(query).mappings().all()
 
-    out: list[Member] = []
+    out: list[mbr.Member] = []
     for row in rows:
-        m = new_member(str(row["username"]), str(row["password"]))
+        m = mbr.new_member(str(row["username"]), str(row["password"]))
         out.append(m)
 
     return out
 
 
-def fetch_all_profiles(conn: Connection) -> list[MemberProfile]:
+def fetch_all_profiles(conn: Connection) -> list[mbr.MemberProfile]:
     query = sa.text("SELECT username, password FROM users")
 
     rows = conn.execute(query).mappings().all()
 
-    out: list[MemberProfile] = []
+    out: list[mbr.MemberProfile] = []
     for row in rows:
-        m = mk_member_profile(str(row["username"]))
+        m = mbr.mk_member_profile(str(row["username"]))
         out.append(m)
 
     return out
 
 
 def fetch_members_by_filter(
-    conn: Connection, fltr: FilterOfMember
-) -> list[MemberProfile]:
+    conn: Connection, fltr: mbr.FilterOfMember
+) -> list[mbr.MemberProfile]:
     if fltr.by_name:
         return [fetch_member_profile_by_username(conn, fltr.by_name)]
 

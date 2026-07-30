@@ -3,8 +3,8 @@ import sqlalchemy as sa
 from sqlalchemy.engine import Connection
 
 from backend.database.database import metadata
-from .image import Image
-from .upload_image import delete_image_file
+from . import image as img
+from . import upload_image as upload
 
 
 sa.Table(
@@ -17,7 +17,7 @@ sa.Table(
 )
 
 
-def save_image(conn: Connection, image: Image) -> Connection:
+def save_image(conn: Connection, image: img.Image) -> Connection:
     conn.execute(
         sa.text(
             "INSERT INTO images (id, src) VALUES (:id, :src)"
@@ -28,7 +28,7 @@ def save_image(conn: Connection, image: Image) -> Connection:
     return conn
 
 
-def fetch_image(conn: Connection, image_id: str) -> Image:
+def fetch_image(conn: Connection, image_id: str) -> img.Image:
     row = conn.execute(
         sa.text("SELECT id, src FROM images WHERE id = :id"),
         {"id": image_id},
@@ -37,7 +37,7 @@ def fetch_image(conn: Connection, image_id: str) -> Image:
     if row is None:
         raise ValueError("image not found")
 
-    return Image(id=row["id"], src=row["src"])
+    return img.Image(id=row["id"], src=row["src"])
 
 
 def delete_image(conn: Connection, image_id: str) -> Connection:
@@ -47,7 +47,7 @@ def delete_image(conn: Connection, image_id: str) -> Connection:
     ).mappings().first()
 
     if row is not None:
-        delete_image_file(row["src"])
+        upload.delete_image_file(row["src"])
         conn.execute(
             sa.text("DELETE FROM images WHERE id = :id"),
             {"id": image_id},
