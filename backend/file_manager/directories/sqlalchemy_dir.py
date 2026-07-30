@@ -42,9 +42,7 @@ sa.Table(
 def fetch_all_dirs(conn: Conn) -> list[Directory]:
     query = sa.text("SELECT dir_id, name, parent_id FROM directories")
     rows = conn.execute(query).mappings().all()
-    return [
-        Directory(str(r["dir_id"]), str(r["name"]), r["parent_id"], []) for r in rows
-    ]
+    return [Directory(str(r["dir_id"]), str(r["name"]), r["parent_id"]) for r in rows]
 
 
 def fetch_dirs_by_parent(conn: Conn, parent_id: str | None) -> list[Directory]:
@@ -64,9 +62,7 @@ def fetch_dirs_by_parent(conn: Conn, parent_id: str | None) -> list[Directory]:
     if not rows:
         return []
 
-    return [
-        mk_directory(row["dir_id"], row["name"], row["parent_id"], []) for row in rows
-    ]
+    return [mk_directory(row["dir_id"], row["name"], row["parent_id"]) for row in rows]
 
 
 def fetch_dir_by_id(conn: Conn, dir_id: str) -> Directory:
@@ -79,7 +75,7 @@ def fetch_dir_by_id(conn: Conn, dir_id: str) -> Directory:
     if row is None:
         raise DirFetchError("directory not found")
 
-    return Directory(row["dir_id"], row["name"], row["parent_id"], [])
+    return Directory(row["dir_id"], row["name"], row["parent_id"])
 
 
 def fetch_dir_by_name(conn: Conn, dirname: str) -> Directory:
@@ -93,7 +89,7 @@ def fetch_dir_by_name(conn: Conn, dirname: str) -> Directory:
     if row is None:
         raise DirFetchError("directory not found")
 
-    return Directory(row["dir_id"], row["name"], row["parent_id"], [])
+    return Directory(row["dir_id"], row["name"], row["parent_id"])
 
 
 def fetch_dirs_by_filter(conn: Conn, fltr: DirFilter) -> list[Directory]:

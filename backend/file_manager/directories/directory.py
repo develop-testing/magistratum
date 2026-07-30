@@ -26,7 +26,6 @@ class Directory:
     dir_id: str
     name: str
     parent_id: str | None
-    files: list[str]
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,13 +40,11 @@ def mk_rich_directory(d: Directory, perms: Permissions, image: str) -> RichDirec
 
 
 def new_directory(dir_name: str, parent_id: str) -> Directory:
-    return Directory("dir@" + str(uuid.uuid4()), dir_name, parent_id, [])
+    return Directory("dir@" + str(uuid.uuid4()), dir_name, parent_id)
 
 
-def mk_directory(
-    dir_id: str, name: str, parent_id: str | None, files: list[str]
-) -> Directory:
-    return Directory(dir_id, name, parent_id, files)
+def mk_directory(dir_id: str, name: str, parent_id: str | None) -> Directory:
+    return Directory(dir_id, name, parent_id)
 
 
 def mk_broken_directory(name: str, reason: str) -> BrokenDirectory:
@@ -58,24 +55,11 @@ def rename_directory(d: Directory, new_name: str) -> Directory:
     if new_name == "":
         return d
 
-    return Directory(d.dir_id, new_name, d.parent_id, d.files)
+    return Directory(d.dir_id, new_name, d.parent_id)
 
 
 def change_directory_parent(d: Directory, new_parent_id: str) -> Directory:
     if not new_parent_id:
         return d
 
-    return Directory(d.dir_id, d.name, new_parent_id, d.files)
-
-
-def add_to_directory(d: Directory, file_name: str) -> Directory:
-    return Directory(d.dir_id, d.name, d.parent_id, d.files + [file_name])
-
-
-def remove_from_directory(d: Directory, file_name: str) -> Directory:
-    if file_name not in d.files:
-        return d
-
-    new_files = [f for f in d.files if f != file_name]
-
-    return Directory(d.dir_id, d.name, d.parent_id, new_files)
+    return Directory(d.dir_id, d.name, new_parent_id)
