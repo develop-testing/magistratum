@@ -79,6 +79,7 @@ const mk_dir_edit_form = data => {
     group_perms: {
       active: mapPerms(dir.permitions, "group"),
       list: [
+        { value: "", label: "Нет доступа" },
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
         { value: "rw", label: "Чтение и запись" },
@@ -87,6 +88,7 @@ const mk_dir_edit_form = data => {
     other_perms: {
       active: mapPerms(dir.permitions, "other"),
       list: [
+        { value: "", label: "Нет доступа" },
         { value: "r", label: "Чтение" },
         { value: "w", label: "Запись" },
         { value: "rw", label: "Чтение и запись" },

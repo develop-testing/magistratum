@@ -145,7 +145,7 @@
             const json_object = Object.fromEntries(form_data.entries())
             json_object.owner = get_username()
             json_object.group = "root"
-            json_object.permissions = "rwr-"
+            json_object.permissions = "rw--"
 
             send_post("/node/directory", json_object).then((_) => {
                 file_manager = fetch_content().then((fm) => {
