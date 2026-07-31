@@ -167,9 +167,7 @@ def fetch_node(conn: Conn, node_id: str) -> nmd.Node:
     return row_to_node(row)
 
 
-def fetch_nodes(
-    conn: Conn, fltr: nmd.NodeFilter = nmd.NodeFilter()
-) -> list[nmd.Node]:
+def fetch_nodes(conn: Conn, fltr: nmd.NodeFilter = nmd.NodeFilter()) -> list[nmd.Node]:
     conditions = []
     params: dict[str, str] = {}
 

@@ -45,9 +45,7 @@ async def create_directory(req: Request, body: CreateDirReq) -> nmd.Node:
                 raise resp.Forbidden("access denied")
 
         dir_val = dirs.mk_directory(body.name)
-        node_perms = nmd.mk_node_permitions(
-            body.owner, body.group, body.permissions
-        )
+        node_perms = nmd.mk_node_permitions(body.owner, body.group, body.permissions)
         node_value = nmd.mk_node_value("directory", dir_val)
         node = nmd.new_node(body.parent_id, node_perms, node_value)
 
@@ -89,9 +87,7 @@ async def create_text_file(req: Request, body: CreateTextFileReq) -> nmd.Node:
             raise resp.Forbidden("access denied")
 
         file_val = txt.mk_text_file(body.name, body.content)
-        node_perms = nmd.mk_node_permitions(
-            body.owner, body.group, body.permissions
-        )
+        node_perms = nmd.mk_node_permitions(body.owner, body.group, body.permissions)
         node_value = nmd.mk_node_value("text_file", file_val)
         node = nmd.new_node(body.parent_id, node_perms, node_value)
 
@@ -136,9 +132,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> nmd.Node:
             if not isinstance(node.value.content, dirs.Directory):
                 raise resp.BadRequest("node is not a directory")
 
-            new_content = dirs.rename_directory(
-                node.value.content, body.new_name
-            )
+            new_content = dirs.rename_directory(node.value.content, body.new_name)
 
         new_parent = body.new_parent_id or node.parent_id
 
@@ -156,9 +150,7 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> nmd.Node:
         cnn = node_src.update_node(cnn, node)
 
         if body.new_owner or body.new_group or body.new_permissions:
-            cnn = node_src.update_perms(
-                cnn, node.id, new_owner, new_group, new_perms
-            )
+            cnn = node_src.update_perms(cnn, node.id, new_owner, new_group, new_perms)
 
         if body.new_cover:
             src = save_image_file(body.new_cover)
@@ -205,16 +197,12 @@ async def edit_text_file(req: Request, body: EditTextFileReq) -> nmd.Node:
         if body.new_name:
             if not isinstance(node.value.content, txt.TextFile):
                 raise resp.BadRequest("node is not a text file")
-            new_content = txt.rename_text_file(
-                node.value.content, body.new_name
-            )
+            new_content = txt.rename_text_file(node.value.content, body.new_name)
 
         if body.new_content:
             if not isinstance(new_content, txt.TextFile):
                 raise resp.BadRequest("node is not a text file")
-            new_content = txt.change_text_file_content(
-                new_content, body.new_content
-            )
+            new_content = txt.change_text_file_content(new_content, body.new_content)
 
         new_parent = body.new_parent_id or node.parent_id
         if new_parent == "root":
@@ -299,9 +287,7 @@ async def read_nodes(req: Request, fltr: Filter = Depends()) -> ReadResult:
 
 
 @node_router.get("/node/{node_id}", tags=["Nodes"])
-async def read_node(
-    req: Request, node_id: str, data_type: str = ""
-) -> nmd.Node:
+async def read_node(req: Request, node_id: str, data_type: str = "") -> nmd.Node:
     conn = db.engine.connect()
     try:
         session_owner = req.state.session.owner

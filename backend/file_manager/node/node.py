@@ -24,9 +24,7 @@ class NodePermitions:
     permitions: str
 
 
-def mk_node_permitions(
-    owner: str, group: str, permitions: str
-) -> NodePermitions:
+def mk_node_permitions(owner: str, group: str, permitions: str) -> NodePermitions:
     vld.validate_username(owner)
     vld.validate_name(group)
     vld.validate_permissions(permitions)
@@ -68,9 +66,7 @@ def new_node(parent_id: str, prmts: NodePermitions, value: NodeValue) -> Node:
     )
 
 
-def mk_node(
-    id: str, parent_id: str, prmts: NodePermitions, value: NodeValue
-) -> Node:
+def mk_node(id: str, parent_id: str, prmts: NodePermitions, value: NodeValue) -> Node:
     vld.validate_id(id)
     if parent_id:
         vld.validate_id(parent_id)

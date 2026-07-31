@@ -21,9 +21,7 @@ class RichDirectory:
     decor: txt.Decoration
 
 
-def mk_rich_directory(
-    directory: Directory, decor: txt.Decoration
-) -> RichDirectory:
+def mk_rich_directory(directory: Directory, decor: txt.Decoration) -> RichDirectory:
     if not isinstance(directory, Directory):
         raise ValueError("invalid directory")
     if not isinstance(decor, txt.Decoration):

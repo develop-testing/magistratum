@@ -8,9 +8,7 @@ MAX_CONTENT_LEN = 65535
 NAME_RE = re.compile(r"^[\w\-. ]+$")
 USERNAME_RE = re.compile(r"^[\w.-]+$")
 PERMISSIONS_RE = re.compile(r"^[rwx-]{4}$")
-SRC_RE = re.compile(
-    r"^/public/(upload/[0-9a-f]{32}\.(png|jpg)|img/not-found\.png)$"
-)
+SRC_RE = re.compile(r"^/public/(upload/[0-9a-f]{32}\.(png|jpg)|img/not-found\.png)$")
 CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 CONTENT_BLOCKED_RE = re.compile(
     r"<\s*/?\s*(script|iframe|object|embed)|"
