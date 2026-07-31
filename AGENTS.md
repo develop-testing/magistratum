@@ -46,7 +46,25 @@ app/
 
 - Frozen dataclasses with `slots=True` for domain models
 - `black` at 80 chars (`.black.toml`), `mypy --strict` (`.mypy.ini`)
-- Tests use `*_test.py` pattern (pytest.ini)
+- Tests live in `test_<module>.py` files next to their modules, plain `assert` + `pytest.raises` (pytest, `make test`)
+- Functional (API lifecycle) tests in `backend/tests/` against the running stack, marked `functional`, run via `make functional-test` (requires `make run` + `make setup` for root/root user). Shared HTTP helpers in `backend/tests/api_client.py`.
 - DB: MariaDB via SQLAlchemy (`backend/database/database.py`). Redis at `fast-store:6379`.
 - Alembic migrations in `backend/database/alembic/`
 - Python imports use `backend.` and `frontend.` prefixes (namespace packages, no `__init__.py`)
+
+Общие правила.
+
+- Код функциональный, все структуры неизменяемые, значит изменяеющие функции возвращают копию.
+- Для ошибок используются исключения. Работа с result затруднинельна в связи с отсутствием быстрого выхода.
+- Проект строится по принципам модульного монолита. Модуль состоит из директории(module) основного файла(module.py) и файлов для работы с внешней средой (базы данны, апиб файловвая система) которые имеют префикс соответсвующей технологии.
+
+Создание структур.
+
+- Конструкторы как отдельные функции. Префиксы конструкторов new\_ - любое создание структуры с генерацией данных, mk\_ - создание со всеми аргументами.
+- Каждый new конструктор и изменяющая функция создает новый экземпляр структуры.
+- Придерживаемся принципа трех: три поля, три вложенности, три функции для структуры и другое, три шага. Подход должен уменьшить когнитивную нагрузку.
+
+Функции.
+
+- Все функции, независимо процедлура или рассчет, должны возвращать значение для продолжения пайплайна.
+- Функции работы с внешней средой именуются префиксами: fetch, save, delete и другие.
