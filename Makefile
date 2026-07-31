@@ -13,6 +13,9 @@ lint:
 format:
 	docker compose run --rm backend black .
 
+test:
+	docker compose run --rm backend pytest .
+
 web-command:
 	docker compose exec backend $(cmd)
 
