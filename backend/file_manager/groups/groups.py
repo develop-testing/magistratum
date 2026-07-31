@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
+from ...validation import validation as vld
+
 
 @dataclass(frozen=True, slots=True)
 class Group:
@@ -49,11 +51,16 @@ def remove_member(g: Group, username: str) -> Group:
 
 
 def mk_group(name: str, owner: str, members: list[str]) -> Group:
+    vld.validate_name(name)
+    vld.validate_username(owner)
     members = [name] + members if name not in members else members
+    for m in members:
+        vld.validate_name(m)
     return Group(name, owner, members)
 
 
 def mk_removed_group(name: str) -> RemovedGroup:
+    vld.validate_name(name)
     return RemovedGroup(name)
 
 

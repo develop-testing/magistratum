@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
+from ...validation import validation as vld
 from ..files import files as txt
 
 
@@ -10,6 +11,7 @@ class Directory:
 
 
 def mk_directory(name: str) -> Directory:
+    vld.validate_name(name)
     return Directory(name)
 
 
@@ -19,7 +21,13 @@ class RichDirectory:
     decor: txt.Decoration
 
 
-def mk_rich_directory(directory: Directory, decor: txt.Decoration) -> RichDirectory:
+def mk_rich_directory(
+    directory: Directory, decor: txt.Decoration
+) -> RichDirectory:
+    if not isinstance(directory, Directory):
+        raise ValueError("invalid directory")
+    if not isinstance(decor, txt.Decoration):
+        raise ValueError("invalid decoration")
     return RichDirectory(directory, decor)
 
 

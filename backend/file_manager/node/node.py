@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 
+from ...validation import validation as vld
 from ..directories import directory as dirs
 from ..files import files as txt
 
@@ -26,6 +27,9 @@ class NodePermitions:
 def mk_node_permitions(
     owner: str, group: str, permitions: str
 ) -> NodePermitions:
+    vld.validate_username(owner)
+    vld.validate_name(group)
+    vld.validate_permissions(permitions)
     return NodePermitions(owner, group, permitions)
 
 
@@ -36,6 +40,14 @@ class NodeValue:
 
 
 def mk_node_value(type: str, content: Values) -> NodeValue:
+    if type == "directory":
+        if not isinstance(content, (dirs.Directory, dirs.RichDirectory)):
+            raise ValueError("invalid node value")
+    elif type == "text_file":
+        if not isinstance(content, (txt.TextFile, txt.RichTextFile)):
+            raise ValueError("invalid node value")
+    else:
+        raise ValueError("invalid node value")
     return NodeValue(type, content)
 
 
@@ -48,10 +60,10 @@ class Node:
 
 
 def new_node(parent_id: str, prmts: NodePermitions, value: NodeValue) -> Node:
-    return Node(
+    return mk_node(
         id=str(uuid.uuid4()),
         parent_id=parent_id,
-        permitions=prmts,
+        prmts=prmts,
         value=value,
     )
 
@@ -59,6 +71,13 @@ def new_node(parent_id: str, prmts: NodePermitions, value: NodeValue) -> Node:
 def mk_node(
     id: str, parent_id: str, prmts: NodePermitions, value: NodeValue
 ) -> Node:
+    vld.validate_id(id)
+    if parent_id:
+        vld.validate_id(parent_id)
+    if not isinstance(prmts, NodePermitions):
+        raise ValueError("invalid node permissions")
+    if not isinstance(value, NodeValue):
+        raise ValueError("invalid node value")
     return Node(id, parent_id, prmts, value)
 
 

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 import bcrypt
 
+from ...validation import validation as vld
+
 
 @dataclass(frozen=True, slots=True)
 class FilterOfMember:
@@ -17,8 +19,7 @@ class Member:
 
 
 def mk_member(uname: str, hash: str) -> Member:
-    if len(uname) > 255:
-        raise ValueError("incorrect username length")
+    vld.validate_username(uname)
 
     if len(hash) > 255:
         raise ValueError("incorrect password hash")
@@ -41,8 +42,7 @@ class Candidate:
 
 def mk_candidate(uname: str, password_hash: str) -> Candidate:
 
-    if len(uname) > 255:
-        raise ValueError("incorrect username length")
+    vld.validate_username(uname)
 
     return Candidate(username=uname, password_hash=password_hash)
 
@@ -58,4 +58,5 @@ class MemberProfile:
 
 
 def mk_member_profile(username: str) -> MemberProfile:
+    vld.validate_username(username)
     return MemberProfile(username)
