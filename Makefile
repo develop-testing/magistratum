@@ -16,6 +16,9 @@ format:
 test:
 	docker compose run --rm backend pytest .
 
+functional-test:
+	docker compose run --rm backend pytest backend/tests -m functional
+
 web-command:
 	docker compose exec backend $(cmd)
 
