@@ -40,5 +40,4 @@ if __name__ == "__main__":
 
         conn.commit()
     finally:
-        conn.rollback()
         conn.close()

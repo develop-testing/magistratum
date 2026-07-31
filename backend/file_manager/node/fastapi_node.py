@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
+
 from fastapi import APIRouter, Depends, Request
 
 import backend.database.database as db
@@ -14,7 +16,6 @@ from ..files import files as txt
 from . import node as nmd
 from . import sqlalchemy_node as node_src
 from ..groups import groups as grps, sqlalchemy_group as grps_src
-
 
 node_router = APIRouter()
 
@@ -36,26 +37,26 @@ async def create_directory(req: Request, body: CreateDirReq) -> nmd.Node:
 
         if body.parent_id:
             parent = node_src.fetch_node(conn, body.parent_id)
-            group_names = grps.get_group_names(
-                grps_src.fetch_groups_by_user(conn, session_owner)
-            )
+
+            groups = grps_src.fetch_groups_by_user(conn, session_owner)
+            group_names = grps.get_group_names(groups)
+
             if not nmd.has_write(parent, session_owner, group_names):
                 raise resp.Forbidden("access denied")
 
         dir_val = dirs.new_directory(body.name)
-        node = nmd.new_node(
-            body.parent_id,
-            nmd.NodePermitions(body.owner, body.group, body.permissions),
-            dir_val,
-        )
+        node_perms = nmd.new_node_permitions(body.owner, body.group, body.permissions)
+        node_value = nmd.new_node_value("directory", dir_val)
+        node = nmd.new_node(body.parent_id, node_perms, node_value)
+
         conn = node_src.save_node(conn, node)
         conn.commit()
+
         return node
 
     except node_src.NodeFetchError as e:
         raise resp.BadRequest(str(e))
     finally:
-        conn.rollback()
         conn.close()
 
 
@@ -79,26 +80,25 @@ async def create_text_file(req: Request, body: CreateTextFileReq) -> nmd.Node:
             raise resp.BadRequest("parent_id is required")
 
         parent = node_src.fetch_node(conn, body.parent_id)
-        group_names = grps.get_group_names(
-            grps_src.fetch_groups_by_user(conn, session_owner)
-        )
+        groups = grps_src.fetch_groups_by_user(conn, session_owner)
+        group_names = grps.get_group_names(groups)
+
         if not nmd.has_write(parent, session_owner, group_names):
             raise resp.Forbidden("access denied")
 
         file_val = txt.new_text_file(body.name, body.content)
-        node = nmd.new_node(
-            body.parent_id,
-            nmd.NodePermitions(body.owner, body.group, body.permissions),
-            file_val,
-        )
+        node_perms = nmd.new_node_permitions(body.owner, body.group, body.permissions)
+        node_value = nmd.new_node_value("text_file", file_val)
+        node = nmd.new_node(body.parent_id, node_perms, node_value)
+
         conn = node_src.save_node(conn, node)
         conn.commit()
+
         return node
 
     except node_src.NodeFetchError as e:
         raise resp.BadRequest(str(e))
     finally:
-        conn.rollback()
         conn.close()
 
 
@@ -114,60 +114,58 @@ class EditDirectoryReq:
 
 
 @node_router.patch("/node/directory/{node_id}", tags=["Nodes"])
-async def edit_directory(
-    req: Request, body: EditDirectoryReq
-) -> nmd.Node:
-    conn = db.engine.connect()
+async def edit_directory(req: Request, body: EditDirectoryReq) -> nmd.Node:
+    cnn = db.engine.connect()
     try:
         session_owner = req.state.session.owner
-        group_names = grps.get_group_names(
-            grps_src.fetch_groups_by_user(conn, session_owner)
-        )
 
-        node = node_src.fetch_node(conn, body.node_id)
+        groups = grps_src.fetch_groups_by_user(cnn, session_owner)
+        group_names = grps.get_group_names(groups)
+        node = node_src.fetch_node(cnn, body.node_id)
+
         if not nmd.has_write(node, session_owner, group_names):
             raise resp.Forbidden("access denied")
 
         new_content = node.value.content
+
         if body.new_name:
             if not isinstance(node.value.content, dirs.Directory):
                 raise resp.BadRequest("node is not a directory")
+
             new_content = dirs.rename_directory(node.value.content, body.new_name)
 
         new_parent = body.new_parent_id or node.parent_id
+
         if new_parent == "root":
             new_parent = ""
+
         new_owner = body.new_owner or node.permitions.owner
         new_group = body.new_group or node.permitions.group
         new_perms = body.new_permissions or node.permitions.permitions
 
-        node = nmd.Node(
-            node.id, new_parent,
-            nmd.NodePermitions(new_owner, new_group, new_perms),
-            nmd.NodeValue("directory", new_content),
-        )
+        node_perms = nmd.new_node_permitions(new_owner, new_group, new_perms)
+        node_value = nmd.new_node_value("directory", new_content)
+        node = nmd.mk_node(node.id, new_parent, node_perms, node_value)
 
-        conn = node_src.update_node(conn, node)
+        cnn = node_src.update_node(cnn, node)
 
         if body.new_owner or body.new_group or body.new_permissions:
-            conn = node_src.cascade_update_children_perms(
-                conn, node.id, new_owner, new_group, new_perms,
-            )
+            cnn = node_src.update_perms(cnn, node.id, new_owner, new_group, new_perms)
 
         if body.new_cover:
             src = save_image_file(body.new_cover)
             image = new_image(src)
-            conn = save_image_to_db(conn, image)
-            conn = node_src.add_image_to_dir(conn, node.id, image.id)
+            cnn = save_image_to_db(cnn, image)
+            cnn = node_src.add_image_to_dir(cnn, node.id, image.id)
 
-        conn.commit()
+        cnn.commit()
+
         return node
 
     except node_src.NodeFetchError as e:
         raise resp.BadRequest(str(e))
     finally:
-        conn.rollback()
-        conn.close()
+        cnn.close()
 
 
 @dataclass(frozen=True, slots=True)
@@ -183,17 +181,15 @@ class EditTextFileReq:
 
 
 @node_router.patch("/node/text_file/{node_id}", tags=["Nodes"])
-async def edit_text_file(
-    req: Request, body: EditTextFileReq
-) -> nmd.Node:
+async def edit_text_file(req: Request, body: EditTextFileReq) -> nmd.Node:
     conn = db.engine.connect()
     try:
         session_owner = req.state.session.owner
-        group_names = grps.get_group_names(
-            grps_src.fetch_groups_by_user(conn, session_owner)
-        )
 
+        groups = grps_src.fetch_groups_by_user(conn, session_owner)
+        group_names = grps.get_group_names(groups)
         node = node_src.fetch_node(conn, body.node_id)
+
         if not nmd.has_write(node, session_owner, group_names):
             raise resp.Forbidden("access denied")
 
@@ -202,6 +198,7 @@ async def edit_text_file(
             if not isinstance(node.value.content, txt.TextFile):
                 raise resp.BadRequest("node is not a text file")
             new_content = txt.rename_text_file(node.value.content, body.new_name)
+
         if body.new_content:
             if not isinstance(new_content, txt.TextFile):
                 raise resp.BadRequest("node is not a text file")
@@ -210,15 +207,14 @@ async def edit_text_file(
         new_parent = body.new_parent_id or node.parent_id
         if new_parent == "root":
             new_parent = ""
+
         new_owner = body.new_owner or node.permitions.owner
         new_group = body.new_group or node.permitions.group
         new_perms = body.new_permissions or node.permitions.permitions
 
-        node = nmd.Node(
-            node.id, new_parent,
-            nmd.NodePermitions(new_owner, new_group, new_perms),
-            nmd.NodeValue("text_file", new_content),
-        )
+        node_perms = nmd.new_node_permitions(new_owner, new_group, new_perms)
+        node_value = nmd.new_node_value("text_file", new_content)
+        node = nmd.mk_node(node.id, new_parent, node_perms, node_value)
 
         conn = node_src.update_node(conn, node)
 
@@ -234,42 +230,59 @@ async def edit_text_file(
     except node_src.NodeFetchError as e:
         raise resp.BadRequest(str(e))
     finally:
-        conn.rollback()
         conn.close()
 
 
+Filter = nmd.NodeFilter
+ReadResult = list[nmd.Node]
+
+
 @node_router.get("/nodes", tags=["Nodes"])
-async def read_nodes(req: Request, fltr: nmd.NodeFilter = Depends()) -> list[nmd.Node]:
+async def read_nodes(req: Request, fltr: Filter = Depends()) -> ReadResult:
     conn = db.engine.connect()
     try:
         session_owner = req.state.session.owner
-        group_names = grps.get_group_names(
-            grps_src.fetch_groups_by_user(conn, session_owner)
-        )
+
+        groups = grps_src.fetch_groups_by_user(conn, session_owner)
+        group_names = grps.get_group_names(groups)
 
         nodes = node_src.fetch_nodes(conn, fltr)
 
         result: list[nmd.Node] = []
+
         for n in nodes:
-            if nmd.has_read(n, session_owner, group_names):
-                if fltr.data_type == "rich":
-                    if isinstance(n.value.content, txt.TextFile):
-                        src = node_src.fetch_image_by_file(conn, n.id) or "/public/img/not-found.png"
-                        n = nmd.Node(
-                            n.id, n.parent_id, n.permitions,
-                            nmd.NodeValue("text_file", txt.RichTextFile(n.value.content, txt.Decoration(src))),
-                        )
-                    elif isinstance(n.value.content, dirs.Directory):
-                        src = node_src.fetch_image_by_dir(conn, n.id) or "/public/img/not-found.png"
-                        n = nmd.Node(
-                            n.id, n.parent_id, n.permitions,
-                            nmd.NodeValue("directory", dirs.RichDirectory(n.value.content, txt.Decoration(src))),
-                        )
+            if not nmd.has_read(n, session_owner, group_names):
+                continue
+
+            if fltr.data_type != "rich":
                 result.append(n)
+                continue
+
+            def_img = "/public/img/not-found.png"
+
+            if isinstance(n.value.content, txt.TextFile):
+                img_src = node_src.fetch_image_by_file(conn, n.id) or def_img
+                rich_file = txt.new_rich_text_file(
+                    n.value.content, txt.new_decoration(img_src)
+                )
+                node_value = nmd.new_node_value("text_file", rich_file)
+
+            elif isinstance(n.value.content, dirs.Directory):
+                img_src = node_src.fetch_image_by_dir(conn, n.id) or def_img
+                rich_dir = dirs.new_rich_directory(
+                    n.value.content, txt.new_decoration(img_src)
+                )
+                node_value = nmd.new_node_value("directory", rich_dir)
+            else:
+                raise resp.BadRequest("unexpected node content")
+
+            n = nmd.mk_node(n.id, n.parent_id, n.permitions, node_value)
+
+            result.append(n)
+
         return result
 
     finally:
-        conn.rollback()
         conn.close()
 
 
@@ -286,26 +299,30 @@ async def read_node(req: Request, node_id: str, data_type: str = "") -> nmd.Node
         if not nmd.has_read(node, session_owner, group_names):
             raise resp.Forbidden("access denied")
 
-        if data_type == "rich":
-            if isinstance(node.value.content, txt.TextFile):
-                src = node_src.fetch_image_by_file(conn, node_id) or "/public/img/not-found.png"
-                node = nmd.Node(
-                    node.id, node.parent_id, node.permitions,
-                    nmd.NodeValue("text_file", txt.RichTextFile(node.value.content, txt.Decoration(src))),
-                )
-            elif isinstance(node.value.content, dirs.Directory):
-                src = node_src.fetch_image_by_dir(conn, node_id) or "/public/img/not-found.png"
-                node = nmd.Node(
-                    node.id, node.parent_id, node.permitions,
-                    nmd.NodeValue("directory", dirs.RichDirectory(node.value.content, txt.Decoration(src))),
-                )
+        if data_type != "rich":
+            return node
 
-        return node
+        def_img = "/public/img/not-found.png"
 
+        if isinstance(node.value.content, txt.TextFile):
+            img_src = node_src.fetch_image_by_file(conn, node_id) or def_img
+            rich_file = txt.new_rich_text_file(
+                node.value.content, txt.new_decoration(img_src)
+            )
+            node_value = nmd.new_node_value("text_file", rich_file)
+        elif isinstance(node.value.content, dirs.Directory):
+            img_src = node_src.fetch_image_by_dir(conn, node_id) or def_img
+            rich_dir = dirs.new_rich_directory(
+                node.value.content, txt.new_decoration(img_src)
+            )
+            node_value = nmd.new_node_value("directory", rich_dir)
+        else:
+            raise resp.BadRequest("unexpected node content")
+
+        return nmd.mk_node(node.id, node.parent_id, node.permitions, node_value)
     except node_src.NodeFetchError as e:
         raise resp.BadRequest(str(e))
     finally:
-        conn.rollback()
         conn.close()
 
 
@@ -314,11 +331,11 @@ async def delete_node(req: Request, node_id: str) -> bool:
     conn = db.engine.connect()
     try:
         session_owner = req.state.session.owner
-        group_names = grps.get_group_names(
-            grps_src.fetch_groups_by_user(conn, session_owner)
-        )
 
+        groups = grps_src.fetch_groups_by_user(conn, session_owner)
+        group_names = grps.get_group_names(groups)
         node = node_src.fetch_node(conn, node_id)
+
         if not nmd.has_write(node, session_owner, group_names):
             raise resp.Forbidden("access denied")
 
@@ -329,5 +346,4 @@ async def delete_node(req: Request, node_id: str) -> bool:
     except node_src.NodeFetchError as e:
         raise resp.BadRequest(str(e))
     finally:
-        conn.rollback()
         conn.close()

@@ -4,21 +4,21 @@ from fastapi import APIRouter, Request, Depends
 
 import backend.database.database as db
 import backend.router.response as resp
-from . import member as members, sqlalchemy_member as member_src
+from . import member as mbrs, sqlalchemy_member as member_src
 
 member_router = APIRouter()
 
 
+MemberFilter = mbrs.FilterOfMember
+MembersRes = list[mbrs.MemberProfile]
+
+
 @member_router.get("/members", tags=["Members"])
-def fetch_members(
-    fltr: members.FilterOfMember = Depends(),
-) -> list[members.MemberProfile]:
+def fetch_members(fltr: MemberFilter = Depends()) -> MembersRes:
     conn = db.engine.connect()
     try:
-        res = member_src.fetch_members_by_filter(conn, fltr)
-        return res
+        return member_src.fetch_members_by_filter(conn, fltr)
     finally:
-        conn.rollback()
         conn.close()
 
 
@@ -43,5 +43,4 @@ def remove_member(req: Request, body: RemoveMemberReq) -> bool:
     except member_src.DeleteError as err:
         raise resp.BadRequest(str(err))
     finally:
-        conn.rollback()
         conn.close()

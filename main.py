@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.auth.member.auth_middleware import *
 
 from backend.auth.member.fastapi_auth import auth_router
+
 # from backend.file_manager.files.fastapi_file import files_router
 # from backend.file_manager.directories.fastapi_dirs import dirs_router
 from backend.file_manager.groups.fastapi_groups import groups_router

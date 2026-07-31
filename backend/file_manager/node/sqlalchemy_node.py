@@ -8,12 +8,15 @@ from ..directories import directory as dirs
 from ..files import files as txt
 from . import node as nmd
 
-
 sa.Table(
     "nodes",
     metadata,
     sa.Column("id", sa.String(255), primary_key=True),
-    sa.Column("parent_id", sa.String(255), sa.ForeignKey("nodes.id", ondelete="CASCADE")),
+    sa.Column(
+        "parent_id",
+        sa.String(255),
+        sa.ForeignKey("nodes.id", ondelete="CASCADE"),
+    ),
     sa.Column("name", sa.String(255), nullable=False),
     sa.Column("owner", sa.String(255), nullable=False),
     sa.Column("group", sa.String(255), nullable=False),
@@ -25,28 +28,56 @@ sa.Table(
 sa.Table(
     "node_text_files",
     metadata,
-    sa.Column("node_id", sa.String(255), sa.ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True),
+    sa.Column(
+        "node_id",
+        sa.String(255),
+        sa.ForeignKey("nodes.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
     sa.Column("content", sa.Text, nullable=False),
 )
 
 sa.Table(
     "node_directories",
     metadata,
-    sa.Column("node_id", sa.String(255), sa.ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True),
+    sa.Column(
+        "node_id",
+        sa.String(255),
+        sa.ForeignKey("nodes.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
 )
 
 sa.Table(
     "file_to_images",
     metadata,
-    sa.Column("node_id", sa.String(255), sa.ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True),
-    sa.Column("image_id", sa.String(255), sa.ForeignKey("images.id", ondelete="CASCADE")),
+    sa.Column(
+        "node_id",
+        sa.String(255),
+        sa.ForeignKey("nodes.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column(
+        "image_id",
+        sa.String(255),
+        sa.ForeignKey("images.id", ondelete="CASCADE"),
+    ),
 )
 
 sa.Table(
     "dir_to_images",
     metadata,
-    sa.Column("node_id", sa.String(255), sa.ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True),
-    sa.Column("image_id", sa.String(255), sa.ForeignKey("images.id", ondelete="CASCADE")),
+    sa.Column(
+        "node_id",
+        sa.String(255),
+        sa.ForeignKey("nodes.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column(
+        "image_id",
+        sa.String(255),
+        sa.ForeignKey("images.id", ondelete="CASCADE"),
+    ),
 )
 
 
@@ -60,21 +91,21 @@ class NodeFetchError(Exception):
 
 def row_to_node(row: sa.RowMapping) -> nmd.Node:
     if row.get("dir_node_id") is not None:
-        content: nmd.Values = dirs.Directory(name=row["name"])
+        content: nmd.Values = dirs.new_directory(row["name"])
         ntype = "directory"
     else:
-        content = txt.TextFile(name=row["name"], content=row.get("content") or "")
+        content = txt.new_text_file(row["name"], row.get("content") or "")
         ntype = "text_file"
 
-    return nmd.Node(
+    return nmd.mk_node(
         id=row["id"],
         parent_id=row["parent_id"] or "",
-        permitions=nmd.NodePermitions(
+        prmts=nmd.new_node_permitions(
             owner=row["owner"],
             group=row["group"],
             permitions=row["permissions"],
         ),
-        value=nmd.NodeValue(type=ntype, content=content),
+        value=nmd.new_node_value(type=ntype, content=content),
     )
 
 
@@ -109,9 +140,7 @@ def save_node(conn: Conn, node: nmd.Node) -> Conn:
         )
     else:
         conn.execute(
-            sa.text(
-                "INSERT INTO node_directories (node_id) VALUES (:node_id)"
-            ),
+            sa.text("INSERT INTO node_directories (node_id) VALUES (:node_id)"),
             {"node_id": node.id},
         )
 
@@ -119,16 +148,20 @@ def save_node(conn: Conn, node: nmd.Node) -> Conn:
 
 
 def fetch_node(conn: Conn, node_id: str) -> nmd.Node:
-    row = conn.execute(
-        sa.text(
-            "SELECT n.*, ntf.content, nd.node_id AS dir_node_id "
-            "FROM nodes n "
-            "LEFT JOIN node_text_files ntf ON n.id = ntf.node_id "
-            "LEFT JOIN node_directories nd ON n.id = nd.node_id "
-            "WHERE n.id = :id"
-        ),
-        {"id": node_id},
-    ).mappings().first()
+    row = (
+        conn.execute(
+            sa.text(
+                "SELECT n.*, ntf.content, nd.node_id AS dir_node_id "
+                "FROM nodes n "
+                "LEFT JOIN node_text_files ntf ON n.id = ntf.node_id "
+                "LEFT JOIN node_directories nd ON n.id = nd.node_id "
+                "WHERE n.id = :id"
+            ),
+            {"id": node_id},
+        )
+        .mappings()
+        .first()
+    )
     if row is None:
         raise NodeFetchError("node not found")
     return row_to_node(row)
@@ -153,16 +186,20 @@ def fetch_nodes(conn: Conn, fltr: nmd.NodeFilter = nmd.NodeFilter()) -> list[nmd
     if conditions:
         where = "WHERE " + " AND ".join(conditions)
 
-    rows = conn.execute(
-        sa.text(
-            "SELECT n.*, ntf.content, nd.node_id AS dir_node_id "
-            "FROM nodes n "
-            "LEFT JOIN node_text_files ntf ON n.id = ntf.node_id "
-            "LEFT JOIN node_directories nd ON n.id = nd.node_id "
-            f"{where}"
-        ),
-        params,
-    ).mappings().all()
+    rows = (
+        conn.execute(
+            sa.text(
+                "SELECT n.*, ntf.content, nd.node_id AS dir_node_id "
+                "FROM nodes n "
+                "LEFT JOIN node_text_files ntf ON n.id = ntf.node_id "
+                "LEFT JOIN node_directories nd ON n.id = nd.node_id "
+                f"{where}"
+            ),
+            params,
+        )
+        .mappings()
+        .all()
+    )
 
     return [row_to_node(r) for r in rows]
 
@@ -212,7 +249,7 @@ def update_node(conn: Conn, node: nmd.Node) -> Conn:
     return conn
 
 
-def cascade_update_children_perms(
+def update_perms(
     conn: Conn, node_id: str, owner: str, group: str, permissions: str
 ) -> Conn:
     conn.execute(
@@ -227,7 +264,12 @@ def cascade_update_children_perms(
             SET owner = :owner, `group` = :group, permissions = :permissions
             WHERE id IN (SELECT id FROM descendants)
         """),
-        {"root_id": node_id, "owner": owner, "group": group, "permissions": permissions},
+        {
+            "root_id": node_id,
+            "owner": owner,
+            "group": group,
+            "permissions": permissions,
+        },
     )
     return conn
 
@@ -250,14 +292,18 @@ def add_image_to_file(conn: Conn, node_id: str, image_id: str) -> Conn:
 
 
 def fetch_image_by_file(conn: Conn, node_id: str) -> str | None:
-    row = conn.execute(
-        sa.text(
-            "SELECT i.src FROM file_to_images nti "
-            "JOIN images i ON nti.image_id = i.id "
-            "WHERE nti.node_id = :node_id"
-        ),
-        {"node_id": node_id},
-    ).mappings().first()
+    row = (
+        conn.execute(
+            sa.text(
+                "SELECT i.src FROM file_to_images nti "
+                "JOIN images i ON nti.image_id = i.id "
+                "WHERE nti.node_id = :node_id"
+            ),
+            {"node_id": node_id},
+        )
+        .mappings()
+        .first()
+    )
 
     if row is None:
         return None
@@ -286,14 +332,18 @@ def add_image_to_dir(conn: Conn, node_id: str, image_id: str) -> Conn:
 
 
 def fetch_image_by_dir(conn: Conn, node_id: str) -> str | None:
-    row = conn.execute(
-        sa.text(
-            "SELECT i.src FROM dir_to_images nti "
-            "JOIN images i ON nti.image_id = i.id "
-            "WHERE nti.node_id = :node_id"
-        ),
-        {"node_id": node_id},
-    ).mappings().first()
+    row = (
+        conn.execute(
+            sa.text(
+                "SELECT i.src FROM dir_to_images nti "
+                "JOIN images i ON nti.image_id = i.id "
+                "WHERE nti.node_id = :node_id"
+            ),
+            {"node_id": node_id},
+        )
+        .mappings()
+        .first()
+    )
 
     if row is None:
         return None

@@ -36,7 +36,9 @@ def fetch_member_by_username(conn: Connection, username: str) -> mbr.Member:
     return mbr.new_member(row["username"], row["password"])
 
 
-def fetch_member_profile_by_username(conn: Connection, username: str) -> mbr.MemberProfile:
+def fetch_member_profile_by_username(
+    conn: Connection, username: str
+) -> mbr.MemberProfile:
     query = sa.text(
         "SELECT id, username, password FROM users WHERE username = :username"
     )

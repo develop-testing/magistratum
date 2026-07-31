@@ -11,3 +11,7 @@ class Image:
 
 def new_image(src: str) -> Image:
     return Image(id=str(uuid.uuid4()), src=src)
+
+
+def mk_image(id: str, src: str) -> Image:
+    return Image(id, src)

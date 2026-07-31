@@ -20,7 +20,6 @@ def render_dashboard(dir_id: str, username: str) -> HTMLResponse:
         try:
             parent_id = fetch_node(conn, dir_id).parent_id
         finally:
-            conn.rollback()
             conn.close()
 
     with open(template, "r", encoding="utf-8") as tmpl:

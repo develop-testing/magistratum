@@ -66,7 +66,7 @@ def fetch_group_by_name(conn: Connection, name: str) -> grps.Group:
 
     members = [row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})]
 
-    return grps.Group(row["name"], row["owner_name"], members)
+    return grps.mk_group(row["name"], row["owner_name"], members)
 
 
 def update_group(conn: Connection, old_name: str, group: grps.Group) -> Connection:
@@ -91,7 +91,11 @@ def update_group(conn: Connection, old_name: str, group: grps.Group) -> Connecti
 
     conn.execute(
         update_query,
-        {"new_name": group.name, "owner_name": group.owner, "old_name": old_name},
+        {
+            "new_name": group.name,
+            "owner_name": group.owner,
+            "old_name": old_name,
+        },
     )
 
     conn.execute(delete_members_query, {"group_id": group_id})
@@ -125,7 +129,9 @@ def delete_group_by_name(conn: Connection, removed: grps.RemovedGroup) -> Connec
     return conn
 
 
-def fetch_groups_by_filter(conn: Connection, filter: grps.FetchGroupReq) -> list[grps.Group]:
+def fetch_groups_by_filter(
+    conn: Connection, filter: grps.FetchGroupReq
+) -> list[grps.Group]:
     sql = """
         SELECT g.id, g.name, g.owner_name, utg.username
         FROM groups g
@@ -168,7 +174,7 @@ def fetch_groups_by_filter(conn: Connection, filter: grps.FetchGroupReq) -> list
             members_list.append(row["username"])
 
     return [
-        grps.Group(name=name, owner=owner, members=members)
+        grps.mk_group(name=name, owner=owner, members=members)
         for (g_id, name, owner), members in groups_dict.items()
     ]
 
@@ -192,7 +198,7 @@ def fetch_groups_by_user(conn: Connection, username: str) -> list[grps.Group]:
         members = [
             row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
         ]
-        groups.append(grps.Group(row["name"], row["owner_name"], members))
+        groups.append(grps.mk_group(row["name"], row["owner_name"], members))
 
     return groups
 

@@ -6,7 +6,6 @@ from backend.database.database import metadata
 from . import image as img
 from . import upload_image as upload
 
-
 sa.Table(
     "images",
     metadata,
@@ -29,22 +28,30 @@ def save_image(conn: Connection, image: img.Image) -> Connection:
 
 
 def fetch_image(conn: Connection, image_id: str) -> img.Image:
-    row = conn.execute(
-        sa.text("SELECT id, src FROM images WHERE id = :id"),
-        {"id": image_id},
-    ).mappings().first()
+    row = (
+        conn.execute(
+            sa.text("SELECT id, src FROM images WHERE id = :id"),
+            {"id": image_id},
+        )
+        .mappings()
+        .first()
+    )
 
     if row is None:
         raise ValueError("image not found")
 
-    return img.Image(id=row["id"], src=row["src"])
+    return img.mk_image(id=row["id"], src=row["src"])
 
 
 def delete_image(conn: Connection, image_id: str) -> Connection:
-    row = conn.execute(
-        sa.text("SELECT src FROM images WHERE id = :id"),
-        {"id": image_id},
-    ).mappings().first()
+    row = (
+        conn.execute(
+            sa.text("SELECT src FROM images WHERE id = :id"),
+            {"id": image_id},
+        )
+        .mappings()
+        .first()
+    )
 
     if row is not None:
         upload.delete_image_file(row["src"])
