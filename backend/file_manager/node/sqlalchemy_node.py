@@ -91,21 +91,21 @@ class NodeFetchError(Exception):
 
 def row_to_node(row: sa.RowMapping) -> nmd.Node:
     if row.get("dir_node_id") is not None:
-        content: nmd.Values = dirs.new_directory(row["name"])
+        content: nmd.Values = dirs.mk_directory(row["name"])
         ntype = "directory"
     else:
-        content = txt.new_text_file(row["name"], row.get("content") or "")
+        content = txt.mk_text_file(row["name"], row.get("content") or "")
         ntype = "text_file"
 
     return nmd.mk_node(
         id=row["id"],
         parent_id=row["parent_id"] or "",
-        prmts=nmd.new_node_permitions(
+        prmts=nmd.mk_node_permitions(
             owner=row["owner"],
             group=row["group"],
             permitions=row["permissions"],
         ),
-        value=nmd.new_node_value(type=ntype, content=content),
+        value=nmd.mk_node_value(type=ntype, content=content),
     )
 
 
@@ -167,7 +167,9 @@ def fetch_node(conn: Conn, node_id: str) -> nmd.Node:
     return row_to_node(row)
 
 
-def fetch_nodes(conn: Conn, fltr: nmd.NodeFilter = nmd.NodeFilter()) -> list[nmd.Node]:
+def fetch_nodes(
+    conn: Conn, fltr: nmd.NodeFilter = nmd.NodeFilter()
+) -> list[nmd.Node]:
     conditions = []
     params: dict[str, str] = {}
 

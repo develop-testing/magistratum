@@ -24,28 +24,28 @@ def rename_group(g: Group, new_name: str) -> Group:
     if new_name == "":
         return g
 
-    return Group(new_name, g.owner, g.members)
+    return mk_group(new_name, g.owner, g.members)
 
 
 def change_owner(g: Group, new_owner: str) -> Group:
     if new_owner == "":
         return g
 
-    return Group(g.name, new_owner, g.members)
+    return mk_group(g.name, new_owner, g.members)
 
 
 def add_member(g: Group, username: str) -> Group:
     if username in g.members:
         return g
 
-    return Group(g.name, g.owner, g.members + [username])
+    return mk_group(g.name, g.owner, g.members + [username])
 
 
 def remove_member(g: Group, username: str) -> Group:
     if username not in g.members:
         return g
 
-    return Group(g.name, g.owner, [m for m in g.members if m != username])
+    return mk_group(g.name, g.owner, [m for m in g.members if m != username])
 
 
 def mk_group(name: str, owner: str, members: list[str]) -> Group:
@@ -53,8 +53,12 @@ def mk_group(name: str, owner: str, members: list[str]) -> Group:
     return Group(name, owner, members)
 
 
+def mk_removed_group(name: str) -> RemovedGroup:
+    return RemovedGroup(name)
+
+
 def destroy_group(g: Group) -> RemovedGroup:
-    return RemovedGroup(g.name)
+    return mk_removed_group(g.name)
 
 
 def get_group_names(groups: list[Group]) -> list[str]:

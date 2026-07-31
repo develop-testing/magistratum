@@ -33,7 +33,7 @@ def fetch_member_by_username(conn: Connection, username: str) -> mbr.Member:
     if row is None:
         raise ValueError("user not found")
 
-    return mbr.new_member(row["username"], row["password"])
+    return mbr.mk_member(row["username"], row["password"])
 
 
 def fetch_member_profile_by_username(
@@ -79,7 +79,7 @@ def fetch_all_members(conn: Connection) -> list[mbr.Member]:
 
     out: list[mbr.Member] = []
     for row in rows:
-        m = mbr.new_member(str(row["username"]), str(row["password"]))
+        m = mbr.mk_member(str(row["username"]), str(row["password"]))
         out.append(m)
 
     return out

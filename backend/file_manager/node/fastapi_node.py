@@ -44,9 +44,11 @@ async def create_directory(req: Request, body: CreateDirReq) -> nmd.Node:
             if not nmd.has_write(parent, session_owner, group_names):
                 raise resp.Forbidden("access denied")
 
-        dir_val = dirs.new_directory(body.name)
-        node_perms = nmd.new_node_permitions(body.owner, body.group, body.permissions)
-        node_value = nmd.new_node_value("directory", dir_val)
+        dir_val = dirs.mk_directory(body.name)
+        node_perms = nmd.mk_node_permitions(
+            body.owner, body.group, body.permissions
+        )
+        node_value = nmd.mk_node_value("directory", dir_val)
         node = nmd.new_node(body.parent_id, node_perms, node_value)
 
         conn = node_src.save_node(conn, node)
@@ -86,9 +88,11 @@ async def create_text_file(req: Request, body: CreateTextFileReq) -> nmd.Node:
         if not nmd.has_write(parent, session_owner, group_names):
             raise resp.Forbidden("access denied")
 
-        file_val = txt.new_text_file(body.name, body.content)
-        node_perms = nmd.new_node_permitions(body.owner, body.group, body.permissions)
-        node_value = nmd.new_node_value("text_file", file_val)
+        file_val = txt.mk_text_file(body.name, body.content)
+        node_perms = nmd.mk_node_permitions(
+            body.owner, body.group, body.permissions
+        )
+        node_value = nmd.mk_node_value("text_file", file_val)
         node = nmd.new_node(body.parent_id, node_perms, node_value)
 
         conn = node_src.save_node(conn, node)
@@ -132,7 +136,9 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> nmd.Node:
             if not isinstance(node.value.content, dirs.Directory):
                 raise resp.BadRequest("node is not a directory")
 
-            new_content = dirs.rename_directory(node.value.content, body.new_name)
+            new_content = dirs.rename_directory(
+                node.value.content, body.new_name
+            )
 
         new_parent = body.new_parent_id or node.parent_id
 
@@ -143,14 +149,16 @@ async def edit_directory(req: Request, body: EditDirectoryReq) -> nmd.Node:
         new_group = body.new_group or node.permitions.group
         new_perms = body.new_permissions or node.permitions.permitions
 
-        node_perms = nmd.new_node_permitions(new_owner, new_group, new_perms)
-        node_value = nmd.new_node_value("directory", new_content)
+        node_perms = nmd.mk_node_permitions(new_owner, new_group, new_perms)
+        node_value = nmd.mk_node_value("directory", new_content)
         node = nmd.mk_node(node.id, new_parent, node_perms, node_value)
 
         cnn = node_src.update_node(cnn, node)
 
         if body.new_owner or body.new_group or body.new_permissions:
-            cnn = node_src.update_perms(cnn, node.id, new_owner, new_group, new_perms)
+            cnn = node_src.update_perms(
+                cnn, node.id, new_owner, new_group, new_perms
+            )
 
         if body.new_cover:
             src = save_image_file(body.new_cover)
@@ -197,12 +205,16 @@ async def edit_text_file(req: Request, body: EditTextFileReq) -> nmd.Node:
         if body.new_name:
             if not isinstance(node.value.content, txt.TextFile):
                 raise resp.BadRequest("node is not a text file")
-            new_content = txt.rename_text_file(node.value.content, body.new_name)
+            new_content = txt.rename_text_file(
+                node.value.content, body.new_name
+            )
 
         if body.new_content:
             if not isinstance(new_content, txt.TextFile):
                 raise resp.BadRequest("node is not a text file")
-            new_content = txt.change_text_file_content(new_content, body.new_content)
+            new_content = txt.change_text_file_content(
+                new_content, body.new_content
+            )
 
         new_parent = body.new_parent_id or node.parent_id
         if new_parent == "root":
@@ -212,8 +224,8 @@ async def edit_text_file(req: Request, body: EditTextFileReq) -> nmd.Node:
         new_group = body.new_group or node.permitions.group
         new_perms = body.new_permissions or node.permitions.permitions
 
-        node_perms = nmd.new_node_permitions(new_owner, new_group, new_perms)
-        node_value = nmd.new_node_value("text_file", new_content)
+        node_perms = nmd.mk_node_permitions(new_owner, new_group, new_perms)
+        node_value = nmd.mk_node_value("text_file", new_content)
         node = nmd.mk_node(node.id, new_parent, node_perms, node_value)
 
         conn = node_src.update_node(conn, node)
@@ -262,17 +274,17 @@ async def read_nodes(req: Request, fltr: Filter = Depends()) -> ReadResult:
 
             if isinstance(n.value.content, txt.TextFile):
                 img_src = node_src.fetch_image_by_file(conn, n.id) or def_img
-                rich_file = txt.new_rich_text_file(
-                    n.value.content, txt.new_decoration(img_src)
+                rich_file = txt.mk_rich_text_file(
+                    n.value.content, txt.mk_decoration(img_src)
                 )
-                node_value = nmd.new_node_value("text_file", rich_file)
+                node_value = nmd.mk_node_value("text_file", rich_file)
 
             elif isinstance(n.value.content, dirs.Directory):
                 img_src = node_src.fetch_image_by_dir(conn, n.id) or def_img
-                rich_dir = dirs.new_rich_directory(
-                    n.value.content, txt.new_decoration(img_src)
+                rich_dir = dirs.mk_rich_directory(
+                    n.value.content, txt.mk_decoration(img_src)
                 )
-                node_value = nmd.new_node_value("directory", rich_dir)
+                node_value = nmd.mk_node_value("directory", rich_dir)
             else:
                 raise resp.BadRequest("unexpected node content")
 
@@ -287,7 +299,9 @@ async def read_nodes(req: Request, fltr: Filter = Depends()) -> ReadResult:
 
 
 @node_router.get("/node/{node_id}", tags=["Nodes"])
-async def read_node(req: Request, node_id: str, data_type: str = "") -> nmd.Node:
+async def read_node(
+    req: Request, node_id: str, data_type: str = ""
+) -> nmd.Node:
     conn = db.engine.connect()
     try:
         session_owner = req.state.session.owner
@@ -306,16 +320,16 @@ async def read_node(req: Request, node_id: str, data_type: str = "") -> nmd.Node
 
         if isinstance(node.value.content, txt.TextFile):
             img_src = node_src.fetch_image_by_file(conn, node_id) or def_img
-            rich_file = txt.new_rich_text_file(
-                node.value.content, txt.new_decoration(img_src)
+            rich_file = txt.mk_rich_text_file(
+                node.value.content, txt.mk_decoration(img_src)
             )
-            node_value = nmd.new_node_value("text_file", rich_file)
+            node_value = nmd.mk_node_value("text_file", rich_file)
         elif isinstance(node.value.content, dirs.Directory):
             img_src = node_src.fetch_image_by_dir(conn, node_id) or def_img
-            rich_dir = dirs.new_rich_directory(
-                node.value.content, txt.new_decoration(img_src)
+            rich_dir = dirs.mk_rich_directory(
+                node.value.content, txt.mk_decoration(img_src)
             )
-            node_value = nmd.new_node_value("directory", rich_dir)
+            node_value = nmd.mk_node_value("directory", rich_dir)
         else:
             raise resp.BadRequest("unexpected node content")
 

@@ -16,7 +16,7 @@ class Member:
     password_hash: str
 
 
-def new_member(uname: str, hash: str) -> Member:
+def mk_member(uname: str, hash: str) -> Member:
     if len(uname) > 255:
         raise ValueError("incorrect username length")
 
@@ -39,7 +39,7 @@ class Candidate:
     password_hash: str
 
 
-def new_candidate(uname: str, password_hash: str) -> Candidate:
+def mk_candidate(uname: str, password_hash: str) -> Candidate:
 
     if len(uname) > 255:
         raise ValueError("incorrect username length")
@@ -49,7 +49,7 @@ def new_candidate(uname: str, password_hash: str) -> Candidate:
 
 def make_candidate(uname: str, password: str) -> Candidate:
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
-    return new_candidate(uname=uname, password_hash=hashed.decode())
+    return mk_candidate(uname=uname, password_hash=hashed.decode())
 
 
 @dataclass(frozen=True, slots=True)

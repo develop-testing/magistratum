@@ -8,7 +8,9 @@ from . import session as ssn_src
 def fetch_session_by_id(session_id: str) -> ssn_src.Session:
     if client.exists(session_id):
         owner_id = client.get(session_id)
-        return ssn_src.session_of(session_id, str(owner_id), client.ttl(session_id))
+        return ssn_src.mk_session(
+            session_id, str(owner_id), client.ttl(session_id)
+        )
 
     raise ValueError("session not found")
 

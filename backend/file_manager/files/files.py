@@ -8,7 +8,7 @@ class TextFile:
     content: str
 
 
-def new_text_file(name: str, content: str) -> TextFile:
+def mk_text_file(name: str, content: str) -> TextFile:
     return TextFile(name, content)
 
 
@@ -17,7 +17,7 @@ class Decoration:
     cover: str
 
 
-def new_decoration(cover: str) -> Decoration:
+def mk_decoration(cover: str) -> Decoration:
     return Decoration(cover)
 
 
@@ -27,7 +27,7 @@ class RichTextFile:
     decor: Decoration
 
 
-def new_rich_text_file(file: TextFile, decor: Decoration) -> RichTextFile:
+def mk_rich_text_file(file: TextFile, decor: Decoration) -> RichTextFile:
     return RichTextFile(file, decor)
 
 
@@ -35,11 +35,11 @@ def rename_text_file(f: TextFile, new_name: str) -> TextFile:
     if new_name == "":
         return f
 
-    return TextFile(new_name, f.content)
+    return mk_text_file(new_name, f.content)
 
 
 def change_text_file_content(f: TextFile, new_content: str) -> TextFile:
     if new_content == "":
         return f
 
-    return TextFile(f.name, new_content)
+    return mk_text_file(f.name, new_content)

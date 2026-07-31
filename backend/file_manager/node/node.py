@@ -23,7 +23,9 @@ class NodePermitions:
     permitions: str
 
 
-def new_node_permitions(owner: str, group: str, permitions: str) -> NodePermitions:
+def mk_node_permitions(
+    owner: str, group: str, permitions: str
+) -> NodePermitions:
     return NodePermitions(owner, group, permitions)
 
 
@@ -33,7 +35,7 @@ class NodeValue:
     content: Values
 
 
-def new_node_value(type: str, content: Values) -> NodeValue:
+def mk_node_value(type: str, content: Values) -> NodeValue:
     return NodeValue(type, content)
 
 
@@ -54,7 +56,9 @@ def new_node(parent_id: str, prmts: NodePermitions, value: NodeValue) -> Node:
     )
 
 
-def mk_node(id: str, parent_id: str, prmts: NodePermitions, value: NodeValue) -> Node:
+def mk_node(
+    id: str, parent_id: str, prmts: NodePermitions, value: NodeValue
+) -> Node:
     return Node(id, parent_id, prmts, value)
 
 
