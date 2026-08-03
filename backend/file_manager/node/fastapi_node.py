@@ -248,27 +248,29 @@ async def read_nodes(req: Request, fltr: Filter = Depends()) -> ReadResult:
 
         nodes = node_src.fetch_nodes(conn, fltr)
 
+        visible: list[nmd.Node] = []
+        for n in nodes:
+            if nmd.has_read(n, session_owner, group_names):
+                visible.append(n)
+
+        if fltr.data_type != "rich":
+            return visible
+
+        def_img = "/public/img/not-found.png"
+        covers = node_src.fetch_cover_images(conn, [n.id for n in visible])
+
         result: list[nmd.Node] = []
 
-        for n in nodes:
-            if not nmd.has_read(n, session_owner, group_names):
-                continue
-
-            if fltr.data_type != "rich":
-                result.append(n)
-                continue
-
-            def_img = "/public/img/not-found.png"
+        for n in visible:
+            img_src = covers.get(n.id, def_img)
 
             if isinstance(n.value.content, txt.TextFile):
-                img_src = node_src.fetch_image_by_file(conn, n.id) or def_img
                 rich_file = txt.mk_rich_text_file(
                     n.value.content, txt.mk_decoration(img_src)
                 )
                 node_value = nmd.mk_node_value("text_file", rich_file)
 
             elif isinstance(n.value.content, dirs.Directory):
-                img_src = node_src.fetch_image_by_dir(conn, n.id) or def_img
                 rich_dir = dirs.mk_rich_directory(
                     n.value.content, txt.mk_decoration(img_src)
                 )
@@ -276,9 +278,7 @@ async def read_nodes(req: Request, fltr: Filter = Depends()) -> ReadResult:
             else:
                 raise resp.BadRequest("unexpected node content")
 
-            n = nmd.mk_node(n.id, n.parent_id, n.permitions, node_value)
-
-            result.append(n)
+            result.append(nmd.mk_node(n.id, n.parent_id, n.permitions, node_value))
 
         return result
 

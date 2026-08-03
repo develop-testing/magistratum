@@ -180,27 +180,25 @@ def fetch_groups_by_filter(
 
 
 def fetch_groups_by_user(conn: Connection, username: str) -> list[grps.Group]:
-    groups_query = sa.text("""
-        SELECT g.id, g.name, g.owner_name
+    sql = """
+        SELECT g.id, g.name, g.owner_name, utg.username
         FROM groups g
-        JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS INTEGER)
+        JOIN users_to_groups utg ON g.id = CAST(utg.group_id AS CHAR)
         WHERE utg.username = :username
-    """)
+    """
 
-    members_query = sa.text("""
-        SELECT username FROM users_to_groups WHERE group_id = CAST(:group_id AS CHAR)
-    """)
+    rows = conn.execute(sa.text(sql), {"username": username}).mappings().all()
 
-    group_rows = conn.execute(groups_query, {"username": username}).mappings().all()
+    groups_dict: dict[tuple[int, str, str], list[str]] = {}
+    for row in rows:
+        group_key = (row["id"], row["name"], row["owner_name"])
+        members_list = groups_dict.setdefault(group_key, [])
+        members_list.append(row["username"])
 
-    groups: list[grps.Group] = []
-    for row in group_rows:
-        members = [
-            row2[0] for row2 in conn.execute(members_query, {"group_id": row["id"]})
-        ]
-        groups.append(grps.mk_group(row["name"], row["owner_name"], members))
-
-    return groups
+    return [
+        grps.mk_group(name=name, owner=owner, members=members)
+        for (g_id, name, owner), members in groups_dict.items()
+    ]
 
 
 def fetch_all_groups(conn: Connection) -> list[str]:

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections.abc import Sequence
 from dataclasses import dataclass
 import sqlalchemy as sa
 from sqlalchemy.engine import Connection as Conn
@@ -357,3 +358,32 @@ def remove_image_from_dir(conn: Conn, node_id: str) -> Conn:
         {"node_id": node_id},
     )
     return conn
+
+
+def fetch_cover_images(conn: Conn, node_ids: Sequence[str]) -> dict[str, str]:
+    if not node_ids:
+        return {}
+
+    placeholders = ",".join(f":nid{i}" for i in range(len(node_ids)))
+    params = {f"nid{i}": nid for i, nid in enumerate(node_ids)}
+
+    rows = conn.execute(
+        sa.text(
+            """
+            SELECT node_id, src FROM (
+                SELECT nti.node_id AS node_id, i.src AS src
+                FROM file_to_images nti
+                JOIN images i ON nti.image_id = i.id
+                UNION ALL
+                SELECT nti.node_id AS node_id, i.src AS src
+                FROM dir_to_images nti
+                JOIN images i ON nti.image_id = i.id
+            ) covers
+            WHERE node_id IN (%s)
+            """
+            % placeholders
+        ),
+        params,
+    ).mappings().all()
+
+    return {str(row["node_id"]): str(row["src"]) for row in rows}
