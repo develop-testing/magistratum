@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 
 import chevron  # type: ignore[import-untyped]
 
-from mustache_default import generate_layout
+from frontend.default_layout.default import generate_layout
 
 
 def render_not_found(request: Request) -> HTMLResponse:

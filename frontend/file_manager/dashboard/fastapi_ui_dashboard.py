@@ -7,7 +7,7 @@ import chevron  # type: ignore[import-untyped]
 
 from backend.database.database import engine
 from backend.file_manager.node.sqlalchemy_node import fetch_node
-from mustache_default import generate_layout
+from frontend.default_layout.default import generate_layout
 
 ui_dashboard_router = APIRouter()
 

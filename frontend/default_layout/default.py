@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-import os
-
 import chevron  # type: ignore[import-untyped]
 
-layout = os.path.join(
-    os.path.dirname(__file__), "frontend", "default_layout", "default.mustache"
-)
+layout = "frontend/default_layout/default.mustache"
 
 
 def generate_layout(content: str, username: str) -> str:
