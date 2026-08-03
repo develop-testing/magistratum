@@ -58,7 +58,7 @@ const close_modals = () => {
 }
 
 const send_get = (url, params) => {
-  const full_url = new URL(`http://127.0.0.1:8800${url}`)
+  const full_url = new URL(`http://localhost:8800${url}`)
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -78,7 +78,7 @@ const send_get = (url, params) => {
 }
 
 const send_post = (url, data) => {
-  return fetch(`http://127.0.0.1:8800${url}`, {
+  return fetch(`http://localhost:8800${url}`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -93,7 +93,7 @@ const send_post = (url, data) => {
 }
 
 const send_patch = (url, data) => {
-  return fetch(`http://127.0.0.1:8800${url}`, {
+  return fetch(`http://localhost:8800${url}`, {
     method: "PATCH",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -108,7 +108,7 @@ const send_patch = (url, data) => {
 }
 
 const send_delete = (url, data) => {
-  return fetch(`http://127.0.0.1:8800${url}`, {
+  return fetch(`http://localhost:8800${url}`, {
     method: "DELETE",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
