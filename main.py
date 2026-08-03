@@ -10,25 +10,18 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.auth.member.auth_middleware import *
+import backend.auth.member.auth_middleware as auth_mdw
+import backend.auth.member.fastapi_auth as auth_api
+import backend.auth.member.fastapi_members as members_api
+import backend.file_manager.groups.fastapi_groups as groups_api
+import backend.file_manager.node.fastapi_node as node_api
 
-from backend.auth.member.fastapi_auth import auth_router
-
-# from backend.file_manager.files.fastapi_file import files_router
-# from backend.file_manager.directories.fastapi_dirs import dirs_router
-from backend.file_manager.groups.fastapi_groups import groups_router
-from backend.file_manager.node.fastapi_node import node_router
-from backend.auth.member.fastapi_members import member_router
-
-
-from frontend.file_manager.dashboard.fastapi_ui_dashboard import ui_dashboard_router
-from frontend.file_manager.detail_file.fastapi_ui_file import ui_files_router
-from frontend.auth.fastapi_ui_auth import ui_auth_router
-from frontend.file_manager.directory.fastapi_ui_directory import (
-    ui_directory_router,
-)
-from frontend.members.fastapi_ui_members import ui_members_router
-from frontend.not_found.fastapi_ui_not_found import render_not_found
+import frontend.auth.fastapi_ui_auth as ui_auth
+import frontend.file_manager.dashboard.fastapi_ui_dashboard as ui_dashboard
+import frontend.file_manager.detail_file.fastapi_ui_file as ui_file
+import frontend.file_manager.directory.fastapi_ui_directory as ui_directory
+import frontend.members.fastapi_ui_members as ui_members
+import frontend.not_found.fastapi_ui_not_found as ui_not_found
 
 backend = FastAPI(docs_url=None, redoc_url=None)
 frontend = FastAPI()
@@ -106,11 +99,16 @@ backend.add_middleware(
     allow_headers=["*"],
 )
 
-backend.include_router(auth_router)
-backend.include_router(member_router, dependencies=[Depends(auth_middleware)])
-# backend.include_router(dirs_router, dependencies=[Depends(auth_middleware)])
-backend.include_router(groups_router, dependencies=[Depends(auth_middleware)])
-backend.include_router(node_router, dependencies=[Depends(auth_middleware)])
+backend.include_router(auth_api.auth_router)
+backend.include_router(
+    members_api.member_router, dependencies=[Depends(auth_mdw.auth_middleware)]
+)
+backend.include_router(
+    groups_api.groups_router, dependencies=[Depends(auth_mdw.auth_middleware)]
+)
+backend.include_router(
+    node_api.node_router, dependencies=[Depends(auth_mdw.auth_middleware)]
+)
 
 frontend.mount(
     "/static/auth",
@@ -137,20 +135,28 @@ frontend.mount(
 )
 frontend.mount("/public/img", StaticFiles(directory="frontend/public/img"), name="img")
 frontend.mount("/public/default", StaticFiles(directory="frontend/default_layout"))
-frontend.include_router(ui_dashboard_router, dependencies=[Depends(auth_middleware)])
-frontend.include_router(ui_files_router, dependencies=[Depends(auth_middleware)])
-frontend.include_router(ui_directory_router, dependencies=[Depends(auth_middleware)])
-frontend.include_router(ui_members_router, dependencies=[Depends(auth_middleware)])
-frontend.include_router(ui_auth_router)
+frontend.include_router(
+    ui_dashboard.ui_dashboard_router, dependencies=[Depends(auth_mdw.auth_middleware)]
+)
+frontend.include_router(
+    ui_file.ui_files_router, dependencies=[Depends(auth_mdw.auth_middleware)]
+)
+frontend.include_router(
+    ui_directory.ui_directory_router, dependencies=[Depends(auth_mdw.auth_middleware)]
+)
+frontend.include_router(
+    ui_members.ui_members_router, dependencies=[Depends(auth_mdw.auth_middleware)]
+)
+frontend.include_router(ui_auth.ui_auth_router)
 
 
 @frontend.exception_handler(404)
 async def not_found_handler(request: Request, exc: Exception) -> HTMLResponse:
-    return render_not_found(request)
+    return ui_not_found.render_not_found(request)
 
 
-@frontend.exception_handler(UnauthorizedException)
+@frontend.exception_handler(auth_mdw.UnauthorizedException)
 async def unauthorized_handler(
-    request: Request, exc: UnauthorizedException
+    request: Request, exc: auth_mdw.UnauthorizedException
 ) -> RedirectResponse:
     return RedirectResponse("/login", status_code=302)

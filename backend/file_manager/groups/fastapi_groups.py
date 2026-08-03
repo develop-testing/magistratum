@@ -77,7 +77,7 @@ ReadRes = list[grps.Group]
 async def read_groups(req: Request, filter: Filter = Depends()) -> ReadRes:
     conn = db.engine.connect()
     try:
-        if filter.owner == "" and filter.member == "": 
+        if filter.owner == "" and filter.member == "":
             return grps_src.fetch_groups_by_user(conn, req.state.session.owner)
 
         return grps_src.fetch_groups_by_filter(conn, filter)
