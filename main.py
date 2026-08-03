@@ -4,7 +4,7 @@ import os
 
 # import traceback
 
-from fastapi import HTTPException, Request, Response, FastAPI, Depends
+from fastapi import HTTPException, Request, FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import PlainTextResponse, HTMLResponse, RedirectResponse

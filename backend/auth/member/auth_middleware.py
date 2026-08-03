@@ -1,8 +1,7 @@
 from __future__ import annotations
 from fastapi import Request, HTTPException
 
-from backend.auth.session.redis_sessions import *
-from backend.router.response import *
+from backend.auth.session.redis_sessions import fetch_session_by_id
 
 
 class UnauthorizedException(HTTPException):
