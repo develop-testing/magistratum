@@ -36,3 +36,6 @@ docker-data/
 # Project specific
 *.db
 frontend/public/upload/
+
+# TinyMCE (CDN)
+frontend/file_manager/detail_file/tinymce/
