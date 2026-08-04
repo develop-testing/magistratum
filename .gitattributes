@@ -1,1 +1,3 @@
 frontend/file_manager/detail_file/tinymce/**/*
+frontend/public/admin/swagger-ui-bundle.js linguist-vendored
+frontend/public/admin/swagger-ui.css linguist-vendored
